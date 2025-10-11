@@ -6,6 +6,7 @@ on:
       - 'src-tauri/tauri.conf.json'
     tags:
       - 'v*'
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
