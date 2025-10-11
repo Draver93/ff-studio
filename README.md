@@ -123,22 +123,24 @@ FFStudio is designed to make advanced FFmpeg usage accessible and visual. Instea
 
 1. **Clone the repository:**
    ```sh
-   git clone https://github.com/yourusername/ff-studio-src.git
-   cd ff-studio-src
+   git clone https://github.com/Draver93/ff-studio.git
+   cd ff-studio
    ```
 
 2. **Install dependencies:**
    ```sh
    # Install Rust (if not already installed)
    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   
-   # Install Tauri CLI
-   cargo install tauri-cli
-   
-   # Build the application
-   cd src-tauri
-   cargo build
-   cd ..
+
+   # Clone the repository
+   git clone https://github.com/Draver93/ff-studio.git
+   cd ff-studio
+
+   # Build the application in release mode
+   cargo build --release
+
+   # Run the application
+   cargo run --release
    ```
 
 3. **Run the app:**
@@ -192,48 +194,113 @@ FFStudio is designed to make advanced FFmpeg usage accessible and visual. Instea
 ## Project Structure
 
 ```
-ff-studio-src/
+ff-studio/
 ├── src/                           # Frontend application
 │   ├── index.html                 # Main HTML UI with tabbed interface
 │   ├── modules/                   # JavaScript modules (ES6)
-│   │   ├── main.js               # Application entry point
-│   │   ├── graph/                # Graph editor functionality
-│   │   │   ├── core.js           # Core graph operations
-│   │   │   ├── nodes.js          # Node definitions and types
-│   │   │   ├── parser.js         # FFmpeg command parsing
-│   │   │   └── execution.js      # Graph execution logic
-│   │   ├── player/               # Media player system
-│   │   │   ├── player.js         # Main player controller
-│   │   │   └── timeline.js       # Timeline and segment management
-│   │   ├── workflows/            # Workflow management
-│   │   ├── logs/                 # Logging system
-│   │   └── ui/                   # UI components (modals, loading)
-│   ├── styles/                   # CSS styling system
-│   │   ├── main.css              # Main stylesheet
-│   │   ├── components/           # Component-specific styles
-│   │   ├── graph/                # Graph editor styles
-│   │   ├── player/               # Player and timeline styles
-│   │   └── responsive/           # Mobile and tablet styles
-│   └── libs/litegraph/           # LiteGraph.js library
-├── src-tauri/                    # Rust backend (Tauri 2.0)
-│   ├── src/
-│   │   ├── main.rs               # Application entry point
-│   │   ├── lib.rs                # Library exports
-│   │   ├── commands/             # Tauri command handlers
-│   │   │   ├── file_ops.rs       # File operations
-│   │   │   ├── media_ops.rs      # Media information
-│   │   │   └── workflow_ops.rs   # Workflow management
-│   │   ├── ffmpeg/               # FFmpeg integration
-│   │   │   ├── executor.rs       # FFmpeg execution
-│   │   │   ├── parser.rs         # FFmpeg feature parsing
-│   │   │   └── version.rs        # Version detection
-│   │   ├── workflow/             # Workflow data structures
-│   │   ├── server/               # HTTP server for media streaming
-│   │   └── utils/                # Utility functions
-│   ├── icons/                    # Application icons (all platforms)
-│   ├── tauri.conf.json           # Tauri configuration
-│   ├── Cargo.toml                # Rust dependencies
-│   └── ffstudio.desktop          # Linux desktop entry
+│   │   ├── main.js                # Application entry point
+│   │   ├── core/                  # Core utilities (formatting, etc.)
+│   │   │   └── format.js
+│   │   ├── graph/                 # Graph editor functionality
+│   │   │   ├── clipboard.js
+│   │   │   ├── constants.js
+│   │   │   ├── core.js            # Core graph operations
+│   │   │   ├── execution.js       # Graph execution logic
+│   │   │   ├── graph.js
+│   │   │   ├── import_export.js
+│   │   │   ├── nodes.js           # Node definitions and types
+│   │   │   ├── parser.js          # FFmpeg command parsing
+│   │   │   └── utils.js
+│   │   ├── player/                # Media player system
+│   │   │   ├── compare-player.js
+│   │   │   ├── player.js          # Main player controller
+│   │   │   ├── stream-player.js
+│   │   │   ├── timeline-player.js
+│   │   │   └── timeline.js        # Timeline and segment management
+│   │   ├── workflows/             # Workflow management
+│   │   │   └── workflows.js
+│   │   ├── logs/                  # Logging system
+│   │   │   └── logs.js
+│   │   └── ui/                    # UI components (modals, loading)
+│   │       ├── loading.js
+│   │       └── modal.js
+│   ├── styles/                    # CSS styling system
+│   │   ├── main.css               # Main stylesheet
+│   │   ├── animations/
+│   │   │   ├── keyframes.css
+│   │   │   └── transitions.css
+│   │   ├── components/            # Component-specific styles
+│   │   │   ├── badges.css
+│   │   │   ├── buttons.css
+│   │   │   ├── drop-zone.css
+│   │   │   ├── exec-bar.css
+│   │   │   ├── forms.css
+│   │   │   ├── loading.css
+│   │   │   ├── modals.css
+│   │   │   ├── scrollbars.css
+│   │   ├── core/
+│   │   │   ├── reset.css
+│   │   │   ├── typography.css
+│   │   │   ├── utilities.css
+│   │   │   └── variables.css
+│   │   ├── graph/                 # Graph editor styles
+│   │   │   ├── controls.css
+│   │   │   ├── graph-zone.css
+│   │   │   └── nodes.css
+│   │   ├── layout/
+│   │   │   ├── app-container.css
+│   │   │   ├── main-content.css
+│   │   │   ├── side-bar.css
+│   │   │   └── top-bar.css
+│   │   ├── logs/
+│   │   │   └── logs-zone.css
+│   │   ├── player/                # Player and timeline styles
+│   │   │   ├── compare-player.css
+│   │   │   ├── player-zone.css
+│   │   │   ├── stream-player.css
+│   │   │   ├── timeline-player.css
+│   │   │   ├── timeline.css
+│   │   │   └── video-controls.css
+│   │   ├── responsive/            # Mobile and tablet styles
+│   │   │   ├── mobile.css
+│   │   │   └── tablet.css
+│   │   └── workflows/
+│   │       ├── workflow-icons.css
+│   │       └── workflow-list.css
+│   └── libs/litegraph/            # LiteGraph.js library
+├── src-tauri/                     # Rust backend (Tauri 2.0)
+│   ├── Cargo.toml                 # Rust dependencies
+│   ├── ffstudio.desktop           # Linux desktop entry
+│   ├── tauri.conf.json            # Tauri configuration
+│   ├── capabilities/
+│   ├── gen/
+│   ├── icons/                     # Application icons (all platforms)
+│   └── src/
+│       ├── error.rs
+│       ├── lib.rs                 # Library exports
+│       ├── main.rs                # Application entry point
+│       ├── commands/              # Tauri command handlers
+│       │   ├── file_ops.rs        # File operations
+│       │   ├── media_ops.rs       # Media information
+│       │   ├── mod.rs
+│       │   └── workflow_ops.rs    # Workflow management
+│       ├── ffmpeg/                # FFmpeg integration
+│       │   ├── executor.rs        # FFmpeg execution
+│       │   ├── mod.rs
+│       │   ├── parser.rs          # FFmpeg feature parsing
+│       │   └── version.rs         # Version detection
+│       ├── server/                # HTTP server for media streaming
+│       │   ├── file_server.rs
+│       │   └── mod.rs
+│       ├── utils/                 # Utility functions
+│       │   ├── filesystem.rs
+│       │   ├── hash.rs
+│       │   ├── mod.rs
+│       │   └── version.rs
+│       └── workflow/              # Workflow data structures
+│           ├── manager.rs
+│           ├── mod.rs
+│           └── types.rs
 ├── LICENSE                        # License file
 └── README.md                      # This file
 ```
