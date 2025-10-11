@@ -1,4 +1,4 @@
-# FFStudio
+# FFStudio ![Build Status](https://github.com/Draver93/ff-studio/actions/workflows/rust.yml/badge.svg)
 
 **FFStudio** is a modern, cross-platform desktop application for visually designing, executing, and managing complex FFmpeg video/audio processing workflows. It provides a graphical interface to build, preview, and run FFmpeg command pipelines using a node-based editor, timeline, and integrated player.
 
