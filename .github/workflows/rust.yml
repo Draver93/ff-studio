@@ -19,39 +19,21 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: 20
-
     - name: Set up Rust
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
         override: true
 
-    # Linux-specific dependencies
-    - name: Install Linux deps
-      if: runner.os == 'Linux'
-      run: sudo apt update && sudo apt install -y pkg-config libssl-dev curl build-essential
-
-    # macOS-specific dependencies (if any)
-    - name: Install macOS deps
-      if: runner.os == 'macOS'
-      run: brew install pkg-config openssl
-
     - name: Build Tauri app
       working-directory: ./src-tauri
-      run: |
-        npm install
-        npm run build
-        cargo tauri build
+      run: cargo tauri build
 
     - name: Upload installer
       uses: actions/upload-artifact@v4
       with:
         name: tauri-installer-${{ matrix.os }}
         path: |
-          ./src-tauri/target/release/bundle/msi/*   # Windows
-          ./src-tauri/target/release/bundle/deb/*   # Linux
-          ./src-tauri/target/release/bundle/dmg/*   # macOS
+          ./src-tauri/target/release/bundle/msi/*
+          ./src-tauri/target/release/bundle/deb/*
+          ./src-tauri/target/release/bundle/dmg/*
