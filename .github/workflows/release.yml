@@ -1,17 +1,30 @@
-name: Create Release
+name: Release
 
 on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
 
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download Linux .deb
+        uses: actions/download-artifact@v4
         with:
+          name: linux-deb
+          path: dist
+
+      - name: Download Windows .msi
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-msi
+          path: dist
+
+      - name: Download macOS .dmg
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-dmg
           path: dist
 
       - name: Create GitHub Release
