@@ -1,0 +1,57 @@
+name: Rust Cross-Platform Build
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20
+
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+
+    # Linux-specific dependencies
+    - name: Install Linux deps
+      if: runner.os == 'Linux'
+      run: sudo apt update && sudo apt install -y pkg-config libssl-dev curl build-essential
+
+    # macOS-specific dependencies (if any)
+    - name: Install macOS deps
+      if: runner.os == 'macOS'
+      run: brew install pkg-config openssl
+
+    - name: Build Tauri app
+      working-directory: ./src-tauri
+      run: |
+        npm install
+        npm run build
+        cargo tauri build
+
+    - name: Upload installer
+      uses: actions/upload-artifact@v3
+      with:
+        name: tauri-installer-${{ matrix.os }}
+        path: |
+          ./src-tauri/target/release/bundle/msi/*   # Windows MSI
+          ./src-tauri/target/release/bundle/deb/*   # Linux DEB
+          ./src-tauri/target/release/bundle/dmg/*   # macOS DMG
