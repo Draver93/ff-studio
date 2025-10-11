@@ -1,0 +1,20 @@
+/**
+ * Tablet Responsive Styles
+ * Breakpoints: 768px - 1024px
+ */
+
+/* ========================================
+   MAIN LAYOUT ADJUSTMENTS
+   ======================================== */
+@media (max-width: 1024px) {
+    /* Modal dialogs slightly smaller */
+    .modal-content {
+        width: 90%;
+        max-width: 400px;
+    }
+
+    /* App title abbreviation */
+    .app-title span {
+        display: none;
+    }
+}

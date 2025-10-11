@@ -1,0 +1,217 @@
+/**
+ * Button Components
+ * Reusable button styles with hover, active, and variant states
+ */
+
+/* ========================================
+   BASE BUTTON
+   ======================================== */
+.button,
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: 8px 16px;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-align: center;
+    user-select: none;
+}
+
+.button:disabled,
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ========================================
+   PRIMARY BUTTON
+   ======================================== */
+.button-primary,
+.btn-primary {
+    background: var(--accent);
+    color: var(--text-primary);
+}
+
+.button-primary:hover,
+.btn-primary:hover {
+    background: #5d94f5;
+    transform: translateY(-1px);
+}
+
+.button-primary:active,
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* ========================================
+   SECONDARY BUTTON
+   ======================================== */
+.button-secondary,
+.btn-secondary {
+    background: var(--secondary-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+}
+
+.button-secondary:hover,
+.btn-secondary:hover {
+    background: var(--tertiary-bg);
+    border-color: var(--accent);
+}
+
+/* ========================================
+   SUCCESS BUTTON
+   ======================================== */
+.button-success,
+.btn-success {
+    background: var(--success);
+    color: var(--text-primary);
+}
+
+.button-success:hover,
+.btn-success:hover {
+    background: #5fc874;
+}
+
+/* ========================================
+   WARNING BUTTON
+   ======================================== */
+.button-warning,
+.btn-warning {
+    background: var(--warning);
+    color: var(--text-primary);
+}
+
+.button-warning:hover,
+.btn-warning:hover {
+    background: #e6c635;
+}
+
+/* ========================================
+   DANGER BUTTON
+   ======================================== */
+.button-danger,
+.btn-danger {
+    background: var(--error);
+    color: var(--text-primary);
+}
+
+.button-danger:hover,
+.btn-danger:hover {
+    background: #ff5252;
+}
+
+/* ========================================
+   ICON BUTTON
+   ======================================== */
+.icon-button {
+    padding: 6px;
+    background: var(--secondary-bg);
+    border-radius: var(--radius-md);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.icon-button:hover {
+    background: var(--tertiary-bg);
+    color: var(--accent);
+}
+
+/* ========================================
+   FULL WIDTH BUTTON
+   ======================================== */
+.button-full,
+.btn-full {
+    width: 100%;
+}
+
+/* ========================================
+   SMALL BUTTON
+   ======================================== */
+.button-sm,
+.btn-sm {
+    padding: 4px 10px;
+    font-size: var(--font-size-sm);
+}
+
+/* ========================================
+   PLAYER BUTTONS
+   ======================================== */
+.control-btn {
+    background: #404040;
+    border: none;
+    color: #ffffff;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.control-btn:hover {
+    background: #505050;
+    transform: scale(1.1);
+}
+
+.control-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.control-btn.play {
+    background: #4dabf7;
+    width: 44px;
+    height: 44px;
+}
+
+.control-btn.play:hover {
+    background: #3b99e6;
+}
+
+.zoom-btn {
+    background: #404040;
+    border: none;
+    color: #ccc;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.zoom-btn:hover {
+    background: #505050;
+}
+
+.control-btn.generate {
+    background: var(--execute);
+}
+
+.control-btn.generate:hover {
+    background: var(--execute-hover);
+}
+
+.control-btn.reset {
+    background: #ff6b6b;
+}
+
+.control-btn.reset:hover {
+    background: #ff5252;
+}

@@ -1,0 +1,139 @@
+/**
+ * Video Player Controls
+ * Play/Pause, Seekbar, Volume, and Time Display
+ * (stacked layout under video, not overlay)
+ */
+
+/* ========================================
+   CONTROLS CONTAINER
+   ======================================== */
+.player-controls {
+    width: 100%;
+    background: var(--secondary-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    box-sizing: border-box;
+    border-top: 1px solid var(--border-tertiary);
+}
+
+/* ========================================
+   PLAY/PAUSE BUTTON
+   ======================================== */
+.play-btn,
+.pause-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-round);
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    color: #fff;
+    font-size: 16px;
+    transition: all var(--transition-fast);
+}
+
+.play-btn:hover,
+.pause-btn:hover {
+    transform: scale(1.1);
+    background: var(--accent-2);
+}
+
+/* ========================================
+   TIME DISPLAY
+   ======================================== */
+.time-display {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    background: var(--tertiary-bg);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    min-width: 60px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* ========================================
+   SEEKBAR / SCRUBBER
+   ======================================== */
+.seekbar-container {
+    flex: 1;
+    height: 6px;
+    background: var(--border-primary);
+    border-radius: var(--radius-sm);
+    position: relative;
+    cursor: pointer;
+}
+
+.seekbar-progress {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    border-radius: var(--radius-sm);
+    transition: width var(--transition-fast) linear;
+}
+
+.seekbar-handle {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-round);
+    background: var(--accent-2);
+    cursor: pointer;
+    transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.seekbar-handle:hover {
+    transform: translate(-50%, -50%) scale(1.2);
+    background: var(--accent);
+}
+
+/* ========================================
+   VOLUME CONTROLS
+   ======================================== */
+.volume-container {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.volume-slider {
+    width: 80px;
+    height: 4px;
+    background: var(--border-primary);
+    border-radius: var(--radius-sm);
+    position: relative;
+    cursor: pointer;
+}
+
+.volume-progress {
+    height: 100%;
+    width: 50%;
+    background: var(--accent);
+    border-radius: var(--radius-sm);
+}
+
+.volume-handle {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-round);
+    background: var(--accent-2);
+    cursor: pointer;
+    transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.volume-handle:hover {
+    transform: translate(-50%, -50%) scale(1.2);
+    background: var(--accent);
+}

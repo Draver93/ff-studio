@@ -1,0 +1,84 @@
+/**
+ * Status Badges & Labels
+ */
+
+/* ========================================
+   BASE BADGE
+   ======================================== */
+.badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: var(--radius-xl);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    background: var(--tertiary-bg);
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+/* ========================================
+   VARIANT COLORS
+   ======================================== */
+.badge.blue {
+    background: rgba(77, 171, 247, 0.2);
+    color: var(--accent);
+}
+
+.badge.green {
+    background: rgba(107, 207, 127, 0.2);
+    color: var(--success);
+}
+
+.badge.yellow {
+    background: rgba(255, 217, 61, 0.2);
+    color: var(--warning);
+}
+
+.badge.red {
+    background: rgba(255, 107, 107, 0.2);
+    color: var(--error);
+}
+
+.badge.purple {
+    background: rgba(138, 92, 246, 0.2);
+    color: var(--accent-2);
+}
+
+/* ========================================
+   SIZE VARIANTS
+   ======================================== */
+.badge-sm {
+    font-size: var(--font-size-xs);
+    padding: 2px 6px;
+}
+
+.badge-md {
+    font-size: var(--font-size-sm);
+    padding: 3px 8px;
+}
+
+.badge-lg {
+    font-size: var(--font-size-md);
+    padding: 4px 10px;
+}
+
+/* ========================================
+   STATUS DOT
+   Small circular indicator often used with text
+   ======================================== */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-round);
+    display: inline-block;
+    margin-right: 4px;
+    vertical-align: middle;
+    background: var(--text-disabled);
+}
+
+/* Status-specific colors */
+.status-dot.ready { background: var(--success); }
+.status-dot.generating { background: var(--warning); }
+.status-dot.playing { background: var(--info); }
+.status-dot.error { background: var(--error); }

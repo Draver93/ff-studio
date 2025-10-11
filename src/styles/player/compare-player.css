@@ -1,0 +1,346 @@
+/**
+ * Compare Player Styles
+ * Styles specific to the side-by-side video comparison player
+ */
+
+/* ========================================
+   COMPARE PLAYER CONTAINER
+   ======================================== */
+.compare-player {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--panel);
+}
+
+/* ========================================
+   COMPARE HEADER
+   ======================================== */
+.compare-header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border-tertiary);
+}
+
+.compare-file-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.file-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.file-input-group label {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 50px;
+}
+
+.compare-url-input {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    color: var(--ink);
+    font-size: 13px;
+    transition: border-color var(--transition-fast);
+}
+
+.compare-url-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+/* ========================================
+   SPLIT CONTAINER
+   ======================================== */
+.split-container {
+    position: relative;
+    flex: 1;
+    background: #000;
+    overflow: hidden;
+}
+
+.split-video-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#video-wrapper-b {
+    clip-path: inset(0 0 0 50%);
+}
+
+.compare-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* ========================================
+   VIDEO LABELS
+   ======================================== */
+.video-label {
+    position: absolute;
+    top: 16px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.label-a {
+    left: 16px;
+}
+
+.label-b {
+    right: 16px;
+}
+
+/* ========================================
+   DRAGGABLE DIVIDER
+   ======================================== */
+.split-divider {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 4px;
+    height: 100%;
+    background: var(--accent);
+    cursor: ew-resize;
+    z-index: 10;
+    transform: translateX(-50%);
+    transition: background-color var(--transition-fast);
+}
+
+.split-divider:hover {
+    background: var(--accent-2);
+}
+
+.split-divider::before,
+.split-divider::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    width: 2px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateX(-50%);
+}
+
+.split-divider::before {
+    top: 0;
+}
+
+.split-divider::after {
+    bottom: 0;
+}
+
+.divider-handle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 48px;
+    height: 48px;
+    background: var(--accent);
+    border: 3px solid white;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: all var(--transition-fast);
+}
+
+.divider-handle:hover {
+    background: var(--accent-2);
+    transform: translate(-50%, -50%) scale(1.05);
+}
+
+.handle-grip {
+    width: 20px;
+    height: 20px;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M9 3L5 6.99h3V14h2V6.99h3L9 3zm7 14.01V10h-2v7.01h-3L15 21l4-3.99h-3z"/></svg>') no-repeat center;
+    background-size: contain;
+    opacity: 0.9;
+}
+
+/* ========================================
+   COMPARE CONTROLS
+   ======================================== */
+.compare-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--secondary-bg);
+    border-top: 1px solid var(--border-tertiary);
+}
+
+.compare-controls .control-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+}
+
+/* ========================================
+   OFFSET CONTROLS
+   ======================================== */
+.offset-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.oc-input {
+    width: 60px;
+    padding: 5px 8px;
+    background: var(--bg);
+    border: 1px solid var(--border-primary);
+    border-radius: 6px;
+    color: var(--ink);
+    font-size: 13px;
+    text-align: center;
+}
+
+.oc-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+/* Transparent background for spinner buttons (Chrome/Edge/Safari) */
+.oc-input::-webkit-inner-spin-button,
+.oc-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    width: 20px;
+    height: 20px;
+    mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"><polygon points="6,2 10,6 2,6" fill="gray"/><polygon points="2,8 10,8 6,12" fill="gray"/></svg>') no-repeat center;
+    background-color: #808080;
+}
+
+/* Firefox */
+.oc-input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+/* ========================================
+   GLOBAL TIMELINE
+   ======================================== */
+.global-timeline-container {
+    flex: 1;
+    margin-left: 16px;
+}
+
+#global-timeline {
+    width: 100%;
+    appearance: none;
+    height: 4px;
+    background: #555;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+#global-timeline:hover {
+    background: #666;
+}
+
+#global-timeline::-webkit-slider-thumb {
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+#global-timeline::-webkit-slider-thumb:hover {
+    background: var(--accent-2);
+    transform: scale(1.1);
+}
+
+#global-timeline::-moz-range-thumb {
+    width: 15px;
+    height: 15px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    transition: all var(--transition-fast);
+}
+
+#global-timeline::-moz-range-thumb:hover {
+    background: var(--accent-2);
+    transform: scale(1.1);
+}
+
+/* ========================================
+   TIME DISPLAY
+   ======================================== */
+.compare-time-display {
+    font-family: var(--font-family-mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--tertiary-bg);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    min-width: 80px;
+    text-align: center;
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+@media (max-width: 768px) {
+    .compare-file-inputs {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .compare-controls {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .global-timeline-container {
+        margin-left: 0;
+        margin-top: 8px;
+        order: 1;
+    }
+    
+    .divider-handle {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .handle-grip {
+        width: 16px;
+        height: 16px;
+    }
+}

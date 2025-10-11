@@ -1,0 +1,112 @@
+/**
+ * CSS Reset and Base Element Styles
+ * Normalize browser defaults and set foundation styles
+ */
+
+/* ========================================
+   UNIVERSAL RESET
+   ======================================== */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ========================================
+   HTML & BODY BASE
+   ======================================== */
+html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    font-family: var(--font-family-primary);
+    background: var(--primary-bg);
+    color: var(--text-primary);
+    height: 100vh;
+    overflow: hidden;
+    /*line-height: 1.5;*/
+}
+
+
+/* ========================================
+   MEDIA ELEMENTS
+   ======================================== */
+img,
+video,
+canvas,
+svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ========================================
+   FORM ELEMENTS
+   ======================================== */
+input,
+button,
+textarea,
+select {
+    font: inherit;
+    color: inherit;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    background: none;
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+.spacer {
+    height: 1.5rem;
+}
+
+.disableScroll {
+    overflow-y: hidden;
+    overflow-x: hidden;
+}
+
+/* ========================================
+   VIDEO SPECIFIC RESETS
+   ======================================== */
+#frame-display {
+    width: 100%;
+    height: 100%;
+    display: none;
+    object-fit: contain;
+}
+
+#main-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background-color: black;
+    outline: none;
+}
+
+/* Hide default video controls */
+#main-video::-webkit-media-controls {
+    display: none !important;
+}
+
+#main-video::-webkit-media-controls-enclosure {
+    display: none !important;
+}
+
+#main-video::-webkit-media-controls-panel {
+    display: none !important;
+}
+
+video {
+    max-width: 100%;
+    max-height: 100%;
+    outline: none;
+}

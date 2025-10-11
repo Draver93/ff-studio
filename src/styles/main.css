@@ -1,0 +1,126 @@
+/*
+ * Main CSS Entry Point
+ * Video Editor/Workflow Application
+ * 
+ * Import order is important for proper CSS cascade
+ */
+
+/* ========================================
+   CORE FOUNDATION
+   ======================================== */
+
+/* CSS Custom Properties - Colors, spacing, typography */
+@import 'core/variables.css';
+
+/* CSS Reset and base element styles */
+@import 'core/reset.css';
+
+/* Typography - fonts, sizes, weights */
+@import 'core/typography.css';
+
+/* Utility classes and helper styles */
+@import 'core/utilities.css';
+
+/* ========================================
+   LAYOUT STRUCTURE
+   ======================================== */
+
+/* Main application container and grid */
+@import 'layout/app-container.css';
+
+/* Top navigation bar and tabs */
+@import 'layout/top-bar.css';
+
+/* Main content area layout */
+@import 'layout/main-content.css';
+
+/* Right sidebar layout and structure */
+@import 'layout/side-bar.css';
+
+/* ========================================
+   FEATURE MODULES
+   ======================================== */
+
+/* Graph Visualization */
+@import 'graph/graph-zone.css';
+@import 'graph/nodes.css';
+@import 'graph/controls.css';
+
+/* Video Player */
+@import 'player/player-zone.css';
+@import 'player/timeline-player.css';
+@import 'player/stream-player.css';
+@import 'player/compare-player.css';
+@import 'player/timeline.css';
+@import 'player/video-controls.css';
+
+/* Logs Display */
+@import 'logs/logs-zone.css';
+
+/* Workflow Management */
+@import 'workflows/workflow-list.css';
+@import 'workflows/workflow-icons.css';
+
+/* ========================================
+   UI COMPONENTS
+   ======================================== */
+
+/* Button components and variants */
+@import 'components/buttons.css';
+
+/* Form elements and validation */
+@import 'components/forms.css';
+
+@import 'components/exec-bar.css';
+
+
+/* Modal dialogs and overlays */
+@import 'components/modals.css';
+
+/* Modal drag and drop */
+@import 'components/drop-zone.css';
+
+/* Loading states and indicators */
+@import 'components/loading.css';
+
+/* Status badges and labels */
+@import 'components/badges.css';
+
+/* Custom scrollbar styling */
+@import 'components/scrollbars.css';
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
+/* Reusable keyframe animations */
+@import 'animations/keyframes.css';
+
+/* Transition effects and timing */
+@import 'animations/transitions.css';
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+/* Tablet breakpoints (768px - 1024px) */
+@import 'responsive/tablet.css';
+
+/* Mobile breakpoints (< 768px) */
+@import 'responsive/mobile.css';
+
+/* ========================================
+   BROWSER COMPATIBILITY
+   ======================================== */
+
+/* Ensure focus styles work across browsers */
+*:focus {
+    outline: none;
+}
+
+/* Ensure box-sizing is consistent */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}

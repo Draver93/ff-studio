@@ -1,0 +1,49 @@
+/**
+ * Transition Effects
+ * Smooth property changes for UI elements
+ */
+
+/* ========================================
+   GENERAL TRANSITIONS
+   ======================================== */
+.transition-fast {
+    transition: all 0.2s ease;
+}
+
+.transition-medium {
+    transition: all 0.3s ease;
+}
+
+.transition-slow {
+    transition: all 0.5s ease;
+}
+
+/* ========================================
+   SPECIFIC PROPERTY TRANSITIONS
+   ======================================== */
+.transition-opacity {
+    transition: opacity 0.2s ease;
+}
+
+.transition-transform {
+    transition: transform 0.2s ease;
+}
+
+.transition-color {
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.transition-shadow {
+    transition: box-shadow 0.25s ease, text-shadow 0.25s ease;
+}
+
+/* ========================================
+   HOVER EFFECTS USING TRANSITIONS
+   ======================================== */
+.hover-scale {
+    transition: transform 0.2s ease;
+}
+
+.hover-lift {
+    transition: transform 0.2s ease;
+}

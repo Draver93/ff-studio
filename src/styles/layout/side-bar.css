@@ -1,0 +1,103 @@
+/**
+ * Right Sidebar Layout
+ * Workflow management and collapsible sidebar structure
+ */
+
+/* ========================================
+   SIDEBAR CONTAINER
+   ======================================== */
+.right-sidebar {
+    width: var(--sidebar-width);
+    background: var(--secondary-bg);
+    border-left: 1px solid var(--border-primary);
+    display: flex;
+    flex-direction: column;
+    transition: width var(--transition-medium);
+    position: relative;
+}
+
+.right-sidebar.collapsed {
+    width: var(--sidebar-width-collapsed);
+}
+
+/* ========================================
+   SIDEBAR HEADER
+   ======================================== */
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-primary);
+    background: var(--tertiary-bg);
+}
+
+.sidebar-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.collapse-btn {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 5px;
+    border-radius: var(--radius-xs);
+    transition: var(--transition-fast);
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.collapse-btn:hover {
+    background: var(--border-primary);
+    color: var(--text-primary);
+}
+
+/* ========================================
+   SIDEBAR FOOTER
+   ======================================== */
+.sidebar-footer {
+    display: flex;
+    align-items: center;
+    font-size: var(--font-size-md);
+    color: var(--text-disabled);
+    justify-content: center;
+    border-top: 1px solid var(--border-primary);
+    height: 35px;
+    line-height: 0px;
+    background: var(--tertiary-bg);
+}
+.version-full { 
+    display: flex; 
+    gap: var(--spacing-sm);
+}
+.right-sidebar.collapsed .version-full {
+    display: none;
+}
+
+.version-short { display: none; }
+.right-sidebar.collapsed .version-short {
+    display: flex;
+}
+
+/* ========================================
+   COLLAPSED SIDEBAR STATES
+   ======================================== */
+.right-sidebar.collapsed .sidebar-title,
+.right-sidebar.collapsed .footer-title,
+.right-sidebar.collapsed .workflows-container,
+.right-sidebar.collapsed .add-workflow-btn {
+    display: none;
+}
+
+.right-sidebar.collapsed .sidebar-header {
+    justify-content: center;
+    padding: var(--spacing-lg) 0;
+}

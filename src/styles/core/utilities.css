@@ -1,0 +1,169 @@
+/**
+ * Utility Classes
+ * Helper classes for common layout patterns and styling
+ */
+
+/* ========================================
+   DISPLAY UTILITIES
+   ======================================== */
+.hidden { display: none !important; }
+.block { display: block; }
+.inline { display: inline; }
+.inline-block { display: inline-block; }
+.flex { display: flex; }
+.inline-flex { display: inline-flex; }
+
+/* ========================================
+   FLEXBOX UTILITIES
+   ======================================== */
+.flex-col { flex-direction: column; }
+.flex-row { flex-direction: row; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-nowrap { flex-wrap: nowrap; }
+
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.items-stretch { align-items: stretch; }
+
+.justify-center { justify-content: center; }
+.justify-start { justify-content: flex-start; }
+.justify-end { justify-content: flex-end; }
+.justify-between { justify-content: space-between; }
+.justify-around { justify-content: space-around; }
+
+.flex-1 { flex: 1; }
+.flex-auto { flex: auto; }
+.flex-none { flex: none; }
+
+/* ========================================
+   POSITIONING
+   ======================================== */
+.relative { position: relative; }
+.absolute { position: absolute; }
+.fixed { position: fixed; }
+.sticky { position: sticky; }
+
+/* ========================================
+   SPACING UTILITIES
+   ======================================== */
+.gap-xs { gap: var(--spacing-xs); }
+.gap-sm { gap: var(--spacing-sm); }
+.gap-md { gap: var(--spacing-md); }
+.gap-lg { gap: var(--spacing-lg); }
+.gap-xl { gap: var(--spacing-xl); }
+
+/* ========================================
+   BORDER RADIUS
+   ======================================== */
+.rounded-xs { border-radius: var(--radius-xs); }
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+.rounded-full { border-radius: var(--radius-round); }
+
+/* ========================================
+   OVERFLOW
+   ======================================== */
+.overflow-hidden { overflow: hidden; }
+.overflow-auto { overflow: auto; }
+.overflow-scroll { overflow: scroll; }
+.overflow-x-hidden { overflow-x: hidden; }
+.overflow-y-hidden { overflow-y: hidden; }
+.overflow-x-auto { overflow-x: auto; }
+.overflow-y-auto { overflow-y: auto; }
+
+/* ========================================
+   CURSOR
+   ======================================== */
+.cursor-pointer { cursor: pointer; }
+.cursor-default { cursor: default; }
+.cursor-not-allowed { cursor: not-allowed; }
+.cursor-move { cursor: move; }
+
+/* ========================================
+   OPACITY
+   ======================================== */
+.opacity-0 { opacity: 0; }
+.opacity-50 { opacity: 0.5; }
+.opacity-60 { opacity: 0.6; }
+.opacity-100 { opacity: 1; }
+
+/* ========================================
+   VISIBILITY
+   ======================================== */
+.visible { visibility: visible; }
+.invisible { visibility: hidden; }
+
+/* ========================================
+   TRANSFORM
+   ======================================== */
+.scale-100 { transform: scale(1); }
+.scale-110 { transform: scale(1.1); }
+.scale-125 { transform: scale(1.25); }
+
+/* ========================================
+   DIVIDERS
+   ======================================== */
+.divider {
+    height: 1px;
+    background: var(--border-primary);
+}
+
+/* ========================================
+   KEYBOARD KEY STYLING
+   ======================================== */
+.kbd {
+    border: 1px solid #2f3750;
+    border-bottom-width: 2px;
+    border-radius: var(--radius-md);
+    padding: 1px 6px;
+    background: #0c0f17;
+    color: #a8b3cf;
+    font-size: var(--font-size-sm);
+    font-family: var(--font-family-mono);
+}
+
+/* ========================================
+   STATUS INDICATORS
+   ======================================== */
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-round);
+    background: var(--text-disabled);
+}
+
+.status-dot.ready { background: var(--success); }
+.status-dot.generating { background: var(--warning); }
+.status-dot.playing { background: var(--info); }
+.status-dot.error { background: var(--error); }
+
+/* ========================================
+   HOVER EFFECTS
+   ======================================== */
+.hover-lift:hover {
+    transform: translateY(-1px);
+}
+
+.hover-scale:hover {
+    transform: scale(1.05);
+}
+
+/* ========================================
+   DISABLED STATE
+   ======================================== */
+.disabled,
+[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}

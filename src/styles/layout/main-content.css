@@ -1,0 +1,23 @@
+/**
+ * Main Content Layout
+ * Primary content area and zone containers
+ */
+
+/* ========================================
+   MAIN CONTENT CONTAINER
+   ======================================== */
+.main-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    height: calc(100vh - var(--topbar-height));
+}
+
+.main-area {
+    flex: 1;
+    background: var(--primary-bg);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    margin: var(--spacing-md);
+}

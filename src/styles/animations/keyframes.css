@@ -1,0 +1,73 @@
+/**
+ * Reusable Keyframe Animations
+ * Core animations for loading states, hover effects, and transitions
+ */
+
+/* ========================================
+   ROTATION
+   ======================================== */
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ========================================
+   LOADING BARS
+   ======================================== */
+@keyframes loading-bar {
+    0% { transform: scaleY(0.3); }
+    50% { transform: scaleY(1); }
+    100% { transform: scaleY(0.3); }
+}
+
+/* ========================================
+   PROGRESS PULSE
+   ======================================== */
+@keyframes progress-pulse {
+    0% { opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
+}
+
+/* ========================================
+   DOT PULSE
+   ======================================== */
+@keyframes dot-pulse {
+    0%, 100% { transform: scale(0.8); opacity: 0.6; }
+    50% { transform: scale(1.2); opacity: 1; }
+}
+
+/* ========================================
+   FADE IN / OUT
+   ======================================== */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* ========================================
+   SLIDE IN / OUT
+   ======================================== */
+@keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+    from { transform: translateY(0); opacity: 1; }
+    to { transform: translateY(-20px); opacity: 0; }
+}
+
+/* ========================================
+   HOVER LIFT
+   ======================================== */
+@keyframes hover-lift {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+    100% { transform: translateY(0); }
+}

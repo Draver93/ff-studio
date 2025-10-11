@@ -1,0 +1,50 @@
+/**
+ * Custom Scrollbars
+ * Dark theme scroll styling for all scrollable areas
+ */
+
+/* ========================================
+   SCROLLBAR WIDTH & HEIGHT
+   ======================================== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+/* ========================================
+   SCROLLBAR TRACK
+   ======================================== */
+::-webkit-scrollbar-track {
+    background: var(--secondary-bg);
+    border-radius: var(--radius-sm);
+}
+
+/* ========================================
+   SCROLLBAR THUMB
+   ======================================== */
+::-webkit-scrollbar-thumb {
+    background: var(--border-tertiary);
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast);
+}
+
+/* Hover effect for thumb */
+::-webkit-scrollbar-thumb:hover {
+    background: var(--border-secondary);
+}
+
+/* ========================================
+   SCROLLBAR CORNER (for intersecting scrollbars)
+   ======================================== */
+::-webkit-scrollbar-corner {
+    background: var(--secondary-bg);
+}
+
+/* ========================================
+   GENERIC SCROLL CONTAINER CLASS
+   ======================================== */
+.scrollable {
+    overflow: auto;
+    scrollbar-width: thin;          /* Firefox */
+    scrollbar-color: var(--border-tertiary) var(--secondary-bg); /* Firefox */
+}

@@ -1,0 +1,137 @@
+/**
+ * Video Player Timeline
+ * Keyframes, markers, and scrubber track
+ * (restored larger stacked layout)
+ */
+
+/* ========================================
+   TIMELINE CONTAINER
+   ======================================== */
+.timeline-container {
+    background: var(--secondary-bg);
+    border-top: 1px solid var(--border-tertiary);
+    padding: var(--spacing-xl);
+    height: 210px;
+}
+
+.timeline-shell {
+    background: var(--panel);
+    border: 1px solid #3a3a3a;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    height: 72.5%;
+}
+
+.timeline-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+    gap: 15px;
+}
+
+.timeline-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.timeline-info {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-right: auto;
+}
+
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ========================================
+   TIMELINE TRACK
+   ======================================== */
+.timeline-track {
+    flex: 1;
+    height: 6px;
+    background: var(--border-primary);
+    border-radius: var(--radius-sm);
+    position: relative;
+    cursor: pointer;
+}
+
+/* Progress / played portion */
+.timeline-progress {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    border-radius: var(--radius-sm);
+    transition: width var(--transition-fast) linear;
+}
+
+/* ========================================
+   TIMELINE HANDLE
+   ======================================== */
+.timeline-handle {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-round);
+    background: var(--accent-2);
+    cursor: pointer;
+    transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.timeline-handle:hover {
+    transform: translate(-50%, -50%) scale(1.2);
+    background: var(--accent);
+}
+
+/* ========================================
+   TIMELINE MARKERS / KEYFRAMES
+   ======================================== */
+.timeline-marker {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-round);
+    background: var(--info);
+    cursor: pointer;
+    transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.timeline-marker:hover {
+    transform: translate(-50%, -50%) scale(1.3);
+    background: var(--accent);
+}
+
+/* ========================================
+   TIMELINE TIME LABELS
+   ======================================== */
+.timeline-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    pointer-events: none;
+    margin-top: var(--spacing-md);
+}
+
+/* ========================================
+   Z-INDEX / Layering
+   ======================================== */
+.timeline-progress,
+.timeline-handle,
+.timeline-marker {
+    z-index: var(--z-base);
+}
+
+.timeline-handle,
+.timeline-marker {
+    z-index: calc(var(--z-base) + 1);
+}

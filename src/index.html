@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FFStudio - Video Processing Workflow</title>
+    <link rel="stylesheet" href="libs/litegraph/litegraph.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link href="https://unpkg.com/video.js/dist/video-js.css" rel="stylesheet" />
+
+    <script type="text/javascript" src="libs/litegraph/litegraph.js"></script>
+    <script src="https://unpkg.com/video.js@8.23.4/dist/video.js"></script>
+
+</head>
+<body>
+    <div class="app-container" id="app-container">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="app-title">
+                <i class="fas fa-film"></i>
+                <span>Powered by FFmpeg</span>
+            </div>
+            <div class="tabs">
+                <button class="tab active" data-tab="graph">
+                    <i class="fas fa-project-diagram"></i>
+                    <span>Graph</span>
+                </button>
+                <button class="tab" data-tab="player">
+                    <i class="fas fa-play-circle"></i>
+                    <span>Player</span>
+                </button>
+                <button class="tab" data-tab="logs">
+                    <i class="fas fa-terminal"></i>
+                    <span>Logs</span>
+                    <div class="error-badge" id="error-badge"></div>
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Main Area -->
+            <div class="main-area">
+                <!-- Graph Zone (default) -->
+                <div class="graph-zone disableScroll" id="graph-zone">
+                    <canvas id='litegraph-canvas' style='display: none;'></canvas>
+
+                    <!-- Message shown when no workflows exist -->
+                    <div id="no-workflows-message" style="user-select: none;">
+                        <div>
+                            <i class="fas fa-project-diagram"></i>
+                            <h3>No workflows available</h3>
+                            <p>Please create or import a new workflow to get started</p>
+                        </div>
+                    </div>
+                    <!-- Graph Execution Bar -->
+                    <div class="graph-execution-bar">
+                        <!-- Compact View (Execute Button + Pro Mode Toggle) -->
+                        <div class="execution-bar-compact">
+                            <button class="execute-btn" id="execute-btn">
+                                <i class="fas fa-play"></i>
+                                <span>Execute Graph</span>
+                            </button>
+                            <button class="pro-mode-toggle" id="pro-mode-toggle">
+                                <i class="fas fa-cogs"></i>
+                            </button>
+                        </div>
+
+                        <!-- Expanded View (Pro Mode with Canvas Chain) -->
+                        <div class="execution-bar-expanded" id="execution-bar-expanded">
+                            <div class="execution-header">
+                                <div class="execution-title">
+                                    <i class="fas fa-cogs"></i>
+                                    <span>Pro Mode - Graph Execution Pipeline</span>
+                                </div>
+                                <div class="execution-actions">
+                                    <button id="add-chain-element">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                    <button id="refresh-chain-element">
+                                        <i class="fas fa-refresh"></i>
+                                    </button>
+                                    <button id="remove-chain-element">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Canvas Container -->
+                            <div class="canvas-container" id="canvas-container">
+                                <canvas id="chainCanvas" style="max-width: none"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Player Zone -->
+                <div class="player-zone" id="player-zone">
+                    <!-- Player Sub-tabs -->
+                    <div class="player-tabs">
+                        <button class="player-tab active" data-player-tab="timeline">
+                            <i class="fas fa-scissors"></i>
+                            <span>Timeline Preview</span>
+                        </button>
+                        <button class="player-tab" data-player-tab="stream">
+                            <i class="fas fa-stream"></i>
+                            <span>Stream Player</span>
+                        </button>
+                        <button class="player-tab" data-player-tab="compare">
+                            <i class="fas fa-columns"></i>
+                            <span>Compare</span>
+                        </button>
+                    </div>
+
+                    <!-- Timeline Preview View (existing) -->
+                    <div class="player-view active" id="timeline-view">
+                        <div class="video-container">
+                            <video id="main-video">
+                                <source src="" type="video/mp4">
+                            </video>
+                            <img id="frame-display"/>
+                        </div>
+                        <div class="player-controls">
+                            <button class="control-btn play" id="play-pause-btn">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="control-btn" id="reset-btn">
+                                <i class="fas fa-rotate-left"></i>
+                            </button>
+                            <button class="control-btn" id="backward-btn">
+                                <i class="fas fa-backward-step"></i>
+                            </button>
+                            <button class="control-btn" id="forward-btn">
+                                <i class="fas fa-forward-step"></i>
+                            </button>
+                            <span class="time-display" id="time-display">00:00:00 / 00:00:00</span>
+                        </div>
+                        <div class="timeline-container">
+                            <div class="timeline-shell">
+                                <div class="timeline" id="timeline"></div>
+                            </div>
+                            <div class="timeline-footer">
+                                <div class="timeline-controls">
+                                    <button class="control-btn generate" id="generate-btn">
+                                        <i class="fas fa-film"></i>
+                                    </button>
+                                    <button class="control-btn reset" id="reset-selection-btn">
+                                        <i class="fas fa-rotate-left"></i>
+                                    </button>
+                                </div>
+                                <div class="timeline-info">
+                                    <div class="status-indicator">
+                                        <div class="status-dot ready"></div>
+                                        <span>Ready</span>
+                                    </div>
+                                    <span class="timecode" id="selection-display">No selection</span>
+                                </div>
+                                <div class="zoom-controls">
+                                    <button class="zoom-btn" id="zoom-out">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <button class="zoom-btn" id="zoom-in">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stream Player View (new) -->
+                    <div class="player-view" id="stream-view">
+                        <div class="stream-header">
+                            <div class="stream-info">
+                                <span class="stream-label">Source:</span>
+                                <input type="text" class="stream-url-input" id="stream-url" 
+                                    placeholder="Enter HLS (.m3u8) or DASH (.mpd) URL">
+                            </div>
+                            <div class="stream-actions">
+                                <button class="browse-btn" id="browse-stream">
+                                    <i class="fas fa-folder-open"></i>
+                                </button>
+                                <button class="stream-btn" id="load-stream-btn">
+                                    <i class="fas fa-play-circle"></i>
+                                    Load Stream
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="stream-container">
+                            <video id="stream-video" class="video-js" 
+                                controls preload="auto" playsinline>
+                            </video>
+                        </div>
+
+                        <div class="stream-stats" id="stream-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Protocol:</span>
+                                <span class="stat-value" id="protocol-type">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <label class="stat-label" for="quality-select">Quality:</label>
+                                <select class="stat-select" id="quality-select">
+                                    <option value="auto">Auto</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Compare View (optional) -->
+                    <div class="player-view" id="compare-view">
+                        <div class="compare-header">
+                            <div class="compare-file-inputs">
+                                <div class="file-input-group">
+                                    <label>File A:</label>
+                                    <input type="text" class="compare-url-input" id="compare-url-a" 
+                                        placeholder="Enter video URL">
+                                    <button class="browse-btn" id="browse-a">
+                                        <i class="fas fa-folder-open"></i>
+                                    </button>
+                                </div>
+                                <div class="file-input-group">
+                                    <label>File B:</label>
+                                    <input type="text" class="compare-url-input" id="compare-url-b" 
+                                        placeholder="Enter video URL">
+                                    <button class="browse-btn" id="browse-b">
+                                        <i class="fas fa-folder-open"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="split-container" id="split-container">
+                            <!-- Video A (Left/Full) -->
+                            <div class="split-video-wrapper" id="video-wrapper-a">
+                                <video id="compare-video-a" class="compare-video"></video>
+                                <div class="video-label label-a">A</div>
+                            </div>
+
+                            <!-- Video B (Right/Clipped) -->
+                            <div class="split-video-wrapper" id="video-wrapper-b">
+                                <video id="compare-video-b" class="compare-video"></video>
+                                <div class="video-label label-b">B</div>
+                            </div>
+
+                            <!-- Draggable Divider -->
+                            <div class="split-divider" id="split-divider">
+                                <div class="divider-handle">
+                                    <div class="handle-grip"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="compare-controls">
+                            <button class="control-btn play" id="compare-play-btn">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="control-btn" id="compare-reset-btn">
+                                <i class="fas fa-rotate-left"></i>
+                            </button>
+                            <div class="offset-controls">
+                                <label for="offset-input">Offset (ms):</label>
+                                <input class="oc-input" type="number" id="offset-input" value="0" step="5">
+                            </div>
+                            <div class="global-timeline-container">
+                                <input type="range" id="global-timeline" min="0" max="100" value="0" step="0.1">
+                            </div>
+                            <span class="time-display" id="compare-time-display">00:00:00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logs Zone -->
+                <div class="logs-zone" id="logs-zone">
+                    <div class="logs-header">
+                        <div>
+                            <span>Execution Logs</span>
+                            <span class="badge">24 entries</span>
+                        </div>
+                        <div class="log-actions">
+                            <button class="log-btn" id="logs-zone-clear">
+                                <i class="fas fa-trash"></i>
+                                Clear
+                            </button>
+                            <button class="log-btn" id="logs-zone-export">
+                                <i class="fas fa-download"></i>
+                                Export
+                            </button>
+                        </div>
+                    </div>
+                    <div class="logs-content">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar -->
+            <div class="right-sidebar" id="right-sidebar">
+                <div class="sidebar-header">
+                    <span class="sidebar-title">
+                        <i class="fas fa-project-diagram"></i>
+                        <span>Workflows</span>
+                    </span>
+                    <button class="collapse-btn" id="collapse-btn">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                
+                <div class="workflows-container">
+                    <button class="add-workflow-btn" id="add-workflow-btn">
+                        <i class="fas fa-plus"></i>
+                        <span>New Workflow</span>
+                    </button>
+                    
+                    <!-- Sample Workflows -->
+                    <div class="workflow-item selected" data-workflow="h264-compress">
+                        <div class="workflow-header">
+                            <span class="workflow-name">H.264 Compression</span>
+                            <div class="workflow-actions">
+                                <button class="action-btn edit" title="Edit">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                                <button class="action-btn save" title="Save">
+                                    <i class="fas fa-save"></i>
+                                </button>
+                                <button class="action-btn delete" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="workflow-details">
+                            <span class="workflow-path">/usr/local/bin/ffmpeg</span>
+                            <span class="workflow-date">Today</span>
+                        </div>
+                    </div>
+                    
+                    <div class="workflow-item" data-workflow="audio-extract">
+                        <div class="workflow-header">
+                            <span class="workflow-name">Audio Extraction</span>
+                            <div class="workflow-actions">
+                                <button class="action-btn edit" title="Edit">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                                <button class="action-btn save" title="Save">
+                                    <i class="fas fa-save"></i>
+                                </button>
+                                <button class="action-btn delete" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="workflow-details">
+                            <span class="workflow-path">/usr/local/bin/ffmpeg</span>
+                            <span class="workflow-date">Yesterday</span>
+                        </div>
+                    </div>
+                    
+                    <div class="workflow-item" data-workflow="resize-1080p">
+                        <div class="workflow-header">
+                            <span class="workflow-name">Resize to 1080p</span>
+                            <div class="workflow-actions">
+                                <button class="action-btn edit" title="Edit">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                                <button class="action-btn save" title="Save">
+                                    <i class="fas fa-save"></i>
+                                </button>
+                                <button class="action-btn delete" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="workflow-details">
+                            <span class="workflow-path">/opt/ffmpeg/bin/ffmpeg</span>
+                            <span class="workflow-date">2 days ago</span>
+                        </div>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="workflow-item" data-workflow="gif-conversion">
+                        <div class="workflow-header">
+                            <span class="workflow-name">GIF Conversion</span>
+                            <span class="badge blue">New</span>
+                        </div>
+                        <div class="workflow-details">
+                            <span class="workflow-path">/usr/bin/ffmpeg</span>
+                            <span class="workflow-date">Last week</span>
+                        </div>
+                    </div>
+                    
+                    <div class="workflow-item" data-workflow="watermark-add">
+                        <div class="workflow-header">
+                            <span class="workflow-name">Watermark Overlay</span>
+                            <span class="badge green">Verified</span>
+                        </div>
+                        <div class="workflow-details">
+                            <span class="workflow-path">/opt/ffmpeg/bin/ffmpeg</span>
+                            <span class="workflow-date">3 weeks ago</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Collapsed workflow icons -->
+                <div class="workflow-icons">
+                    <div class="workflow-icon selected" data-workflow="h264-compress" data-tooltip="H.264 Compression">
+                        <i class="fas fa-compress"></i>
+                    </div>
+                    <div class="workflow-icon" data-workflow="audio-extract" data-tooltip="Audio Extraction">
+                        <i class="fas fa-music"></i>
+                    </div>
+                    <div class="workflow-icon" data-workflow="resize-1080p" data-tooltip="Resize to 1080p">
+                        <i class="fas fa-expand"></i>
+                    </div>
+                    <div class="workflow-icon" data-workflow="gif-conversion" data-tooltip="GIF Conversion">
+                        <i class="fas fa-film"></i>
+                    </div>
+                    <div class="workflow-icon" data-workflow="watermark-add" data-tooltip="Watermark Overlay">
+                        <i class="fas fa-tint"></i>
+                    </div>
+                </div>
+                <div class="sidebar-footer">
+                    <div class="version-full">
+                        <span>App version:</span>
+                        <span id="vf-text">0.0.0</span>
+                     </div>
+                    <div class="version-short">
+                        <span id="vs-text">v0.0.0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for New Workflow -->
+    <div class="modal" id="workflow-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <i class="fas fa-plus-circle"></i>
+                <span id="modal-title">Create New Workflow</span>
+            </div>
+            <form id="workflow-form">
+                <div class="form-group">
+                    <label class="form-label" for="workflow-name">Workflow Name</label>
+                    <input type="text" class="form-input" id="workflow-name" placeholder="e.g., Video Compression" required>
+                    <div class="error-message" id="name-error">Please enter a workflow name</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="ffmpeg-path">FFmpeg Path</label>
+                    <input type="text" class="form-input" id="ffmpeg-path" placeholder="/usr/local/bin/ffmpeg" required>
+                    <div class="error-message" id="path-error">Please specify the FFmpeg path</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="env-vars">Environment Variables</label>
+                    <input type="text" class="form-input" id="env-vars" placeholder="VAR1=value1,VAR2=value2">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="workflow-desc">Description</label>
+                    <textarea class="form-input" id="workflow-desc" placeholder="Brief description of this workflow" rows="3"></textarea>
+                </div>
+            </form>
+            <div class="modal-actions">
+                <button class="modal-btn secondary" id="cancel-btn">Cancel</button>
+                <button class="modal-btn primary" id="ok-btn">Ok</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Loading -->
+    <div class="modal" id="loading-modal">
+        <div class="loading-content">
+            <div class="ffmpeg-logo">
+                <div class="logo-circle"></div>
+                <div class="logo-text">FF</div>
+            </div>
+            
+            <div class="loading-text" id="loading-message">Processing Video</div>
+            <div class="loading-subtext">This may take a few moments</div>
+            
+            <div class="loading-bars">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="loading-progress"></div>
+            </div>
+            
+            <div class="loading-dots">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+            
+            <div class="loading-details"  id="loading-details">
+                <div>Encoding: H.264 | 1920x1080 | 30 fps</div>
+                <div>Estimated time: 00:01:25 remaining</div>
+            </div>
+            
+            <div class="spacer"></div>
+
+            <button class="cancel-load-btn" id="cancel-load-btn">
+                <i class="fas fa-stop-circle"></i>
+                Cancel Transcoding
+            </button>
+
+        </div>
+    </div>
+    
+
+    <!-- Modal for Import -->
+    <div class="modal" id="import-modal">
+        <div class="modal-content">
+            <h2>Import Files</h2>
+            <div class="drop-zone" id="drop-zone">
+                <i class="fas fa-file-import fa-5x drop-icon"></i>
+                <p>Drag & drop file .ffgraph here</p>
+            </div>
+        </div>
+    </div>
+    <!-- <script type="module" src="modules/main.js"></script>-->
+
+    <script type="module" src="modules/main.js"></script>
+</body>
+</html>

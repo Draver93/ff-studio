@@ -1,0 +1,163 @@
+/**
+ * Workflow List
+ * Styles for workflow items in the right sidebar
+ */
+
+/* ========================================
+   WORKFLOW LIST CONTAINER
+   ======================================== */
+.workflows-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+/* ========================================
+   INDIVIDUAL WORKFLOW ITEM
+   ======================================== */
+.workflow-item {
+    background: var(--tertiary-bg);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow: var(--shadow-sm);
+}
+
+.workflow-item:hover {
+    background: var(--secondary-bright-bg);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-tertiary);
+}
+
+.workflow-item.selected {
+    background: var(--secondary-trans-bg);
+    border-color: var(--accent-2);
+}
+
+/* ========================================
+   WORKFLOW HEADER
+   ======================================== */
+.workflow-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.workflow-name {
+    text-overflow: ellipsis;
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+}
+
+.workflow-item.selected .workflow-name {
+    color: var(--accent);
+    font-weight: var(--font-weight-semibold);
+}
+
+.workflow-item.selected .workflow-path {
+    color: var(--accent-3);
+}
+
+.workflow-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+}
+
+/* ========================================
+   WORKFLOW DETAILS
+   ======================================== */
+.workflow-details {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    margin-top: var(--spacing-xs);
+}
+
+.workflow-path {
+    font-family: var(--font-family-mono);
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.workflow-date {
+    text-overflow: clip;
+    color: var(--text-disabled);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+}
+
+/* ========================================
+   ADD WORKFLOW BUTTON
+   ======================================== */
+.add-workflow-btn {
+    width: 100%;
+    background: var(--accent-2);
+    color: #fff;
+    border: none;
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+}
+
+.add-workflow-btn:hover {
+    background: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    border-radius: var( --radius-xs);
+    font-size: var(--font-size-xs);
+    transition: all var(--transition-fast);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-btn.delete:hover {
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.1);
+}
+
+.action-btn.export:hover {
+    color: #ffb36b;
+    background: rgba(255, 208, 107, 0.1);
+}
+
+.action-btn.edit:hover {
+    color: #4dabf7;
+    background: rgba(77, 171, 247, 0.1);
+}
+
+.action-btn.save:hover {
+    color: #6bcf7f;
+    background: rgba(107, 207, 127, 0.1);
+}

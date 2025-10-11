@@ -1,0 +1,74 @@
+/**
+ * Graph Node Styles
+ * Nodes, headers, input/output connectors
+ */
+
+/* ========================================
+   NODE CONTAINER
+   ======================================== */
+.node {
+    position: absolute;
+    background: var(--tertiary-bg);
+    border: 1px solid var(--border-secondary);
+    border-radius: var(--radius-md);
+    width: 180px;
+    box-shadow: var(--shadow-md);
+    cursor: move;
+    transition: all var(--transition-fast);
+}
+
+.node:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-lg);
+}
+
+/* ========================================
+   NODE HEADER
+   ======================================== */
+.node-header {
+    background: var(--accent);
+    color: var(--text-primary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ========================================
+   NODE CONTENT
+   ======================================== */
+.node-content {
+    padding: var(--spacing-md);
+}
+
+/* ========================================
+   NODE INPUTS & OUTPUTS
+   ======================================== */
+.node-io {
+    display: flex;
+    justify-content: space-between;
+    margin-top: var(--spacing-sm);
+}
+
+.node-input,
+.node-output {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-round);
+    background: var(--accent);
+}
+
+.node-output {
+    background: var(--success);
+}
+
+/* ========================================
+   NODE POSITIONING EXAMPLES
+   ======================================== */
+.node-1 { top: 50px; left: 100px; }
+.node-2 { top: 200px; left: 350px; }
+.node-3 { top: 50px; left: 600px; }
+.node-4 { top: 350px; left: 600px; }

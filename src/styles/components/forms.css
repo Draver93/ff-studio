@@ -1,0 +1,149 @@
+/**
+ * Form Components
+ * Input fields, labels, textareas, selects, and validation states
+ */
+
+/* ========================================
+   FORM GROUP
+   ======================================== */
+.form-group {
+    margin-bottom: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+/* ========================================
+   LABEL
+   ======================================== */
+.form-label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
+}
+
+/* ========================================
+   INPUT, TEXTAREA, SELECT
+   ======================================== */
+.form-input,
+.form-textarea,
+.form-select {
+    background: var(--tertiary-bg);
+    border: 1px solid var(--border-secondary);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font-family-primary);
+    font-size: var(--font-size-base);
+    padding: 8px 12px;
+    transition: all var(--transition-fast);
+    outline: none;
+    resize: vertical;
+    width: 100%;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(110, 168, 254, 0.2);
+}
+
+.form-input.error,
+.form-textarea.error,
+.form-select.error {
+    border-color: var(--error);
+}
+
+/* ========================================
+   TEXTAREA SPECIFIC
+   ======================================== */
+.form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* ========================================
+   DISABLED FIELDS
+   ======================================== */
+.form-input:disabled,
+.form-textarea:disabled,
+.form-select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ========================================
+   ERROR MESSAGES
+   ======================================== */
+.error-message {
+    font-size: var(--font-size-xs);
+    color: var(--error);
+    display: none;
+}
+
+/* ========================================
+   CHECKBOX & RADIO
+   ======================================== */
+.form-checkbox,
+.form-radio {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.form-checkbox input,
+.form-radio input {
+    cursor: pointer;
+}
+
+/* ========================================
+   SELECT DROPDOWN
+   ======================================== */
+.form-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg fill='%23ccc' height='12' viewBox='0 0 24 24' width='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+    padding-right: 32px;
+}
+
+/* ========================================
+   FORM BUTTONS
+   ======================================== */
+.form-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    border: none;
+    font-size: var(--font-size-base);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.form-btn.primary {
+    background: var(--accent);
+    color: var(--text-primary);
+}
+
+.form-btn.primary:hover {
+    background: #5d94f5;
+    transform: translateY(-1px);
+}
+
+.form-btn.secondary {
+    background: var(--secondary-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+}
+
+.form-btn.secondary:hover {
+    background: var(--tertiary-bg);
+    border-color: var(--accent);
+}

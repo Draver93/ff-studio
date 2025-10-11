@@ -1,0 +1,33 @@
+/**
+ * Graph Controls
+ * Buttons and controls for executing and interacting with the graph
+ */
+
+
+/* ========================================
+   CANCEL BUTTON
+   ======================================== */
+.cancel-load-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    background: var(--error);
+    color: var(--text-primary);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 8px 20px;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin-top: var(--spacing-md);
+}
+
+.cancel-load-btn:hover {
+    background: #ff5252; /* Slightly darker red for hover */
+    transform: translateY(-1px);
+}
+
+.cancel-load-btn:active {
+    transform: translateY(0);
+}

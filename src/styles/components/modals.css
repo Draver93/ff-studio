@@ -1,0 +1,118 @@
+/**
+ * Modal Dialogs & Overlays
+ */
+
+/* ========================================
+   MODAL OVERLAY
+   ======================================== */
+.modal {
+    display: none; /* hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: var(--z-modal);
+    animation: fadeIn var(--transition-fast) ease;
+}
+
+/* ========================================
+   MODAL CONTENT
+   ======================================== */
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--secondary-bg);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    width: 450px;
+    max-width: 90%;
+    border: 1px solid var(--border-tertiary);
+    box-shadow: var(--shadow-xl);
+    animation: slideIn var(--transition-medium) ease;
+}
+
+/* ========================================
+   MODAL HEADER
+   ======================================== */
+.modal-header {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/* ========================================
+   MODAL BODY
+   ======================================== */
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+/* ========================================
+   MODAL ACTIONS
+   ======================================== */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-lg);
+}
+
+.modal-btn {
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-base);
+    transition: all var(--transition-fast);
+}
+
+.modal-btn.primary {
+    background: var(--accent-2);
+    color: var(--text-primary);
+}
+
+.modal-btn.primary:hover {
+    background: var(--accent);
+    transform: translateY(-1px);
+}
+
+.modal-btn.secondary {
+    background: var(--secondary-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+}
+
+.modal-btn.secondary:hover {
+    background: var(--tertiary-bg);
+    border-color: var(--accent);
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { 
+        opacity: 0;
+        transform: translate(-50%, -48%);
+    }
+    to { 
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}

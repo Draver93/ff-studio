@@ -1,0 +1,184 @@
+/**
+ * Loading States & Indicators
+ */
+
+/* ========================================
+   LOADING CONTAINER
+   ======================================== */
+.loading-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    padding: var(--spacing-xxl);
+    background: var(--secondary-bg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xxl);
+    border: 1px solid var(--border-tertiary);
+    max-width: 400px;
+    width: 90%;
+}
+
+/* ========================================
+   LOGO OR ICON
+   ======================================== */
+.loading-icon {
+    margin-bottom: var(--spacing-lg);
+}
+
+.ffmpeg-logo {
+    width: 80px;
+    height: 80px;
+    position: relative;
+    margin: 0 auto var(--spacing-lg);
+}
+
+.logo-circle {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: conic-gradient(
+        #0078d4 0%, #4dabf7 25%, #6bcf7f 50%, #ffd93d 75%, #0078d4 100%
+    );
+    animation: rotate 2s linear infinite;
+    position: relative;
+}
+
+.logo-circle::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    background: var(--secondary-bg);
+    border-radius: 50%;
+}
+
+.logo-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--accent);
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-sm);
+}
+
+/* ========================================
+   LOADING BARS
+   ======================================== */
+.loading-bars {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    height: 30px;
+    margin: var(--spacing-lg) 0;
+}
+
+.bar {
+    width: 6px;
+    height: 30px;
+    background: var(--accent);
+    border-radius: 3px;
+    animation: loading-bar 1.5s ease-in-out infinite;
+}
+
+.bar:nth-child(2) { animation-delay: 0.1s; }
+.bar:nth-child(3) { animation-delay: 0.2s; }
+.bar:nth-child(4) { animation-delay: 0.3s; }
+.bar:nth-child(5) { animation-delay: 0.4s; }
+.bar:nth-child(6) { animation-delay: 0.5s; }
+.bar:nth-child(7) { animation-delay: 0.6s; }
+
+/* ========================================
+   LOADING TEXT
+   ======================================== */
+.loading-text {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.loading-subtext {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-md);
+}
+
+/* ========================================
+   PROGRESS BAR
+   ======================================== */
+.progress-container {
+    width: 100%;
+    height: 6px;
+    background: var(--tertiary-bg);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: var(--spacing-md) 0;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 45%;
+    background: linear-gradient(90deg, #0078d4, #4dabf7);
+    border-radius: 3px;
+    animation: progress-pulse 2s ease-in-out infinite;
+}
+
+/* ========================================
+   LOADING DOTS
+   ======================================== */
+.loading-dots {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin: var(--spacing-md) 0;
+}
+
+.dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.6;
+    animation: dot-pulse 1.5s ease-in-out infinite both;
+}
+
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* ========================================
+   LOADING DETAILS
+   ======================================== */
+.loading-details {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    margin-top: var(--spacing-md);
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes loading-bar {
+    0%, 100% { transform: scaleY(0.3); }
+    50% { transform: scaleY(1); }
+}
+
+@keyframes progress-pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
+@keyframes dot-pulse {
+    0%, 100% { transform: scale(0.8); opacity: 0.6; }
+    50% { transform: scale(1.2); opacity: 1; }
+}

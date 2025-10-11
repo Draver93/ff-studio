@@ -1,0 +1,30 @@
+/**
+ * Modal Drag and Drop
+ */
+
+#import-modal .drop-zone {
+    border: 3px dashed #4a90e2;
+    border-radius: 8px;
+    padding: 40px 20px;
+    margin: 20px 0;
+    text-align: center;
+    background: rgba(74, 144, 226, 0.05);
+    transition: all 0.3s ease;
+}
+
+#import-modal .drop-zone.highlight {
+    background: rgba(74, 144, 226, 0.15);
+    border-color: #e74c3c;
+}
+
+#import-modal .drop-icon {
+    padding-top: 20px;
+    color: #4a90e2;
+    margin-bottom: 15px;
+}
+
+#import-modal .drop-zone p {
+    margin: 10px 0;
+    color: #7f8c8d;
+    font-size: 16px;
+}

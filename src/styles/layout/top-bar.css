@@ -1,0 +1,95 @@
+/**
+ * Top Bar Layout
+ * Navigation bar, tabs, and application title
+ */
+
+/* ========================================
+   TOP BAR CONTAINER
+   ======================================== */
+.top-bar {
+    background: var(--secondary-bg);
+    border-bottom: 1px solid var(--border-primary);
+    display: flex;
+    align-items: center;
+    height: var(--topbar-height);
+    padding: 0 var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    z-index: var(--z-sticky);
+}
+
+/* ========================================
+   APPLICATION TITLE
+   ======================================== */
+.app-title {
+    font-weight: var(--font-weight-semibold);
+    font-size: var(--font-size-lg);
+    margin-right: var(--spacing-lg);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/* ========================================
+   TAB NAVIGATION
+   ======================================== */
+.tabs {
+    display: flex;
+    gap: 0;
+    height: 100%;
+}
+
+.tab {
+    padding: 0 var(--spacing-xxl);
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-radius: 0;
+    border-bottom: 3px solid transparent;
+    transition: var(--transition-fast);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-medium);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    position: relative;
+}
+
+.tab:hover:not(.active) {
+    background: #2f2f2f;
+    color: var(--text-primary);
+}
+
+.tab.active {
+    background: var(--tertiary-bg);
+    color: var(--accent);
+    border-bottom: 3px solid var(--accent);
+}
+
+/* ========================================
+   ERROR NOTIFICATION BADGE
+   ======================================== */
+.error-badge {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    background-color: var(--error);
+    border-radius: var(--radius-round);
+    box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.3);
+    display: none;
+    animation: pulse 2s infinite;
+}
+
+.tab .error-badge {
+    position: relative;
+    bottom: 5px;
+    right: 5px;
+    top: auto;
+    transform: none;
+}

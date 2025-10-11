@@ -1,0 +1,79 @@
+/**
+ * Workflow Icons
+ * Styles for workflow icons in the collapsed sidebar
+ */
+
+/* ========================================
+   ICON CONTAINER (COLLAPSED VIEW)
+   ======================================== */
+.workflow-icons {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-md) 0;
+}
+
+.right-sidebar.collapsed .workflow-icons {
+    display: flex;
+    flex: 1;
+}
+
+/* ========================================
+   INDIVIDUAL ICON
+   ======================================== */
+.workflow-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--tertiary-bg);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-secondary);
+    cursor: pointer;
+    position: relative;
+    transition: all var(--transition-fast);
+}
+
+.workflow-icon:hover {
+    background: var(--secondary-bright-bg);
+    color: var(--text-primary);
+    border-color: var(--border-tertiary);
+}
+
+.workflow-icon.selected {
+    background: var(--secondary-trans-bg);
+    border-color: var(--accent-2);
+    color: var(--accent);
+}
+
+/* ========================================
+   TOOLTIP
+   ======================================== */
+.workflow-icon::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 45px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--tertiary-bg);
+    color: var(--text-primary);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-fast);
+    border: 1px solid var(--border-tertiary);
+    z-index: var(--z-tooltip);
+}
+
+.workflow-icon:hover::after {
+    opacity: 1;
+    visibility: visible;
+}

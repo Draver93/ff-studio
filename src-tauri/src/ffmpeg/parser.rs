@@ -1,0 +1,449 @@
+use regex::Regex;
+use std::collections::{ HashMap, HashSet };
+use std::process::{ Command, Stdio };
+use std::sync::{Arc, Mutex};
+use std::thread;
+use anyhow::Result;
+use crate::workflow::types::{OptionEntry, Node};
+
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
+
+pub fn apply_env<'a>(cmd: &'a mut Command, env_map: &HashMap<String, String>) -> &'a mut Command {
+    cmd.env_clear();
+    cmd.envs(env_map.iter().map(|(k, v)| (k, v)));
+    cmd
+}
+pub fn parse_env_map(env_str: &str) -> HashMap<String, String> {
+    let mut m = HashMap::new();
+    for line in env_str.lines() {
+        if line.trim().is_empty() { continue; }
+        if let Some((k, v)) = line.split_once('=') {
+            m.insert(k.to_string(), v.to_string());
+        }
+    }
+    m
+}
+
+
+pub fn parse_ffmpeg(ffmpeg: &str, env_str: &str) -> Result<Vec<Node>> {
+    let env_map = parse_env_map(env_str);
+    let acc: Arc<Mutex<Vec<Node>>> = Arc::new(Mutex::new(Vec::new()));
+
+    let jobs: Vec<_> = vec![
+        ("filter", 8),
+        ("encoder", 10),
+        ("decoder", 10),
+        ("muxer", 4),
+        ("demuxer", 4),
+        //("bsf", 3),
+    ];
+
+    let mut handles = Vec::new();
+
+    for (name, header) in jobs {
+        let ff = ffmpeg.to_string();
+        let envc = env_map.clone();
+        let accc = Arc::clone(&acc);
+        let h = thread::spawn(move || {
+            if let Ok(nodes) = parse_general(&ff, name, header, &envc) {
+                accc.lock().unwrap().extend(nodes);
+            }
+        });
+        handles.push(h);
+    }
+
+    // sample_fmts
+    {
+        let ff = ffmpeg.to_string();
+        let envc = env_map.clone();
+        let accc = Arc::clone(&acc);
+        let h = thread::spawn(move || {
+            if let Ok(node) = parse_sample_fmts(&ff, &envc) {
+                accc.lock().unwrap().push(node);
+            }
+        });
+        handles.push(h);
+    }
+
+    // pix_fmts
+    {
+        let ff = ffmpeg.to_string();
+        let envc = env_map.clone();
+        let accc = Arc::clone(&acc);
+        let h = thread::spawn(move || {
+            if let Ok(node) = parse_pix_fmts(&ff, &envc) {
+                accc.lock().unwrap().push(node);
+            }
+        });
+        handles.push(h);
+    }
+
+    // globals
+    {
+        let ff = ffmpeg.to_string();
+        let envc = env_map.clone();
+        let accc = Arc::clone(&acc);
+        let h = thread::spawn(move || {
+            if let Ok(nodes) = parse_globals(&ff, &envc) {
+                accc.lock().unwrap().extend(nodes);
+            }
+        });
+        handles.push(h);
+    }
+
+    for h in handles { let _ = h.join(); }
+
+    let out = Arc::try_unwrap(acc).unwrap().into_inner().unwrap();
+    Ok(out)
+}
+
+fn parse_general(ffmpeg: &str, name: &str, header_size: usize, env_map: &HashMap<String, String>) -> Result<Vec<Node>> {
+    let mut cmd = Command::new(ffmpeg);
+    #[cfg(windows)]
+    {
+        // Prevent a new terminal from appearing
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+
+    cmd.arg(format!("-{}s", name)).arg("-hide_banner").stdout(Stdio::piped()).stderr(Stdio::null());
+    apply_env(&mut cmd, env_map);
+    let out = cmd.output()?;
+    let text = String::from_utf8_lossy(&out.stdout);
+    let mut lines: Vec<&str> = text.lines().collect();
+    if lines.len() > header_size { lines.drain(..header_size); } else { lines.clear(); }
+
+    let section_re = Regex::new(r"^(.+?)\s+AVOptions:\s*$").unwrap();
+    let header_re: Regex = Regex::new(r"\s<[^>]+>\s").unwrap();
+    let timeline_re: Regex = Regex::new(r"(?i)(timeline.*support|enable.*option)").unwrap();
+    let re = Regex::new(r"^\s*-?[\w\d_][\w\d_-]*\s*(<\w+>|\d+)?\s+[A-Z.]*\s+.*$").unwrap();
+
+    let mut nodes = Vec::new();
+    for line in lines {
+        if line.trim().is_empty() { continue; }
+        let words: Vec<&str> = line.split_whitespace().collect();
+        if words.len() == 0 { continue; }
+
+        let global_name = 
+            if words.len() == 1 { words.get(0).unwrap_or(&"").to_string() } 
+            else { words.get(1).unwrap_or(&"").to_string() };
+        let global_desc = 
+            if words.len() == 1 { "No description".to_string() } 
+            else { words.iter().skip(3).cloned().collect::<Vec<_>>().join(" ") };
+
+        // Obtain per-item help
+        let mut help_cmd = Command::new(ffmpeg);
+        apply_env(&mut help_cmd, env_map);
+
+        #[cfg(windows)]
+        {
+            // Prevent a new terminal from appearing
+            const CREATE_NO_WINDOW: u32 = 0x08000000;
+            help_cmd.creation_flags(CREATE_NO_WINDOW);
+        }
+
+        help_cmd.args(["-h", &format!("{}={}", name, global_name), "-hide_banner"]).stdout(Stdio::piped()).stderr(Stdio::piped());
+
+        let help = help_cmd.output().unwrap();
+        let help_text = if help.stdout.is_empty() { &help.stderr } else { &help.stdout };
+        let full_desc: Vec<String> = String::from_utf8_lossy(help_text).lines().map(|s| s.to_string()).collect();
+
+        let filtered: Vec<&str> = full_desc
+            .iter()
+            .skip_while(|s| !section_re.is_match(s) )
+            .map(|s| s.as_str())
+            .collect();
+
+        let mut is_main_node = true;
+        let mut is_dup_fields = false;
+        let mut current_node: Option<Node> = None;
+        let mut current_opt: Option<OptionEntry> = None;
+        let mut repeated_opt:HashSet<String>  = HashSet::new();
+
+        for opt_line in filtered.iter() {
+
+            if section_re.is_match(opt_line) {
+
+                if let Some(mut prev) = current_node.take() { 
+                    // --- Add "enable" option if timeline support is mentioned ---
+                    if timeline_re.is_match(&String::from_utf8_lossy(help_text)) {
+                        let mut opt = OptionEntry::default();
+                        opt.flag = "enable".to_string();
+                        opt.no_args = false;
+                        opt.desc = Some("Enable timeline support for this filter".to_string());
+                        prev.options.push(opt);
+                    }
+                    nodes.push(prev); 
+                }
+
+                let mut node = Node::default();
+                node.name = if is_main_node {
+                    global_name.clone() 
+                } else { 
+                    opt_line.split_whitespace().take(1).collect() 
+                };
+
+                node.is_av_option = is_main_node;
+                node.desc = global_desc.clone();
+                node.category = String::new();
+                node.pcategory = format!("{}s", name);
+                node.full_desc = full_desc.clone();
+                node.options = Vec::new();
+                current_node = Some(node);
+                repeated_opt.clear();
+                is_main_node = false;
+            }
+            else if re.is_match(opt_line) {
+                if let Some(n) = &mut current_node {
+                    if header_re.is_match(opt_line) {
+                        // New flag line: "-flag <type> category ..."
+                        let parts: Vec<&str> = opt_line.split_whitespace().collect();
+                        if parts.len() > 3 {
+                            is_dup_fields = false;
+                            let desc: String = parts.iter().skip(3).fold( String::new(), |acc, s| { acc + s });
+                            if repeated_opt.contains(&desc) { 
+                                is_dup_fields = true; 
+                                continue; 
+                            }
+                            else { repeated_opt.insert(desc); }
+
+                            if let Some(prev) = current_opt.take() { n.options.push(prev); }
+                            let mut opt = OptionEntry::default();
+                            opt.flag = parts[0].to_string();
+                            opt.r#type = Some(parts[1].to_string());
+                            opt.category = Some(parts[2].to_string());
+                            
+                            n.category = if n.category.is_empty() {
+                                parts[2].to_string()
+                            } else if n.category != parts[2] {
+                                "~".to_string()
+                            } else { n.category.to_string() };
+
+                            opt.enum_vals = Vec::new();
+                            current_opt = Some(opt);
+                        }
+                    } else if !is_dup_fields {
+                        // Enum/continuation: take first token
+                        if let Some(ref mut e) = current_opt {
+                            if let Some(first) = opt_line.split_whitespace().next() {
+                                e.enum_vals.push(first.to_string());
+                                e.r#type = Some("<enum>".to_string());
+                                e.no_args = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if let Some(mut n) = current_node.take() { 
+            if let Some(opt) = current_opt { 
+                n.options.push(opt); 
+            }
+            // --- Add "enable" option if timeline support is mentioned ---
+            if timeline_re.is_match(&String::from_utf8_lossy(help_text)) {
+                let mut opt = OptionEntry::default();
+                opt.flag = "enable".to_string();
+                opt.no_args = false;
+                opt.desc = Some("Enable timeline support for this filter".to_string());
+                n.options.push(opt);
+            }
+
+            nodes.push(n); 
+        }
+        
+        if is_main_node { //means no info about this node is exists.
+            let mut node = Node::default();
+            node.is_av_option = is_main_node;
+            node.name = global_name.clone(); 
+            node.desc = global_desc.clone();
+            node.category = String::new();
+            node.pcategory = format!("{}s", name);
+            node.full_desc = full_desc.clone();
+            node.options = Vec::new();
+            nodes.push(node); 
+        }
+    }
+    Ok(nodes)
+}
+
+fn parse_globals(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<Vec<Node>> {
+    let mut cmd = Command::new(ffmpeg);
+    #[cfg(windows)]
+    {
+        // Prevent a new terminal from appearing
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+
+    
+    cmd.args(["-h", "long", "-hide_banner"]).stdout(Stdio::piped()).stderr(Stdio::null());
+    apply_env(&mut cmd, env_map);
+    let out = cmd.output()?;
+    let text = String::from_utf8_lossy(&out.stdout);
+
+    let mut nodes: Vec<Node> = Vec::new();
+    let mut lines = text.lines();
+
+    // find first line that contains 'options' and ends with ':'
+    let mut found = false;
+    let mut collected: Vec<String> = Vec::new();
+    for l in lines.by_ref() {
+        if !l.trim().is_empty() && l.contains("options") && l.trim_end().ends_with(':') {
+            found = true;
+            collected.push(l.to_string());
+            break;
+        }
+    }
+    if !found { return Ok(nodes); }
+
+    // collect the rest of the lines
+    for l in lines { collected.push(l.to_string()); }
+
+    let mut current: Option<Node> = None;
+    for line in collected {
+        if line.trim().is_empty() { continue; }
+        if line.contains("options") && line.trim_end().ends_with(':') {
+            if let Some(n) = current.take() { nodes.push(n); }
+            let mut node = Node::default();
+            node.is_av_option = false;
+            node.name = line.clone();
+            node.options = Vec::new();
+            current = Some(node);
+        } else {
+            let mut opt = OptionEntry::default();
+            
+            let re = Regex::new(r" {2,}").unwrap(); // 2 or more literal spaces
+            let parts: Vec<&str> = re.splitn(&line, 2).collect();
+            if let Some(first_part) = parts.first() {
+
+                let parts: Vec<&str> = first_part.split_whitespace().collect();
+                if let Some(first_part) = parts.first() {
+                    opt.flag = first_part.to_string();
+
+                    // Special case for stream specifier options: -*[:<stream_spec>]
+                    if first_part.contains("[:<") && first_part.ends_with(">]") { 
+                        // Extract the base flag name (remove the [:<>] part)
+                        if let Some(base_flag_end) = first_part.find("[:<") {
+                            opt.flag = first_part[..base_flag_end].to_string();
+                        }
+                    }
+
+                    opt.enum_vals = Vec::new();
+
+                    // Regular argument detection
+                    opt.no_args = parts.len() == 1;
+                }
+            }
+            
+            
+            opt.desc = Some(line.clone());
+            if let Some(ref mut n) = current { n.options.push(opt); }
+        }
+    }
+    if let Some(n) = current.take() { nodes.push(n); }
+
+    Ok(nodes)
+}
+
+fn parse_bsfs(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<Vec<Node>> {
+    let mut cmd = Command::new(ffmpeg);
+    #[cfg(windows)]
+    {
+        // Prevent a new terminal from appearing
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+
+    cmd.args(["-bsfs", "-hide_banner"]).stdout(Stdio::piped()).stderr(Stdio::null());
+    apply_env(&mut cmd, env_map);
+    let out = cmd.output()?;
+    let text = String::from_utf8_lossy(&out.stdout);
+
+    let mut nodes = Vec::new();
+    for line in text.lines().skip(1) {
+        if line.trim().is_empty() { continue; }
+        let words: Vec<&str> = line.split_whitespace().collect();
+        if words.is_empty() { continue; }
+        let mut node = Node::default();
+        node.is_av_option = false;
+        node.name = words[0].to_string();
+        node.desc = "No info".to_string();
+        node.options = Vec::new();
+        nodes.push(node);
+    }
+    Ok(nodes)
+}
+
+fn parse_pix_fmts(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<Node> {
+    let mut cmd = Command::new(ffmpeg);
+    #[cfg(windows)]
+    {
+        // Prevent a new terminal from appearing
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+
+    cmd.args(["-pix_fmts", "-hide_banner"]).stdout(Stdio::piped()).stderr(Stdio::null());
+    apply_env(&mut cmd, env_map);
+    let out = cmd.output()?;
+    let text = String::from_utf8_lossy(&out.stdout);
+
+    let mut lines: Vec<&str> = text.lines().collect();
+    if lines.len() > 8 { lines.drain(..8); } else { lines.clear(); }
+
+    let mut node = Node::default();
+    node.name = "pixel format".to_string();
+    node.desc = "No info".to_string();
+    node.is_av_option = false;
+
+    let mut option = OptionEntry::default();
+    option.category = Some(String::new());
+    option.flag = "-pix_fmt".to_string();
+    option.no_args = true;
+
+    for line in lines {
+        if line.trim().is_empty() { continue; }
+        let parts: Vec<&str> = line.split_whitespace().collect();
+        if parts.len() >= 2 {
+            option.enum_vals.push(format!("{}", parts[1]));
+        }
+    }
+    node.options.push(option);
+    Ok(node)
+}
+
+fn parse_sample_fmts(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<Node> {
+    let mut cmd = Command::new(ffmpeg);
+    #[cfg(windows)]
+    {
+        // Prevent a new terminal from appearing
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+    
+    cmd.args(["-sample_fmts", "-hide_banner"]).stdout(Stdio::piped()).stderr(Stdio::null());
+    apply_env(&mut cmd, env_map);
+    let out = cmd.output()?;
+    let text = String::from_utf8_lossy(&out.stdout);
+
+    let mut node = Node::default();
+    node.name = "sample format".to_string();
+    node.desc = "No info".to_string();
+    node.is_av_option = false;
+
+    let mut option = OptionEntry::default();
+    option.category = Some(String::new());
+    option.flag = "-sample_fmt".to_string();
+    option.no_args = true;
+
+    for line in text.lines().skip(1) {
+        if line.trim().is_empty() { continue; }
+        let parts: Vec<&str> = line.split_whitespace().collect();
+        if let Some(fmt) = parts.get(0) {
+            option.enum_vals.push((*fmt).to_string());
+        }
+    }
+    node.options.push(option);
+    Ok(node)
+}

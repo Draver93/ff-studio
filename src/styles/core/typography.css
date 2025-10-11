@@ -1,0 +1,100 @@
+/**
+ * Typography Styles
+ * Font definitions, sizes, weights, and text utilities
+ */
+
+/* ========================================
+   FONT FAMILIES
+   ======================================== */
+.font-mono {
+    font-family: var(--font-family-mono);
+}
+
+.font-primary {
+    font-family: var(--font-family-primary);
+}
+
+/* ========================================
+   FONT SIZES
+   ======================================== */
+.text-xs { font-size: var(--font-size-xs); }
+.text-sm { font-size: var(--font-size-sm); }
+.text-md { font-size: var(--font-size-md); }
+.text-base { font-size: var(--font-size-base); }
+.text-lg { font-size: var(--font-size-lg); }
+.text-xl { font-size: var(--font-size-xl); }
+.text-xxl { font-size: var(--font-size-xxl); }
+.text-title { font-size: var(--font-size-title); }
+
+/* ========================================
+   FONT WEIGHTS
+   ======================================== */
+.font-normal { font-weight: var(--font-weight-normal); }
+.font-medium { font-weight: var(--font-weight-medium); }
+.font-semibold { font-weight: var(--font-weight-semibold); }
+.font-bold { font-weight: var(--font-weight-bold); }
+
+/* ========================================
+   TEXT COLORS
+   ======================================== */
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+.text-muted { color: var(--text-muted); }
+.text-disabled { color: var(--text-disabled); }
+.text-code { color: var(--text-code); }
+
+.text-success { color: var(--success); }
+.text-warning { color: var(--warning); }
+.text-error { color: var(--error); }
+.text-info { color: var(--info); }
+.text-accent { color: var(--accent); }
+
+/* ========================================
+   TEXT ALIGNMENT
+   ======================================== */
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+/* ========================================
+   LINE HEIGHT
+   ======================================== */
+.leading-tight { line-height: 1.2; }
+.leading-normal { line-height: 1.5; }
+.leading-loose { line-height: 1.8; }
+
+/* ========================================
+   TEXT UTILITIES
+   ======================================== */
+.text-nowrap { white-space: nowrap; }
+.text-break { word-break: break-word; }
+.text-uppercase { text-transform: uppercase; }
+.text-lowercase { text-transform: lowercase; }
+.text-capitalize { text-transform: capitalize; }
+
+/* ========================================
+   MONOSPACE ELEMENTS
+   ======================================== */
+.timecode,
+.time-display,
+.log-entry,
+.workflow-path {
+    font-family: var(--font-family-mono);
+}
+
+.time-display {
+    font-size: var(--font-size-base);
+    color: var(--text-secondary);
+    background: var(--tertiary-bg);
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+}
+
+.timecode {
+    color: var(--text-secondary);
+    font-size: var(--font-size-md);
+    background: var(--tertiary-bg);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+}
