@@ -1,6 +1,6 @@
-use super::parser::{parse_env_map, apply_env};
+use super::parser::{apply_env, parse_env_map};
+use anyhow::{anyhow, Context, Result};
 use std::process::{Command, Stdio};
-use anyhow::{Context, Result, anyhow};
 
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
@@ -20,14 +20,24 @@ pub fn get_mediainfo(name: &str, ffmpeg: &str, env_str: &str) -> Result<Vec<Stri
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     apply_env(&mut cmd, &env_map);
-    let out = cmd.output().with_context(|| format!("spawning {}", ffmpeg))?;
+    let out = cmd
+        .output()
+        .with_context(|| format!("spawning {}", ffmpeg))?;
 
     let mut lines = Vec::new();
     if !out.stdout.is_empty() {
-        lines.extend(String::from_utf8_lossy(&out.stdout).lines().map(|s| s.to_string()));
+        lines.extend(
+            String::from_utf8_lossy(&out.stdout)
+                .lines()
+                .map(|s| s.to_string()),
+        );
     }
     if !out.stderr.is_empty() {
-        lines.extend(String::from_utf8_lossy(&out.stderr).lines().map(|s| s.to_string()));
+        lines.extend(
+            String::from_utf8_lossy(&out.stderr)
+                .lines()
+                .map(|s| s.to_string()),
+        );
     }
     Ok(lines)
 }
@@ -42,13 +52,23 @@ pub fn get_ffmpeg_version(name: &str, env_str: &str) -> Result<Vec<String>> {
         cmd.creation_flags(CREATE_NO_WINDOW);
     }
 
-    cmd.arg("-version").stdout(Stdio::piped()).stderr(Stdio::piped());
+    cmd.arg("-version")
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
     apply_env(&mut cmd, &env_map);
-    let out = cmd.output().with_context(|| format!("spawning {} -version", name))?;
-    let text = String::from_utf8_lossy(&if out.stdout.is_empty() { &out.stderr } else { &out.stdout });
-    
+    let out = cmd
+        .output()
+        .with_context(|| format!("spawning {} -version", name))?;
+    let text = String::from_utf8_lossy(&if out.stdout.is_empty() {
+        &out.stderr
+    } else {
+        &out.stdout
+    });
+
     let lines: Vec<String> = text.lines().map(|s| s.to_string()).collect();
-    if lines.len() <= 1 { return Err(anyhow!("Unexpected ffmpeg output: {:?}", lines)); }
+    if lines.len() <= 1 {
+        return Err(anyhow!("Unexpected ffmpeg output: {:?}", lines));
+    }
 
     Ok(lines)
 }

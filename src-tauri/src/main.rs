@@ -4,13 +4,12 @@
 mod server;
 
 use std::net::SocketAddr;
-use tokio::runtime::Runtime;
 use std::thread;
+use tokio::runtime::Runtime;
 
 use crate::server::file_server;
 
 fn main() {
-
     thread::spawn(|| {
         // We need a Tokio runtime inside this thread
         let rt = Runtime::new().unwrap();

@@ -1,6 +1,6 @@
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::io;
-use serde::{Deserialize, Serialize};
 
 /// Custom error type for FFStudio application
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -122,7 +122,7 @@ where
         self.map_err(|e| {
             let mut error = e.into();
             let context = f();
-            
+
             // Add context to the error message
             match &mut error {
                 FFStudioError::FileSystem(msg) => *msg = format!("{}: {}", context, msg),
@@ -142,7 +142,7 @@ where
 /// Logging utilities for errors
 pub fn log_error(error: &FFStudioError, context: &str) {
     eprintln!("[ERROR] {}: {}", context, error);
-    
+
     // In a real application, you might want to use a proper logging crate
     // like `log` or `tracing` instead of eprintln!
 }
@@ -174,9 +174,7 @@ pub fn to_user_message(error: &FFStudioError) -> String {
         FFStudioError::Network(msg) => {
             format!("Network error: {}", msg)
         }
-        FFStudioError::Json(_msg) => {
-            "Invalid data format. Please try again.".to_string()
-        }
+        FFStudioError::Json(_msg) => "Invalid data format. Please try again.".to_string(),
         FFStudioError::Parse(msg) => {
             format!("Parse error: {}", msg)
         }

@@ -1,7 +1,7 @@
-use tauri::{AppHandle};
-use tauri_plugin_dialog::DialogExt;
+use crate::{log_error, FFStudioError, Result};
 use std::path::Path;
-use crate::{Result, FFStudioError, log_error};
+use tauri::AppHandle;
+use tauri_plugin_dialog::DialogExt;
 
 #[tauri::command]
 pub fn pick_file(app: AppHandle) -> Result<Option<String>> {
@@ -23,13 +23,16 @@ pub fn file_exists(path: String) -> Result<bool> {
     if path.is_empty() {
         return Err(FFStudioError::file_system("Empty path provided"));
     }
-    
+
     let path = Path::new(&path);
     match path.try_exists() {
         Ok(exists) => Ok(exists),
         Err(e) => {
             log_error(&FFStudioError::from(e), "checking file existence");
-            Err(FFStudioError::file_system(format!("Failed to check if file exists: {}", path.display())))
+            Err(FFStudioError::file_system(format!(
+                "Failed to check if file exists: {}",
+                path.display()
+            )))
         }
     }
 }
@@ -39,16 +42,24 @@ pub fn get_file_info(path: String) -> Result<serde_json::Value> {
     if path.is_empty() {
         return Err(FFStudioError::file_system("Empty path provided"));
     }
-    
+
     let path = Path::new(&path);
-    
+
     if !path.exists() {
-        return Err(FFStudioError::file_system(format!("File does not exist: {}", path.display())));
+        return Err(FFStudioError::file_system(format!(
+            "File does not exist: {}",
+            path.display()
+        )));
     }
-    
-    let metadata = std::fs::metadata(path)
-        .map_err(|e| FFStudioError::file_system(format!("Failed to read metadata for {}: {}", path.display(), e)))?;
-    
+
+    let metadata = std::fs::metadata(path).map_err(|e| {
+        FFStudioError::file_system(format!(
+            "Failed to read metadata for {}: {}",
+            path.display(),
+            e
+        ))
+    })?;
+
     let file_info = serde_json::json!({
         "path": path.to_string_lossy(),
         "exists": true,
@@ -66,6 +77,6 @@ pub fn get_file_info(path: String) -> Result<serde_json::Value> {
             .and_then(|name| name.to_str())
             .unwrap_or("")
     });
-    
+
     Ok(file_info)
 }

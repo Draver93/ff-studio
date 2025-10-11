@@ -1,6 +1,6 @@
-use crate::workflow::types::{MIResponse};
-use crate::ffmpeg::version::{get_mediainfo};
-use crate::utils::filesystem::{get_data_dir};
+use crate::ffmpeg::version::get_mediainfo;
+use crate::utils::filesystem::get_data_dir;
+use crate::workflow::types::MIResponse;
 
 use std::fs;
 
@@ -8,12 +8,14 @@ use std::fs;
 pub fn get_mediainfo_request(path: String, ffmpeg: String, env: String) -> MIResponse {
     let mi_result = get_mediainfo(&path, &ffmpeg, &env);
     match mi_result {
-        Ok(array) => {
-            MIResponse { message: "OK".to_string(), info_arr: array, }
-        }
-        Err(_) => {
-            MIResponse { message: "Faild to get media info".to_string(), info_arr: Vec::new() }
-        }
+        Ok(array) => MIResponse {
+            message: "OK".to_string(),
+            info_arr: array,
+        },
+        Err(_) => MIResponse {
+            message: "Faild to get media info".to_string(),
+            info_arr: Vec::new(),
+        },
     }
 }
 
@@ -25,9 +27,11 @@ pub async fn delete_cache_request() {
         for entry in fs::read_dir(tmp_path).unwrap() {
             let entry = entry.unwrap();
             let entry_path = entry.path();
-            if entry_path.is_dir() { fs::remove_dir_all(entry_path).unwrap(); } 
-            else { fs::remove_file(entry_path).unwrap(); }
+            if entry_path.is_dir() {
+                fs::remove_dir_all(entry_path).unwrap();
+            } else {
+                fs::remove_file(entry_path).unwrap();
+            }
         }
     }
 }
-

@@ -1,12 +1,12 @@
 #![allow(dead_code)]
 
+mod commands;
 mod error;
 mod ffmpeg;
 mod utils;
-mod commands;
 mod workflow;
 
-pub use error::{FFStudioError, Result, ErrorContext, log_error, to_user_message};
+pub use error::{log_error, to_user_message, ErrorContext, FFStudioError, Result};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -20,7 +20,7 @@ pub fn run() {
         log_error(&e, "initializing working directories");
         eprintln!("Failed to initialize working directories: {}", e);
     }
-    
+
     tauri::Builder::default()
         .manage(ffmpeg::executor::FfmpegHandle::default())
         .plugin(tauri_plugin_opener::init())

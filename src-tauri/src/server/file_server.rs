@@ -1,7 +1,19 @@
-use std::{collections::HashMap, net::SocketAddr, path::PathBuf, sync::{Arc, Mutex}};
+use hyper::{
+    header,
+    service::{make_service_fn, service_fn},
+    Body, Request, Response, Server, StatusCode,
+};
 use std::convert::Infallible;
-use hyper::{Body, Request, Response, Server, StatusCode, service::{make_service_fn, service_fn}, header};
-use tokio::{io::{AsyncReadExt, AsyncSeekExt}, fs::File};
+use std::{
+    collections::HashMap,
+    net::SocketAddr,
+    path::PathBuf,
+    sync::{Arc, Mutex},
+};
+use tokio::{
+    fs::File,
+    io::{AsyncReadExt, AsyncSeekExt},
+};
 use tokio_util::io::ReaderStream;
 use urlencoding::decode;
 
@@ -101,11 +113,7 @@ pub async fn start_server(addr: SocketAddr) {
     let state = Arc::new(Mutex::new(HashMap::new()));
     let make_svc = make_service_fn(move |_conn| {
         let state = state.clone();
-        async move {
-            Ok::<_, Infallible>(service_fn(move |req| {
-                serve_file(req, state.clone())
-            }))
-        }
+        async move { Ok::<_, Infallible>(service_fn(move |req| serve_file(req, state.clone()))) }
     });
 
     let server = Server::bind(&addr).serve(make_svc);

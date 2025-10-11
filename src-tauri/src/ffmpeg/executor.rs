@@ -1,12 +1,12 @@
-use crate::utils::{self, filesystem};
 use super::parser;
+use crate::utils::{self, filesystem};
 
-use std::str::FromStr;
 use regex::Regex;
-use std::path::{ Path, PathBuf };
-use tauri::{ Emitter, Window, Listener };
-use std::sync::{ Arc, Mutex };
-use std::process::{ Child };
+use std::path::{Path, PathBuf};
+use std::process::Child;
+use std::str::FromStr;
+use std::sync::{Arc, Mutex};
+use tauri::{Emitter, Listener, Window};
 
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
@@ -24,15 +24,21 @@ impl Default for FfmpegHandle {
     }
 }
 
-pub fn make_preview_cmd( cmd: &str, cache_dir: PathBuf, start: &str, end: Option<&str>) -> Result<(String, String), String> {
-
+pub fn make_preview_cmd(
+    cmd: &str,
+    cache_dir: PathBuf,
+    start: &str,
+    end: Option<&str>,
+) -> Result<(String, String), String> {
     let seg_name: String = {
         let mut unique_str = String::from_str(cmd).unwrap();
         unique_str.push_str(start);
-        if let Some(end_str) = end { unique_str.push_str(end_str); } 
+        if let Some(end_str) = end {
+            unique_str.push_str(end_str);
+        }
         unique_str
     };
-    let seg_name: String = utils::hash::short_hash(&seg_name );
+    let seg_name: String = utils::hash::short_hash(&seg_name);
 
     // Regex to split by spaces but keep quoted tokens
     let re = Regex::new(r#"(?:[^\s"]+|"[^"]*")+"#).unwrap();
@@ -63,7 +69,6 @@ pub fn make_preview_cmd( cmd: &str, cache_dir: PathBuf, start: &str, end: Option
 
     // Output path
 
-
     let orig_output = PathBuf::from(tokens.last().unwrap());
     let filename = orig_output
         .file_name()
@@ -73,9 +78,12 @@ pub fn make_preview_cmd( cmd: &str, cache_dir: PathBuf, start: &str, end: Option
 
     let mut new_output_file = PathBuf::from(cache_dir);
     new_output_file.push(seg_name);
-    if end == None { new_output_file.set_extension("png"); }
-    else { new_output_file.set_extension("mp4"); }
-    
+    if end == None {
+        new_output_file.set_extension("png");
+    } else {
+        new_output_file.set_extension("mp4");
+    }
+
     if let Some(e) = end {
         // Range preview → keep original extension
         new_tokens.splice(i_idx + 2..i_idx + 2, ["-to".to_string(), e.to_string()]);
@@ -88,7 +96,10 @@ pub fn make_preview_cmd( cmd: &str, cache_dir: PathBuf, start: &str, end: Option
             .to_string_lossy();
         let out = orig_output.with_file_name(format!("{}.png", base_name));
         // Insert `-frames:v 1`
-        new_tokens.splice(i_idx + 4..i_idx + 4, ["-frames:v".to_string(), "1".to_string()]);
+        new_tokens.splice(
+            i_idx + 4..i_idx + 4,
+            ["-frames:v".to_string(), "1".to_string()],
+        );
         out
     };
 
@@ -100,23 +111,28 @@ pub fn make_preview_cmd( cmd: &str, cache_dir: PathBuf, start: &str, end: Option
     // Quote tokens with spaces
     let final_cmd = new_tokens
         .into_iter()
-        .map(|t| if t.contains(' ') { format!("\"{}\"", t) } else { t })
+        .map(|t| {
+            if t.contains(' ') {
+                format!("\"{}\"", t)
+            } else {
+                t
+            }
+        })
         .collect::<Vec<_>>()
         .join(" ");
 
     Ok((final_cmd, new_output_file.to_string_lossy().into_owned()))
 }
 
-
 #[tauri::command]
 pub fn start_transcode(
-    cmds: Vec<String>,    // multiple commands (pipeline)
-    envs: Vec<String>,    // one env per command
+    cmds: Vec<String>, // multiple commands (pipeline)
+    envs: Vec<String>, // one env per command
     window: tauri::Window,
     handle: tauri::State<FfmpegHandle>,
 ) {
-    use std::process::Stdio;
     use std::io::Read;
+    use std::process::Stdio;
     use std::time::Duration;
 
     assert_eq!(cmds.len(), envs.len(), "Each command must have an env");
@@ -196,7 +212,9 @@ pub fn start_transcode(
                 let mut leftover = String::new();
                 loop {
                     let n = stderr.read(&mut buf).unwrap_or(0);
-                    if n == 0 { break; }
+                    if n == 0 {
+                        break;
+                    }
 
                     leftover.push_str(&String::from_utf8_lossy(&buf[..n]));
 
@@ -239,12 +257,20 @@ pub fn start_transcode(
                         for child in children.iter_mut() {
                             match child.try_wait() {
                                 Ok(Some(_status)) => { /* exited */ }
-                                Ok(None) => { everything_exited = false; break; } // still running
-                                Err(_) => { everything_exited = false; break; }
+                                Ok(None) => {
+                                    everything_exited = false;
+                                    break;
+                                } // still running
+                                Err(_) => {
+                                    everything_exited = false;
+                                    break;
+                                }
                             }
                         }
                         everything_exited
-                    } else { break; }
+                    } else {
+                        break;
+                    }
                 };
 
                 if all_done {
@@ -273,7 +299,14 @@ pub fn stop_transcode(handle: tauri::State<FfmpegHandle>) {
 }
 
 #[tauri::command]
-pub fn render_preview_request(window: Window, cmd: String, env: String, start: String, end: String, handle: tauri::State<FfmpegHandle>) {
+pub fn render_preview_request(
+    window: Window,
+    cmd: String,
+    env: String,
+    start: String,
+    end: String,
+    handle: tauri::State<FfmpegHandle>,
+) {
     let data_path = filesystem::get_data_dir().unwrap();
     let tmp_path = data_path.join("tmp");
     let (final_cmd, target_file_path) = if start != end {
@@ -281,7 +314,7 @@ pub fn render_preview_request(window: Window, cmd: String, env: String, start: S
     } else {
         make_preview_cmd(&cmd, tmp_path, &start, None).unwrap()
     };
-    
+
     let window_clone = window.clone();
     let target_path_clone = target_file_path.clone();
     window.listen("start_transcode_listener", move |event| {
@@ -291,10 +324,10 @@ pub fn render_preview_request(window: Window, cmd: String, env: String, start: S
             let _ = window_clone.emit("render_preview_listener", &target_path_clone);
         }
     });
-    
+
     start_transcode(
-        vec![final_cmd],  // cmds
-        vec![env],        // envs
+        vec![final_cmd], // cmds
+        vec![env],       // envs
         window,
         handle,
     );

@@ -16,7 +16,7 @@ pub fn get_workflow_list() -> Vec<WorkflowStructure> {
     while let Some(dir) = dir_iter.next() {
         let path = dir.unwrap().path();
         if std::fs::exists(&path).unwrap() {
-            let data = std::fs::read_to_string(path).unwrap(); 
+            let data = std::fs::read_to_string(path).unwrap();
             let workflow: WorkflowStructure = serde_json::from_str(&data).unwrap();
             result.push(workflow);
         };
