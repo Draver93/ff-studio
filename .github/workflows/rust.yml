@@ -25,14 +25,20 @@ jobs:
         toolchain: stable
         override: true
 
+    # Install Tauri CLI
+    - name: Install Tauri CLI
+      run: cargo install tauri-cli
+
+    # Build the app
     - name: Build Tauri app
       working-directory: ./src-tauri
       run: cargo tauri build
 
-    - name: Upload installer
+    # Upload installer artifacts
+    - name: Upload installers
       uses: actions/upload-artifact@v4
       with:
-        name: tauri-installer-${{ matrix.os }}
+        name: tauri-installers-${{ matrix.os }}
         path: |
           ./src-tauri/target/release/bundle/msi/*
           ./src-tauri/target/release/bundle/deb/*
