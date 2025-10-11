@@ -48,7 +48,6 @@ jobs:
         cargo tauri build
 
     - name: Upload installer
-      name: Upload installer
         uses: actions/upload-artifact@v4
         with:
           name: tauri-installer-${{ matrix.os }}
