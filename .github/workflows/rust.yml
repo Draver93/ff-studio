@@ -25,16 +25,33 @@ jobs:
         toolchain: stable
         override: true
 
-    # Install Tauri CLI
+    # Linux dependencies
+    - name: Install Linux dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libgtk-3-dev \
+          libayatana-appindicator3-dev \
+          librsvg2-dev \
+          pkg-config \
+          libglib2.0-dev \
+          build-essential \
+          curl
+
+    # macOS dependencies
+    - name: Install macOS dependencies
+      if: runner.os == 'macOS'
+      run: brew install pkg-config gtk+3
+
+    # Windows requires no extra deps for Tauri
     - name: Install Tauri CLI
       run: cargo install tauri-cli
 
-    # Build the app
     - name: Build Tauri app
       working-directory: ./src-tauri
       run: cargo tauri build
 
-    # Upload installer artifacts
     - name: Upload installers
       uses: actions/upload-artifact@v4
       with:
