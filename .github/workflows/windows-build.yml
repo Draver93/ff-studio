@@ -23,7 +23,13 @@ jobs:
         working-directory: ./src-tauri
         run: cargo tauri build
 
-      - name: Upload Windows .msi
+      - name: Rename artifacts with commit SHA
+        run: |
+          $sha = git rev-parse --short HEAD
+          Get-ChildItem ./src-tauri/target/release/bundle/msi/* | Rename-Item -NewName { "$($_.BaseName)-$sha$($_.Extension)" }
+        shell: pwsh
+
+      - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-msi

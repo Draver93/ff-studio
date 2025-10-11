@@ -39,6 +39,14 @@ jobs:
         run: cargo tauri build
 
       - name: Upload Linux .deb
+        run: |
+          SHA=$(git rev-parse --short HEAD)
+          for f in ./src-tauri/target/release/bundle/deb/*; do
+            mv "$f" "${f%.deb}-$SHA.deb"
+          done
+        shell: bash
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: linux-deb
