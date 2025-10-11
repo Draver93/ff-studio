@@ -29,7 +29,13 @@ jobs:
     - name: Install Linux dependencies
       if: runner.os == 'Linux'
       run: |
+        # Add Jammy repo to get libwebkit2gtk-4.0-dev
+        echo "deb http://archive.ubuntu.com/ubuntu jammy main universe" | sudo tee /etc/apt/sources.list.d/jammy.list
+        
+        # Update package lists
         sudo apt-get update
+    
+        # Install all required Tauri dependencies
         sudo apt-get install -y \
           libgtk-3-dev \
           libayatana-appindicator3-dev \
