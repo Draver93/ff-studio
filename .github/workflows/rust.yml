@@ -48,10 +48,10 @@ jobs:
         cargo tauri build
 
     - name: Upload installer
-        uses: actions/upload-artifact@v4
-        with:
-          name: tauri-installer-${{ matrix.os }}
-          path: |
-            ./src-tauri/target/release/bundle/msi/*   # Windows
-            ./src-tauri/target/release/bundle/deb/*   # Linux
-            ./src-tauri/target/release/bundle/dmg/*   # macOS
+      uses: actions/upload-artifact@v4
+      with:
+        name: tauri-installer-${{ matrix.os }}
+        path: |
+          ./src-tauri/target/release/bundle/msi/*   # Windows
+          ./src-tauri/target/release/bundle/deb/*   # Linux
+          ./src-tauri/target/release/bundle/dmg/*   # macOS
