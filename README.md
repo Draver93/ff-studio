@@ -261,3 +261,14 @@ For full license details, see [LICENSE](./LICENSE).
 - **Timeline:** Lets users select, label, and manage time-based segments for precise editing and preview.
 - **Player:** Integrated video/audio player for instant feedback.
 - **Logs:** All actions and FFmpeg output are logged for transparency and debugging.
+
+---
+
+### ⚠️ FFmpeg Usage & License
+
+This project does **not** bundle or link FFmpeg — it simply invokes a user-supplied FFmpeg binary via subprocess.
+
+FFmpeg is licensed under **LGPL v2.1+**, though some optional parts are under **GPL v2+**. :contentReference[oaicite:0]{index=0}  
+Because we don’t distribute or modify FFmpeg, its licensing obligations don’t apply to our own code.
+
+For more about FFmpeg’s licensing, see: [ffmpeg.org/legal.html](https://ffmpeg.org/legal.html)  
