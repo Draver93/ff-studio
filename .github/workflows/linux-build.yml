@@ -1,0 +1,60 @@
+name: Linux Build
+
+on:
+  push:
+    paths:
+      - 'src-tauri/tauri.conf.json'
+  tags:
+    - 'v*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Check if version changed
+        id: version
+        run: |
+          if git diff HEAD^ HEAD -- src-tauri/tauri.conf.json | grep '"version"'; then
+            echo "version_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "version_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip if version unchanged
+        if: steps.version.outputs.version_changed == 'false' && !startsWith(github.ref, 'refs/tags/v')
+        run: echo "No version change detected. Skipping build." && exit 0
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libglib2.0-dev \
+            libjavascriptcoregtk-4.1-dev \
+            libsoup-3.0-dev \
+            libwebkit2gtk-4.1-dev \
+            pkg-config \
+            build-essential \
+            curl
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli
+
+      - name: Build Tauri app (Linux)
+        working-directory: ./src-tauri
+        run: cargo tauri build
+
+      - name: Upload Linux .deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-deb
+          path: ./src-tauri/target/release/bundle/deb/*

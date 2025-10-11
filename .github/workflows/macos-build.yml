@@ -1,0 +1,48 @@
+name: macOS Build
+
+on:
+  push:
+    paths:
+      - 'src-tauri/tauri.conf.json'
+  tags:
+    - 'v*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Check if version changed
+        id: version
+        run: |
+          if git diff HEAD^ HEAD -- src-tauri/tauri.conf.json | grep '"version"'; then
+            echo "version_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "version_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip if version unchanged
+        if: steps.version.outputs.version_changed == 'false' && !startsWith(github.ref, 'refs/tags/v')
+        run: echo "No version change detected. Skipping build." && exit 0
+
+      - name: Install macOS dependencies
+        run: brew install pkg-config gtk+3
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli
+
+      - name: Build Tauri app (macOS)
+        working-directory: ./src-tauri
+        run: cargo tauri build
+
+      - name: Upload macOS .dmg
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: ./src-tauri/target/release/bundle/dmg/*

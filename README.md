@@ -1,4 +1,10 @@
-# FFStudio ![Build Status](https://github.com/Draver93/ff-studio/actions/workflows/rust.yml/badge.svg)
+# FFStudio
+
+| Platform | Status |
+|-----------|--------|
+| 🪟 Windows | [![Windows Build](https://github.com/Draver93/ff-studio/actions/workflows/windows-build.yml/badge.svg)](https://github.com/Draver93/ff-studio/actions/workflows/windows-build.yml) |
+| 🐧 Linux   | [![Linux Build](https://github.com/Draver93/ff-studio/actions/workflows/linux-build.yml/badge.svg)](https://github.com/Draver93/ff-studio/actions/workflows/linux-build.yml) |
+| 🍎 macOS   | [![macOS Build](https://github.com/Draver93/ff-studio/actions/workflows/macos-build.yml/badge.svg)](https://github.com/Draver93/ff-studio/actions/workflows/macos-build.yml) |
 
 **FFStudio** is a modern, cross-platform desktop application for visually designing, executing, and managing complex FFmpeg video/audio processing workflows. It provides a graphical interface to build, preview, and run FFmpeg command pipelines using a node-based editor, timeline, and integrated player.
 
