@@ -22,7 +22,7 @@ pub fn run() {
     }
 
     tauri::Builder::default()
-        .manage(ffmpeg::executor::FfmpegHandle::default())
+        .manage(ffmpeg::executor::TranscodeQueue::default())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard::init())
@@ -31,8 +31,12 @@ pub fn run() {
             commands::file_ops::pick_file,
             commands::file_ops::file_exists,
             commands::file_ops::get_file_info,
-            ffmpeg::executor::start_transcode,
-            ffmpeg::executor::stop_transcode,
+            ffmpeg::executor::queue_transcode,
+            ffmpeg::executor::set_max_concurrent,
+            ffmpeg::executor::get_max_concurrent,
+            ffmpeg::executor::get_queue_status,
+            ffmpeg::executor::cancel_job,
+            ffmpeg::executor::render_preview_request,
             ffmpeg::executor::render_preview_request,
             commands::workflow_ops::save_graph,
             commands::workflow_ops::get_workflow,

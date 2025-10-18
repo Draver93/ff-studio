@@ -30,6 +30,10 @@
                     <i class="fas fa-play-circle"></i>
                     <span>Player</span>
                 </button>
+                 <button class="tab" data-tab="queue">
+                    <i class="fas fa-bars"></i>
+                    <span>Queue</span>
+                </button>
                 <button class="tab" data-tab="logs">
                     <i class="fas fa-terminal"></i>
                     <span>Logs</span>
@@ -289,6 +293,49 @@
                         </div>
                     </div>
                     <div class="logs-content">
+                    </div>
+                </div>
+
+                <div class="logs-zone queue-zone" id="queue-zone">
+                    <div class="logs-header">
+                        <div>
+                            <span>Transcode Queue</span>
+                            <span class="badge" id="queue-count">1 task</span>
+                        </div>
+                        <div class="log-actions">
+                            <label style="display:inline-flex;align-items:center;gap:8px;">
+                                Concurrency
+                                <input  class="oc-input" id="queue-limit" type="number" min="1" value="4" />
+                            </label>
+                            <button class="log-btn" id="queue-refresh" title="Refresh"> Refresh </button>
+                            <button class="log-btn" id="queue-clear" title="Clear queue"> Clear </button>
+                        </div>
+                    </div>
+
+                    <div class="logs-content queue-content">
+                        <!-- single-column layout: stats + list below -->
+                        <div style="display:flex;flex-direction:column;">
+                        <!-- stat chips (matches logs look) -->
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;padding:12px;">
+                                <div class="badge" id="queue-running-count" style="background:#6ee2766e;color:#6ee276;">Running: 0</div>
+                                <div class="badge" id="queue-pending-count" style="background:#fff8e171;color:#ebdc5a;">Pending: 1</div>
+                                <div class="badge" id="queue-finished-count" style="background:#4b8bec73;color:#4b8cec;">Finished: 0</div>
+                                <div class="badge" id="queue-failed-count" style="background:#ee5b5b7c;color:#ee5b5b;">Failed: 0</div>
+                            </div>
+
+                            <!-- entries use same 'log-entry' style so they visually match Execution Logs -->
+                            <div id="queue-list" style="padding:0 12px 12px 12px;">
+                                <!-- Example test queue entry -->
+                                <div class="log-entry pending" data-id="test-1">
+                                    <span class="log-time">now</span>
+                                    <i class="fas fa-clock"></i>
+                                    <span><strong>test-1</strong> — ffmpeg -i input.mp4 -c:v libx264 out.mp4</span>
+                                    <div class="entry-meta" style="float:right;font-size:12px;color:#666;">
+                                        Pending • added just now
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

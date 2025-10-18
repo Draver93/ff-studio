@@ -1,7 +1,9 @@
 use super::parser;
 use crate::utils::{self, filesystem};
+use serde::{Deserialize, Serialize};
 
 use regex::Regex;
+use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
 use std::process::Child;
 use std::str::FromStr;
@@ -11,15 +13,306 @@ use tauri::{Emitter, Listener, Window};
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 
-#[derive(Clone)]
-pub struct FfmpegHandle {
-    pub pipeline: Arc<Mutex<Option<Vec<Child>>>>,
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TranscodeJob {
+    pub id: String,
+    pub cmds: Vec<String>,
+    pub envs: Vec<String>,
+    pub status: JobStatus,
 }
 
-impl Default for FfmpegHandle {
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum JobStatus {
+    Queued,
+    Running,
+    Completed,
+    Failed,
+    Cancelled,
+}
+
+pub struct RunningJob {
+    pub id: String,
+    pub pipeline: Vec<Child>,
+}
+
+#[derive(Clone)]
+pub struct TranscodeQueue {
+    pub queue: Arc<Mutex<VecDeque<TranscodeJob>>>,
+    pub running: Arc<Mutex<Vec<RunningJob>>>,
+    pub max_concurrent: Arc<Mutex<usize>>,
+    pub job_counter: Arc<Mutex<u64>>,
+}
+
+impl Default for TranscodeQueue {
     fn default() -> Self {
         Self {
-            pipeline: Arc::new(Mutex::new(None)),
+            queue: Arc::new(Mutex::new(VecDeque::new())),
+            running: Arc::new(Mutex::new(Vec::new())),
+            max_concurrent: Arc::new(Mutex::new(1)),
+            job_counter: Arc::new(Mutex::new(0)),
+        }
+    }
+}
+
+impl TranscodeQueue {
+    fn generate_job_id(&self) -> String {
+        let mut counter = self.job_counter.lock().unwrap();
+        *counter += 1;
+        format!("job_{}", *counter)
+    }
+
+    pub fn add_job(&self, cmds: Vec<String>, envs: Vec<String>) -> String {
+        let job_id = self.generate_job_id();
+        let job = TranscodeJob {
+            id: job_id.clone(),
+            cmds,
+            envs,
+            status: JobStatus::Queued,
+        };
+
+        let mut queue = self.queue.lock().unwrap();
+        queue.push_back(job);
+        
+        job_id
+    }
+
+    pub fn get_queue_status(&self) -> Vec<TranscodeJob> {
+        let queue = self.queue.lock().unwrap();
+        let running = self.running.lock().unwrap();
+        
+        let mut all_jobs = Vec::new();
+        
+        // Add running jobs
+        for rj in running.iter() {
+            all_jobs.push(TranscodeJob {
+                id: rj.id.clone(),
+                cmds: vec![],
+                envs: vec![],
+                status: JobStatus::Running,
+            });
+        }
+        
+        // Add queued jobs
+        for job in queue.iter() {
+            all_jobs.push(job.clone());
+        }
+        
+        all_jobs
+    }
+
+    pub fn cancel_job(&self, job_id: &str) -> bool {
+        // Try to remove from queue first
+        {
+            let mut queue = self.queue.lock().unwrap();
+            if let Some(pos) = queue.iter().position(|j| j.id == job_id) {
+                queue.remove(pos);
+                return true;
+            }
+        }
+
+        // Try to kill running job
+        {
+            let mut running = self.running.lock().unwrap();
+            if let Some(pos) = running.iter().position(|j| j.id == job_id) {
+                let job = &mut running[pos];
+                for child in job.pipeline.iter_mut() {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                }
+                running.remove(pos);
+                return true;
+            }
+        }
+
+        false
+    }
+
+    pub fn process_queue(&self, window: Window) {
+        let max_concurrent = *self.max_concurrent.lock().unwrap();
+        let running_count = self.running.lock().unwrap().len();
+
+        if running_count >= max_concurrent {
+            return;
+        }
+
+        let slots_available = max_concurrent - running_count;
+
+        for _ in 0..slots_available {
+            let job = {
+                let mut queue = self.queue.lock().unwrap();
+                queue.pop_front()
+            };
+
+            if let Some(mut job) = job {
+                job.status = JobStatus::Running;
+                
+                let _ = window.emit("queue_status_changed", self.get_queue_status());
+                
+                self.execute_job(job, window.clone());
+            } else {
+                break;
+            }
+        }
+    }
+
+    fn execute_job(&self, job: TranscodeJob, window: Window) {
+        use std::io::Read;
+        use std::process::Stdio;
+        use std::time::Duration;
+
+        let job_id = job.id.clone();
+        let cmds = job.cmds;
+        let envs = job.envs;
+
+        let mut prev_stdin: Option<Stdio> = None;
+        let mut pipeline: Vec<Child> = Vec::new();
+
+        for (cmd, env_str) in cmds.into_iter().zip(envs) {
+            let env_map = parser::parse_env_map(&env_str);
+
+            let safe_cmd = cmd.replace("\\", "%5C");
+            let parts = match shellwords::split(&safe_cmd) {
+                Ok(data) => data,
+                Err(e) => {
+                    let _ = window.emit(
+                        &format!("transcode_{}", job_id),
+                        format!("Parse failed: {}", e),
+                    );
+                    let _ = window.emit(&format!("transcode_{}", job_id), "EOT_FAILED".to_string());
+                    return;
+                }
+            };
+
+            let mut parts_iter = parts.into_iter().map(|s| s.replace("%5C", "\\"));
+            let program = parts_iter.next().expect("empty command");
+
+            let mut c = std::process::Command::new(program);
+            #[cfg(windows)]
+            {
+                const CREATE_NO_WINDOW: u32 = 0x08000000;
+                c.creation_flags(CREATE_NO_WINDOW);
+            }
+
+            c.args(parts_iter);
+            c.arg("-progress").arg("pipe:2").arg("-hide_banner");
+
+            if let Some(stdin) = prev_stdin.take() {
+                c.stdin(stdin);
+            } else {
+                c.stdin(Stdio::null());
+            }
+
+            c.stdout(Stdio::piped());
+            c.stderr(Stdio::piped());
+
+            parser::apply_env(&mut c, &env_map);
+
+            let mut child = match c.spawn() {
+                Ok(ch) => ch,
+                Err(e) => {
+                    let _ = window.emit(
+                        &format!("transcode_{}", job_id),
+                        format!("Spawn failed: {}", e),
+                    );
+                    let _ = window.emit(&format!("transcode_{}", job_id), "EOT_FAILED".to_string());
+                    return;
+                }
+            };
+
+            prev_stdin = child.stdout.take().map(Stdio::from);
+
+            if let Some(mut stderr) = child.stderr.take() {
+                let win = window.clone();
+                let jid = job_id.clone();
+                std::thread::spawn(move || {
+                    let mut buf = [0; 1024];
+                    let mut leftover = String::new();
+                    loop {
+                        let n = stderr.read(&mut buf).unwrap_or(0);
+                        if n == 0 {
+                            break;
+                        }
+
+                        leftover.push_str(&String::from_utf8_lossy(&buf[..n]));
+
+                        while let Some(pos) = leftover.find('\n') {
+                            let line = leftover.drain(..=pos).collect::<String>();
+                            let clean = line.trim_matches(&['\n', '\r'][..]);
+                            if !clean.is_empty() {
+                                let _ = win.emit(&format!("transcode_{}", jid), clean.to_string());
+                            }
+                        }
+                    }
+
+                    if !leftover.is_empty() {
+                        let _ = win.emit(&format!("transcode_{}", jid), leftover);
+                    }
+                });
+            }
+
+            pipeline.push(child);
+        }
+
+        // Add to running jobs
+        {
+            let mut running = self.running.lock().unwrap();
+            running.push(RunningJob {
+                id: job_id.clone(),
+                pipeline,
+            });
+        }
+
+        let _ = window.emit(&format!("transcode_{}", job_id), "Pipeline started");
+
+        // Spawn watcher thread
+        {
+            let running_clone = self.running.clone();
+            let queue_clone = self.clone();
+            let win = window.clone();
+            let jid = job_id.clone();
+
+            std::thread::spawn(move || {
+                loop {
+                    let all_done = {
+                        let mut guard = running_clone.lock().unwrap();
+                        if let Some(pos) = guard.iter().position(|j| j.id == jid) {
+                            let job = &mut guard[pos];
+                            let mut everything_exited = true;
+                            for child in job.pipeline.iter_mut() {
+                                match child.try_wait() {
+                                    Ok(Some(_status)) => {}
+                                    Ok(None) => {
+                                        everything_exited = false;
+                                        break;
+                                    }
+                                    Err(_) => {
+                                        everything_exited = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            everything_exited
+                        } else {
+                            break;
+                        }
+                    };
+
+                    if all_done {
+                        let mut guard = running_clone.lock().unwrap();
+                        if let Some(pos) = guard.iter().position(|j| j.id == jid) {
+                            guard.remove(pos);
+                        }
+                        let _ = win.emit(&format!("transcode_{}", jid), "EOT".to_string());
+                        
+                        // Process next job in queue
+                        queue_clone.process_queue(win.clone());
+                        let _ = win.emit("queue_status_changed", queue_clone.get_queue_status());
+                        break;
+                    }
+
+                    std::thread::sleep(Duration::from_millis(200));
+                }
+            });
         }
     }
 }
@@ -40,14 +333,12 @@ pub fn make_preview_cmd(
     };
     let seg_name: String = utils::hash::short_hash(&seg_name);
 
-    // Regex to split by spaces but keep quoted tokens
     let re = Regex::new(r#"(?:[^\s"]+|"[^"]*")+"#).unwrap();
     let tokens: Vec<String> = re
         .find_iter(cmd)
         .map(|m| m.as_str().trim_matches('"').to_string())
         .collect();
 
-    // Find input file
     let i_idx = tokens
         .iter()
         .position(|t| t == "-i")
@@ -56,18 +347,14 @@ pub fn make_preview_cmd(
         return Err("No input file after -i".to_string());
     }
 
-    // Build input options (before -i)
     let mut input_opts = Vec::new();
     input_opts.push("-ss".to_string());
     input_opts.push(start.to_string());
 
-    // Insert input options before -i
     let mut new_tokens = Vec::new();
     new_tokens.extend_from_slice(&tokens[..i_idx]);
     new_tokens.extend(input_opts);
     new_tokens.extend_from_slice(&tokens[i_idx..]);
-
-    // Output path
 
     let orig_output = PathBuf::from(tokens.last().unwrap());
     let filename = orig_output
@@ -85,17 +372,14 @@ pub fn make_preview_cmd(
     }
 
     if let Some(e) = end {
-        // Range preview → keep original extension
         new_tokens.splice(i_idx + 2..i_idx + 2, ["-to".to_string(), e.to_string()]);
         orig_output.clone()
     } else {
-        // Single frame → output as PNG
         let base_name = Path::new(&filename)
             .file_stem()
             .unwrap_or_default()
             .to_string_lossy();
         let out = orig_output.with_file_name(format!("{}.png", base_name));
-        // Insert `-frames:v 1`
         new_tokens.splice(
             i_idx + 4..i_idx + 4,
             ["-frames:v".to_string(), "1".to_string()],
@@ -103,12 +387,10 @@ pub fn make_preview_cmd(
         out
     };
 
-    // Replace last token with new output path
     if let Some(last) = new_tokens.last_mut() {
         *last = new_output_file.to_string_lossy().into_owned();
     }
 
-    // Quote tokens with spaces
     let final_cmd = new_tokens
         .into_iter()
         .map(|t| {
@@ -125,177 +407,60 @@ pub fn make_preview_cmd(
 }
 
 #[tauri::command]
-pub fn start_transcode(
-    cmds: Vec<String>, // multiple commands (pipeline)
-    envs: Vec<String>, // one env per command
-    window: tauri::Window,
-    handle: tauri::State<FfmpegHandle>,
-) {
-    use std::io::Read;
-    use std::process::Stdio;
-    use std::time::Duration;
-
+pub fn queue_transcode(
+    cmds: Vec<String>,
+    envs: Vec<String>,
+    window: Window,
+    queue: tauri::State<TranscodeQueue>,
+) -> String {
     assert_eq!(cmds.len(), envs.len(), "Each command must have an env");
-
-    // Kill existing pipeline if running
-    {
-        let mut slot = handle.pipeline.lock().unwrap();
-        if let Some(children) = slot.take() {
-            for mut child in children {
-                let _ = child.kill();
-                let _ = child.wait();
-            }
-        }
-    }
-
-    // prev_stdin is a Stdio we pass into the next Command::stdin(...)
-    let mut prev_stdin: Option<Stdio> = None;
-    let mut pipeline: Vec<std::process::Child> = Vec::new();
-
-    for (cmd, env_str) in cmds.into_iter().zip(envs) {
-        let env_map = parser::parse_env_map(&env_str);
-
-        let safe_cmd = cmd.replace("\\", "%5C");
-        let parts = match shellwords::split(&safe_cmd) {
-            Ok(data) => data,
-            Err(e) => {
-                let _ = window.emit("start_transcode_listener", format!("Parse failed: {}", e));
-                let _ = window.emit("start_transcode_listener", "EOT".to_string());
-                return;
-            }
-        };
-
-        let mut parts_iter = parts.into_iter().map(|s| s.replace("%5C", "\\"));
-
-        let program = parts_iter.next().expect("empty command");
-
-        let mut c = std::process::Command::new(program);
-        #[cfg(windows)]
-        {
-            const CREATE_NO_WINDOW: u32 = 0x08000000;
-            c.creation_flags(CREATE_NO_WINDOW);
-        }
-
-        c.args(parts_iter);
-        c.arg("-progress").arg("pipe:2").arg("-hide_banner");
-
-        // If we have a previous stdout, make it this command's stdin (as Stdio)
-        if let Some(stdin) = prev_stdin.take() {
-            c.stdin(stdin);
-        } else {
-            // first command: no stdin (or explicitly null)
-            c.stdin(Stdio::null());
-        }
-
-        c.stdout(Stdio::piped());
-        c.stderr(Stdio::piped());
-
-        parser::apply_env(&mut c, &env_map);
-
-        let mut child = match c.spawn() {
-            Ok(ch) => ch,
-            Err(e) => {
-                let _ = window.emit("start_transcode_listener", format!("Spawn failed: {}", e));
-                let _ = window.emit("start_transcode_listener", "EOT".to_string());
-                return;
-            }
-        };
-
-        // Convert the newly spawned child's stdout into a Stdio to feed the *next* command.
-        prev_stdin = child.stdout.take().map(Stdio::from);
-
-        // Spawn stderr reader thread; DO NOT clear the shared pipeline here.
-        if let Some(mut stderr) = child.stderr.take() {
-            let win = window.clone();
-            std::thread::spawn(move || {
-                let mut buf = [0; 1024];
-                let mut leftover = String::new();
-                loop {
-                    let n = stderr.read(&mut buf).unwrap_or(0);
-                    if n == 0 {
-                        break;
-                    }
-
-                    leftover.push_str(&String::from_utf8_lossy(&buf[..n]));
-
-                    while let Some(pos) = leftover.find('\n') {
-                        let line = leftover.drain(..=pos).collect::<String>();
-                        let clean = line.trim_matches(&['\n', '\r'][..]);
-                        if !clean.is_empty() {
-                            let _ = win.emit("start_transcode_listener", clean.to_string());
-                        }
-                    }
-                }
-
-                if !leftover.is_empty() {
-                    let _ = win.emit("start_transcode_listener", leftover);
-                }
-            });
-        }
-
-        pipeline.push(child);
-    }
-
-    {
-        let mut slot = handle.pipeline.lock().unwrap();
-        *slot = Some(pipeline);
-    }
-
-    let _ = window.emit("start_transcode_listener", "Pipeline started");
-
-    // Spawn a watcher thread that polls the children with try_wait().
-    // When all children have exited we clear handle.pipeline and emit final EOT.
-    {
-        let pipeline_clone = handle.pipeline.clone();
-        let win = window.clone();
-        std::thread::spawn(move || {
-            loop {
-                let all_done = {
-                    let mut guard = pipeline_clone.lock().unwrap();
-                    if let Some(children) = guard.as_mut() {
-                        let mut everything_exited = true;
-                        for child in children.iter_mut() {
-                            match child.try_wait() {
-                                Ok(Some(_status)) => { /* exited */ }
-                                Ok(None) => {
-                                    everything_exited = false;
-                                    break;
-                                } // still running
-                                Err(_) => {
-                                    everything_exited = false;
-                                    break;
-                                }
-                            }
-                        }
-                        everything_exited
-                    } else {
-                        break;
-                    }
-                };
-
-                if all_done {
-                    // clear the pipeline and notify
-                    let mut guard = pipeline_clone.lock().unwrap();
-                    *guard = None;
-                    let _ = win.emit("start_transcode_listener", "EOT".to_string());
-                    break;
-                }
-
-                std::thread::sleep(Duration::from_millis(200));
-            }
-        });
-    }
+    
+    let job_id = queue.add_job(cmds, envs);
+    
+    // Try to process queue
+    queue.process_queue(window.clone());
+    
+    let _ = window.emit("queue_status_changed", queue.get_queue_status());
+    
+    job_id
 }
 
 #[tauri::command]
-pub fn stop_transcode(handle: tauri::State<FfmpegHandle>) {
-    let mut slot = handle.pipeline.lock().unwrap();
-    if let Some(children) = slot.take() {
-        for mut child in children {
-            let _ = child.kill();
-            let _ = child.wait();
-        }
+pub fn set_max_concurrent(
+    max: usize,
+    window: Window,
+    queue: tauri::State<TranscodeQueue>,
+) {
+    let mut max_concurrent = queue.max_concurrent.lock().unwrap();
+    *max_concurrent = max.max(1); // At least 1
+    drop(max_concurrent);
+    
+    // Try to start more jobs if we increased concurrency
+    queue.process_queue(window.clone());
+    let _ = window.emit("queue_status_changed", queue.get_queue_status());
+}
+
+#[tauri::command]
+pub fn get_max_concurrent(queue: tauri::State<TranscodeQueue>) -> usize {
+    *queue.max_concurrent.lock().unwrap()
+}
+
+#[tauri::command]
+pub fn get_queue_status(queue: tauri::State<TranscodeQueue>) -> Vec<TranscodeJob> {
+    queue.get_queue_status()
+}
+
+#[tauri::command]
+pub fn cancel_job(job_id: String, window: Window, queue: tauri::State<TranscodeQueue>) -> bool {
+    let result = queue.cancel_job(&job_id);
+    
+    if result {
+        // Try to start next job
+        queue.process_queue(window.clone());
+        let _ = window.emit("queue_status_changed", queue.get_queue_status());
     }
+    
+    result
 }
 
 #[tauri::command]
@@ -305,8 +470,8 @@ pub fn render_preview_request(
     env: String,
     start: String,
     end: String,
-    handle: tauri::State<FfmpegHandle>,
-) {
+    queue: tauri::State<TranscodeQueue>,
+) -> String {
     let data_path = filesystem::get_data_dir().unwrap();
     let tmp_path = data_path.join("tmp");
     let (final_cmd, target_file_path) = if start != end {
@@ -315,20 +480,21 @@ pub fn render_preview_request(
         make_preview_cmd(&cmd, tmp_path, &start, None).unwrap()
     };
 
+    let job_id = queue.add_job(vec![final_cmd], vec![env]);
+    
     let window_clone = window.clone();
     let target_path_clone = target_file_path.clone();
-    window.listen("start_transcode_listener", move |event| {
+    
+    window.listen(&format!("transcode_{}", job_id), move |event| {
         let payload = event.payload();
-        if payload == "\"EOT\"" {
+        if payload == "\"EOT\"" || payload == "\"EOT_FAILED\"" {
             window_clone.unlisten(event.id());
             let _ = window_clone.emit("render_preview_listener", &target_path_clone);
         }
     });
 
-    start_transcode(
-        vec![final_cmd], // cmds
-        vec![env],       // envs
-        window,
-        handle,
-    );
+    queue.process_queue(window.clone());
+    let _ = window.emit("queue_status_changed", queue.get_queue_status());
+    
+    job_id
 }
