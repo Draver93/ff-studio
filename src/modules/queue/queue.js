@@ -141,6 +141,10 @@ function createJobEntry(job) {
             </div>
             <span class="progress-text">Waiting...</span>
         </div>
+        <div class="queue-entry-info" style="display: none;">
+            <i class="fas fa-info-circle"></i>
+            <span class="info-text"></span>
+        </div>
         <div class="queue-entry-actions">
             <button class="queue-cancel-btn" data-job-id="${job.id}">
                 <i class="fas fa-times"></i> Cancel
@@ -163,7 +167,8 @@ function createJobEntry(job) {
         element: entry,
         id: job.id,
         status: job.status,
-        startTime: time
+        startTime: Date.now(),
+        errorLogs: []
     };
 }
 
@@ -195,36 +200,66 @@ function handleJobProgress(jobId, payload) {
 
     const progressText = entry.element.querySelector('.progress-text');
     const progressFill = entry.element.querySelector('.progress-fill');
+    const infoSection = entry.element.querySelector('.queue-entry-info');
+    const infoText = entry.element.querySelector('.info-text');
 
     if (payload === 'EOT') {
-        // Job completed successfully
+        // Job completed successfully - calculate duration
+        const duration = Date.now() - entry.startTime;
+        const durationStr = formatDuration(duration);
+        
         entry.status = 'Completed';
         updateJobEntry(entry, { id: jobId, status: 'Completed' });
         progressText.textContent = 'Completed';
         progressFill.style.width = '100%';
         progressFill.style.backgroundColor = 'var(--success)';
+        
+        // Show completion time
+        infoSection.style.display = 'flex';
+        infoSection.className = 'queue-entry-info info-success';
+        infoText.textContent = `Completed in ${durationStr}`;
         return;
     }
 
     if (payload === 'EOT_FAILED') {
-        // Job failed
+        // Job failed - show error info
         entry.status = 'Failed';
         updateJobEntry(entry, { id: jobId, status: 'Failed' });
         progressText.textContent = 'Failed';
         progressFill.style.width = '100%';
         progressFill.style.backgroundColor = 'var(--error)';
+        
+        // Show error message
+        infoSection.style.display = 'flex';
+        infoSection.className = 'queue-entry-info info-error';
+        if (entry.errorLogs.length > 0) {
+            infoText.textContent = entry.errorLogs[0]; // Show first error
+        } else {
+            infoText.textContent = 'Job failed with unknown error';
+        }
         return;
     }
 
     if (payload === 'Pipeline started') {
+        entry.startTime = Date.now(); // Reset start time when pipeline actually starts
         progressText.textContent = 'Processing...';
         progressFill.style.width = '10%';
         progressFill.style.backgroundColor = 'var(--info)';
         return;
     }
 
-    // Parse FFmpeg progress
+    // Parse FFmpeg progress and detect errors
     if (typeof payload === 'string') {
+        // Check for errors using the same regex patterns
+        const ERROR_REGEX = /(error|failed|invalid argument|cannot|matches no streams|No such file or directory|already exists)/i;
+        
+        if (ERROR_REGEX.test(payload)) {
+            // Store error message (keep only first 3 errors to avoid memory issues)
+            if (entry.errorLogs.length < 3) {
+                entry.errorLogs.push(payload);
+            }
+        }
+        
         // Look for progress indicators
         if (payload.includes('frame=')) {
             const frameMatch = payload.match(/frame=\s*(\d+)/);
@@ -256,6 +291,20 @@ function handleJobProgress(jobId, payload) {
                 progressText.textContent = `${currentText} (${speedMatch[1]}x)`;
             }
         }
+    }
+}
+
+function formatDuration(ms) {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    
+    if (hours > 0) {
+        return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
+    } else if (minutes > 0) {
+        return `${minutes}m ${seconds % 60}s`;
+    } else {
+        return `${seconds}s`;
     }
 }
 

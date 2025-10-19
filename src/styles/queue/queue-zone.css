@@ -256,6 +256,41 @@
     font-family: var(--font-family-mono);
 }
 
+/* Info section for completion time or error messages */
+.queue-entry-info {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    margin-bottom: var(--spacing-sm);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.queue-entry-info i {
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.queue-entry-info .info-text {
+    flex: 1;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.info-success {
+    color: var(--success);
+    background: rgba(107, 207, 127, 0.1);
+    border: 1px solid rgba(107, 207, 127, 0.2);
+}
+
+.info-error {
+    color: var(--error);
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.2);
+}
+
 /* Action buttons within a queue entry */
 .queue-entry-actions {
     display: flex;
