@@ -59,7 +59,7 @@
 
 /* Queue Display */
 @import 'queue/queue-zone.css';
-
+@import 'queue/queue-tab.css';
 
 /* Workflow Management */
 @import 'workflows/workflow-list.css';

@@ -53,7 +53,6 @@
 #queue-concurrency {
     width: 60px;
     padding: 6px 10px;
-    background: var(--tertiary-bg);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
@@ -64,7 +63,6 @@
 
 #queue-concurrency-set {
     padding: 6px 12px;
-    background: var(--tertiary-bg);
     border: 1px solid var(--border-primary);
     box-shadow: var(--shadow-sm);
     border-radius: var(--radius-sm);
@@ -156,7 +154,7 @@
 
 /* Status badge */
 .queue-status {
-    padding: 4px 12px;
+    padding: 4px 8px;
     border-radius: var(--radius-sm);
     font-size: var(--font-size-xs);
     font-weight: 500;

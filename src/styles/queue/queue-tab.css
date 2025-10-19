@@ -1,0 +1,73 @@
+/**
+ * Queue Tab Badge with Spinning Progress Wheel
+ * Shows number of active jobs with circular progress animation
+ */
+
+/* Queue Tab with Absolute Badge */
+.tab[data-tab="queue"] {
+    position: relative;
+}
+
+.tab-content {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.queue-badge {
+    min-width: 16px;
+    height: 16px;
+    background: rgba(77, 171, 247, 0.15);
+    color: var(--info);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    display: none;
+    transform: scale(0);
+    transition: all 0.3s ease;
+}
+
+/* Show badge when has jobs */
+.tab[data-tab="queue"].has-jobs .queue-badge {
+    display: flex;
+    transform: scale(1);
+}
+
+/* Running state - change icon to spinner */
+.tab[data-tab="queue"].running .queue-icon {
+    /* Remove existing classes and add spinner */
+}
+
+/* Pulse animation for queue changes */
+.queue-badge.pulse {
+    animation: badge-pulse 0.4s ease-out;
+}
+
+@keyframes badge-pulse {
+    0% { transform: scale(1); }
+    50% { 
+        transform: scale(1.3);
+        background: rgba(0, 123, 255, 1);
+    }
+    100% { transform: scale(1); }
+}
+
+/* High priority state */
+.tab[data-tab="queue"].high-priority .queue-badge {
+    background: rgba(220, 53, 69, 0.9);
+    animation: urgent-pulse 1s ease-in-out infinite;
+}
+
+@keyframes urgent-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+/* Hover effects */
+.tab[data-tab="queue"]:hover .queue-badge {
+    transform: scale(1.1);
+}

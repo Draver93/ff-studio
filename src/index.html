@@ -30,9 +30,12 @@
                     <i class="fas fa-play-circle"></i>
                     <span>Player</span>
                 </button>
-                 <button class="tab" data-tab="queue">
-                    <i class="fas fa-bars"></i>
-                    <span>Queue</span>
+                <button class="tab" data-tab="queue">
+                    <div class="tab-content">
+                        <i class="queue-icon fas fa-list"></i>
+                        <span>Queue</span>
+                        <div class="queue-badge">0</div>
+                    </div>
                 </button>
                 <button class="tab" data-tab="logs">
                     <i class="fas fa-terminal"></i>
@@ -40,7 +43,6 @@
                     <div class="error-badge" id="error-badge"></div>
                 </button>
             </div>
-
         </div>
 
         <!-- Main Content -->
@@ -302,7 +304,7 @@
                     <div class="queue-controls">
                         <div class="queue-concurrency-control">
                             <label for="queue-concurrency">Max Concurrent:</label>
-                            <input type="number" id="queue-concurrency" min="1" max="10" value="1">
+                            <input class="oc-input" type="number" id="queue-concurrency" min="1" max="10" value="1">
                             <button id="queue-concurrency-set">
                                 <i class="fas fa-check"></i> Set
                             </button>

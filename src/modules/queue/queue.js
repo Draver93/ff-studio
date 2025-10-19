@@ -73,8 +73,48 @@ function updateQueueDisplay(jobs) {
     if (badge) {
         badge.textContent = `${runningCount} running, ${queuedCount} queued`;
     }
+    
+    // Update tab badge
+    updateQueueTabBadge(runningCount, queuedCount);
 
     queueContent.scrollTop = queueContent.scrollHeight;
+}
+
+function updateQueueTabBadge(runningCount, queuedCount) {
+    const queueTab = document.querySelector('.tab[data-tab="queue"]');
+    if (!queueTab) return;
+    
+    const badge = queueTab.querySelector('.queue-badge');
+    const icon = queueTab.querySelector('.queue-icon');
+    if (!badge || !icon) return;
+    
+    const totalActive = runningCount + queuedCount;
+    const oldValue = parseInt(badge.textContent) || 0;
+    
+    badge.textContent = totalActive;
+    
+    // Update icon based on running state
+    if (runningCount > 0) {
+        // Switch to spinner
+        icon.className = 'queue-icon fas fa-spinner fa-spin';
+    } else {
+        // Switch back to list
+        icon.className = 'queue-icon fas fa-list';
+    }
+    
+    // Update states
+    queueTab.classList.toggle('has-jobs', totalActive > 0);
+    queueTab.classList.toggle('running', runningCount > 0);
+    queueTab.classList.toggle('high-priority', totalActive >= 8);
+    
+    // Pulse animation for any count change
+    if (oldValue !== totalActive) {
+        badge.classList.remove('pulse');
+        void badge.offsetWidth;
+        badge.classList.add('pulse');
+        
+        setTimeout(() => badge.classList.remove('pulse'), 400);
+    }
 }
 
 function createJobEntry(job) {
