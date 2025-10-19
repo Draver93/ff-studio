@@ -1,6 +1,10 @@
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
 
+import { addLogEntry } from '../logs/logs.js';
+import { ERROR_REGEX, WARNING_REGEX, PROGRESS_REGEX } from './constants.js';
+
+
 const queueContent = document.querySelector('.queue-content');
 let queueJobs = new Map(); // Store job data by ID
 
@@ -158,9 +162,13 @@ function createJobEntry(job) {
         cancelJob(job.id);
     });
 
-    // Listen for job-specific events
+    // Listen for job-specific events and forward to both queue and logs
     listen(`transcode_${job.id}`, (event) => {
-        handleJobProgress(job.id, event.payload);
+        const payload = event.payload;
+        handleJobProgress(job.id, payload);
+        
+        // Forward to logs tab
+        forwardToLogs(job.id, payload);
     });
 
     return {
@@ -250,9 +258,6 @@ function handleJobProgress(jobId, payload) {
 
     // Parse FFmpeg progress and detect errors
     if (typeof payload === 'string') {
-        // Check for errors using the same regex patterns
-        const ERROR_REGEX = /(error|failed|invalid argument|cannot|matches no streams|No such file or directory|already exists)/i;
-        
         if (ERROR_REGEX.test(payload)) {
             // Store error message (keep only first 3 errors to avoid memory issues)
             if (entry.errorLogs.length < 3) {
@@ -382,9 +387,32 @@ function clearCompletedJobs() {
     addLogEntry('info', 'Cleared completed jobs from queue');
 }
 
-// Import addLogEntry from logs module if needed
-function addLogEntry(type, message) {
-    if (window.addLogEntry) {
-        window.addLogEntry(type, message);
+// Forward transcode events to logs tab
+function forwardToLogs(jobId, payload) {
+    if (typeof payload !== 'string') return;
+    
+    // Special messages
+    if (payload === 'EOT') {
+        addLogEntry('success', `[${jobId}] Job completed successfully`);
+        return;
+    }
+    
+    if (payload === 'EOT_FAILED') {
+        addLogEntry('error', `[${jobId}] Job failed`);
+        return;
+    }
+    
+    if (payload === 'Pipeline started') {
+        addLogEntry('info', `[${jobId}] Pipeline started`);
+        return;
+    }
+    
+    // Categorize and log based on content
+    if (ERROR_REGEX.test(payload)) {
+        addLogEntry('error', `[${jobId}] ${payload}`);
+    } else if (WARNING_REGEX.test(payload)) {
+        addLogEntry('warning', `[${jobId}] ${payload}`);
+    } else if (PROGRESS_REGEX.test(payload)) {
+        addLogEntry('debug', `[${jobId}] ${payload}`);
     }
 }
