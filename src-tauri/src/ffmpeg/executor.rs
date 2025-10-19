@@ -77,24 +77,25 @@ impl TranscodeQueue {
     }
 
     pub fn get_queue_status(&self) -> Vec<TranscodeJob> {
-        let queue = self.queue.lock().unwrap();
-        let running = self.running.lock().unwrap();
-        
         let mut all_jobs = Vec::new();
         
-        // Add running jobs
-        for rj in running.iter() {
-            all_jobs.push(TranscodeJob {
-                id: rj.id.clone(),
-                cmds: vec![],
-                envs: vec![],
-                status: JobStatus::Running,
-            });
+        {
+            let running = self.running.lock().unwrap();
+            for rj in running.iter() {
+                all_jobs.push(TranscodeJob {
+                    id: rj.id.clone(),
+                    cmds: vec![],
+                    envs: vec![],
+                    status: JobStatus::Running,
+                });
+            }
         }
         
-        // Add queued jobs
-        for job in queue.iter() {
-            all_jobs.push(job.clone());
+        {
+            let queue = self.queue.lock().unwrap();
+            for job in queue.iter() {
+                all_jobs.push(job.clone());
+            }
         }
         
         all_jobs
@@ -128,8 +129,11 @@ impl TranscodeQueue {
     }
 
     pub fn process_queue(&self, window: Window) {
-        let max_concurrent = *self.max_concurrent.lock().unwrap();
-        let running_count = self.running.lock().unwrap().len();
+        let (max_concurrent, running_count) = {
+            let max = *self.max_concurrent.lock().unwrap();
+            let count = self.running.lock().unwrap().len();
+            (max, count)
+        };
 
         if running_count >= max_concurrent {
             return;
@@ -158,6 +162,7 @@ impl TranscodeQueue {
     fn execute_job(&self, job: TranscodeJob, window: Window) {
         use std::io::Read;
         use std::process::Stdio;
+        use std::sync::atomic::{AtomicBool, Ordering};
         use std::time::Duration;
 
         let job_id = job.id.clone();
@@ -166,6 +171,9 @@ impl TranscodeQueue {
 
         let mut prev_stdin: Option<Stdio> = None;
         let mut pipeline: Vec<Child> = Vec::new();
+        
+        // Track if any errors occurred during execution
+        let had_error = Arc::new(AtomicBool::new(false));
 
         for (cmd, env_str) in cmds.into_iter().zip(envs) {
             let env_map = parser::parse_env_map(&env_str);
@@ -224,9 +232,24 @@ impl TranscodeQueue {
             if let Some(mut stderr) = child.stderr.take() {
                 let win = window.clone();
                 let jid = job_id.clone();
+                let error_flag = had_error.clone();
+                
                 std::thread::spawn(move || {
                     let mut buf = [0; 1024];
                     let mut leftover = String::new();
+                    
+                    // Simple error detection regex patterns
+                    let is_error = |s: &str| {
+                        let lower = s.to_lowercase();
+                        lower.contains("error") || 
+                        lower.contains("failed") || 
+                        lower.contains("invalid argument") ||
+                        lower.contains("cannot") ||
+                        lower.contains("matches no streams") ||
+                        lower.contains("no such file or directory") ||
+                        lower.contains("already exists")
+                    };
+                    
                     loop {
                         let n = stderr.read(&mut buf).unwrap_or(0);
                         if n == 0 {
@@ -239,12 +262,19 @@ impl TranscodeQueue {
                             let line = leftover.drain(..=pos).collect::<String>();
                             let clean = line.trim_matches(&['\n', '\r'][..]);
                             if !clean.is_empty() {
+                                // Check if this line contains an error
+                                if is_error(clean) {
+                                    error_flag.store(true, Ordering::Relaxed);
+                                }
                                 let _ = win.emit(&format!("transcode_{}", jid), clean.to_string());
                             }
                         }
                     }
 
                     if !leftover.is_empty() {
+                        if is_error(&leftover) {
+                            error_flag.store(true, Ordering::Relaxed);
+                        }
                         let _ = win.emit(&format!("transcode_{}", jid), leftover);
                     }
                 });
@@ -270,6 +300,7 @@ impl TranscodeQueue {
             let queue_clone = self.clone();
             let win = window.clone();
             let jid = job_id.clone();
+            let error_flag = had_error.clone();
 
             std::thread::spawn(move || {
                 loop {
@@ -278,14 +309,21 @@ impl TranscodeQueue {
                         if let Some(pos) = guard.iter().position(|j| j.id == jid) {
                             let job = &mut guard[pos];
                             let mut everything_exited = true;
+                            
                             for child in job.pipeline.iter_mut() {
                                 match child.try_wait() {
-                                    Ok(Some(_status)) => {}
+                                    Ok(Some(status)) => {
+                                        // Check if process failed with non-zero exit code
+                                        if !status.success() {
+                                            error_flag.store(true, Ordering::Relaxed);
+                                        }
+                                    }
                                     Ok(None) => {
                                         everything_exited = false;
                                         break;
                                     }
                                     Err(_) => {
+                                        error_flag.store(true, Ordering::Relaxed);
                                         everything_exited = false;
                                         break;
                                     }
@@ -302,7 +340,14 @@ impl TranscodeQueue {
                         if let Some(pos) = guard.iter().position(|j| j.id == jid) {
                             guard.remove(pos);
                         }
-                        let _ = win.emit(&format!("transcode_{}", jid), "EOT".to_string());
+                        drop(guard); // Explicitly drop lock before other operations
+                        
+                        // Emit appropriate completion event based on error flag
+                        if error_flag.load(Ordering::Relaxed) {
+                            let _ = win.emit(&format!("transcode_{}", jid), "EOT_FAILED".to_string());
+                        } else {
+                            let _ = win.emit(&format!("transcode_{}", jid), "EOT".to_string());
+                        }
                         
                         // Process next job in queue
                         queue_clone.process_queue(win.clone());
@@ -431,9 +476,10 @@ pub fn set_max_concurrent(
     window: Window,
     queue: tauri::State<TranscodeQueue>,
 ) {
-    let mut max_concurrent = queue.max_concurrent.lock().unwrap();
-    *max_concurrent = max.max(1); // At least 1
-    drop(max_concurrent);
+    {
+        let mut max_concurrent = queue.max_concurrent.lock().unwrap();
+        *max_concurrent = max.max(1); // At least 1
+    }
     
     // Try to start more jobs if we increased concurrency
     queue.process_queue(window.clone());

@@ -57,6 +57,10 @@
 /* Logs Display */
 @import 'logs/logs-zone.css';
 
+/* Queue Display */
+@import 'queue/queue-zone.css';
+
+
 /* Workflow Management */
 @import 'workflows/workflow-list.css';
 @import 'workflows/workflow-icons.css';

@@ -111,7 +111,7 @@ function cancelTranscoding() {
 }
 
 async function startTranscding(cmds, envs) {
-    invoke('start_transcode', { cmds: cmds,  envs: envs });
+    invoke('queue_transcode', { cmds: cmds,  envs: envs });
 }
 
 // Initialize execution system
@@ -246,7 +246,7 @@ function initializeExecution() {
 
     // Execute functions
     executeBtn.addEventListener('click', () => {
-        if (window.isTranscoding) { cancelTranscoding(); return; }
+        //if (window.isTranscoding) { cancelTranscoding(); return; }
 
         let cmds = [];
         let envs = [];
@@ -265,7 +265,7 @@ function initializeExecution() {
         startTranscding(cmds, envs);
         
         // Update button state
-        loading.showLoading('Processing Graph', true);
+       /* loading.showLoading('Processing Graph', true);
     
         executeBtn.classList.add('executing');
         executeBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> <span class="footer-title">Executing...</span>';
@@ -280,7 +280,7 @@ function initializeExecution() {
             progress += Math.random() * ((75 - progress) / 8.0);
             if (progress <= 0) progress = 1;
             loading.updateLoadingProgress(progress);
-        }, 600);
+        }, 600);*/
     });
 
     window.action_button_listener = setInterval(() => {

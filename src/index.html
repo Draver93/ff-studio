@@ -296,50 +296,32 @@
                     </div>
                 </div>
 
-                <div class="logs-zone queue-zone" id="queue-zone">
-                    <div class="logs-header">
-                        <div>
-                            <span>Transcode Queue</span>
-                            <span class="badge" id="queue-count">1 task</span>
+                <!-- Queue Zone -->
+                <div class="queue-zone" id="queue-zone">
+                    <!-- Queue Header with Controls -->
+                    <div class="queue-controls">
+                        <div class="queue-concurrency-control">
+                            <label for="queue-concurrency">Max Concurrent:</label>
+                            <input type="number" id="queue-concurrency" min="1" max="10" value="1">
+                            <button id="queue-concurrency-set">
+                                <i class="fas fa-check"></i> Set
+                            </button>
                         </div>
-                        <div class="log-actions">
-                            <label style="display:inline-flex;align-items:center;gap:8px;">
-                                Concurrency
-                                <input  class="oc-input" id="queue-limit" type="number" min="1" value="4" />
-                            </label>
-                            <button class="log-btn" id="queue-refresh" title="Refresh"> Refresh </button>
-                            <button class="log-btn" id="queue-clear" title="Clear queue"> Clear </button>
-                        </div>
+                        
+                        <span class="queue-badge">0 running, 0 queued</span>
+                        
+                        <button id="queue-zone-clear">
+                            <i class="fas fa-trash"></i> Clear Completed
+                        </button>
                     </div>
-
-                    <div class="logs-content queue-content">
-                        <!-- single-column layout: stats + list below -->
-                        <div style="display:flex;flex-direction:column;">
-                        <!-- stat chips (matches logs look) -->
-                            <div style="display:flex;gap:8px;flex-wrap:wrap;padding:12px;">
-                                <div class="badge" id="queue-running-count" style="background:#6ee2766e;color:#6ee276;">Running: 0</div>
-                                <div class="badge" id="queue-pending-count" style="background:#fff8e171;color:#ebdc5a;">Pending: 1</div>
-                                <div class="badge" id="queue-finished-count" style="background:#4b8bec73;color:#4b8cec;">Finished: 0</div>
-                                <div class="badge" id="queue-failed-count" style="background:#ee5b5b7c;color:#ee5b5b;">Failed: 0</div>
-                            </div>
-
-                            <!-- entries use same 'log-entry' style so they visually match Execution Logs -->
-                            <div id="queue-list" style="padding:0 12px 12px 12px;">
-                                <!-- Example test queue entry -->
-                                <div class="log-entry pending" data-id="test-1">
-                                    <span class="log-time">now</span>
-                                    <i class="fas fa-clock"></i>
-                                    <span><strong>test-1</strong> — ffmpeg -i input.mp4 -c:v libx264 out.mp4</span>
-                                    <div class="entry-meta" style="float:right;font-size:12px;color:#666;">
-                                        Pending • added just now
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    
+                    <!-- Scrollable Queue Content -->
+                    <div class="queue-content">
+                        <!-- Queue entries will be added here dynamically -->
                     </div>
                 </div>
             </div>
-
+        
             <!-- Right Sidebar -->
             <div class="right-sidebar" id="right-sidebar">
                 <div class="sidebar-header">
@@ -475,7 +457,6 @@
                     </div>
                 </div>
             </div>
-        </div>
     </div>
 
     <!-- Modal for New Workflow -->
