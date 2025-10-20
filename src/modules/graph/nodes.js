@@ -93,6 +93,10 @@ function make_io_nodes() {
         this.onPropertyChanged("Select by", "id");
 
         this.title = "stream selector";
+        this.desc = "Selects specific streams from inputs or filters.<br>\
+        Used to map video/audio/subtitle streams (-map).<br>\
+        Also links filters or encoder flags to target streams (e.g. -b:v, -b:a).<br>\
+        Selection modes: by id, type, name, language, program, or custom map.";
     }
 
     ffstream.prototype.onExecute = function () {
@@ -286,7 +290,11 @@ function make_io_nodes() {
         this.getInfoBtn.disabled = true;
 
         this.title = "IN";
-        
+        this.desc = "Input source node.<br>\
+        Supports file paths or wildcards (*) for batch processing.<br>\
+        Each matching file becomes a separate input (-i).<br>\
+        Use 'Get media info' to inspect streams and formats.";
+
         // Force initial size in LiteGraph
         this.setSize(this.computeSize());
         this.setDirtyCanvas(true);
@@ -434,6 +442,10 @@ function make_io_nodes() {
             }).catch((err) => addLogEntry('error', `Failed to select target file path: ` + err) );
         });
         this.title = "OUT";
+        this.desc = "Output destination node.<br>\
+        Combines streams, encoders, muxer, and global options into one output file.<br>\
+        Supports placeholders: {name}, {index}, {hash}, or * in filenames.<br>\
+        If no placeholder is used, {name} is auto-injected before extension.";
     }
     ffoutput.prototype.onExecute = function () {
         if (window.global_ffmpeg.selected_only && !this.is_selected) { return; }
