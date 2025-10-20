@@ -21,6 +21,10 @@ pub enum FFStudioError {
     Application(String),
     /// IO errors
     Io(String),
+
+    Glob(String),
+
+    Pattern(String),
 }
 
 impl fmt::Display for FFStudioError {
@@ -34,6 +38,8 @@ impl fmt::Display for FFStudioError {
             FFStudioError::Parse(msg) => write!(f, "Parse error: {}", msg),
             FFStudioError::Application(msg) => write!(f, "Application error: {}", msg),
             FFStudioError::Io(msg) => write!(f, "IO error: {}", msg),
+            FFStudioError::Glob(msg) => write!(f, "Glob error: {}", msg),
+            FFStudioError::Pattern(msg) => write!(f, "Pattern error: {}", msg),
         }
     }
 }
@@ -66,6 +72,18 @@ impl From<anyhow::Error> for FFStudioError {
 impl From<std::process::ExitStatus> for FFStudioError {
     fn from(status: std::process::ExitStatus) -> Self {
         FFStudioError::FFmpeg(format!("Process exited with status: {}", status))
+    }
+}
+
+impl From<glob::GlobError> for FFStudioError {
+    fn from(err: glob::GlobError) -> Self {
+        FFStudioError::Io(err.to_string())
+    }
+}
+
+impl From<glob::PatternError> for FFStudioError {
+    fn from(err: glob::PatternError) -> Self {
+        FFStudioError::Io(err.to_string())
     }
 }
 
@@ -102,6 +120,14 @@ impl FFStudioError {
     pub fn io(msg: impl Into<String>) -> Self {
         FFStudioError::Io(msg.into())
     }
+
+    pub fn glob(msg: impl Into<String>) -> Self {
+        FFStudioError::Glob(msg.into())
+    }
+    pub fn pattern(msg: impl Into<String>) -> Self {
+        FFStudioError::Pattern(msg.into())
+    }
+    
 }
 
 /// Error context trait for adding context to errors
@@ -133,6 +159,8 @@ where
                 FFStudioError::Parse(msg) => *msg = format!("{}: {}", context, msg),
                 FFStudioError::Application(msg) => *msg = format!("{}: {}", context, msg),
                 FFStudioError::Io(msg) => *msg = format!("{}: {}", context, msg),
+                FFStudioError::Glob(msg) => *msg = format!("{}: {}", context, msg),
+                FFStudioError::Pattern(msg) => *msg = format!("{}: {}", context, msg),
             }
             error
         })
@@ -187,6 +215,12 @@ pub fn to_user_message(error: &FFStudioError) -> String {
             } else {
                 format!("IO error: {}", msg)
             }
+        }   
+        FFStudioError::Glob(msg) => {
+            format!("Glob error: {}", msg)
+        }
+        FFStudioError::Pattern(msg) => {
+            format!("Pattern error: {}", msg)
         }
     }
 }

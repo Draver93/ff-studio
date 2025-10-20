@@ -52,6 +52,8 @@ async function refreshQueueStatus() {
 }
 
 function updateQueueDisplay(jobs) {
+    const shouldAutoScroll = queueContent.scrollTop + queueContent.clientHeight >= queueContent.scrollHeight - 50;
+
     // Update or add job entries
     jobs.forEach(job => {
         let entry = queueJobs.get(job.id);
@@ -80,8 +82,8 @@ function updateQueueDisplay(jobs) {
     
     // Update tab badge
     updateQueueTabBadge(runningCount, queuedCount);
-
-    queueContent.scrollTop = queueContent.scrollHeight;
+    // Auto-scroll only if user is near the bottom
+    if (shouldAutoScroll) queueContent.scrollTop = queueContent.scrollHeight;
 }
 
 function updateQueueTabBadge(runningCount, queuedCount) {

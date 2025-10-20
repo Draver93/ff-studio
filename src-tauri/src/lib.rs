@@ -48,6 +48,7 @@ pub fn run() {
             commands::media_ops::delete_cache_request,
             workflow::manager::get_workflow_list,
             utils::version::app_version,
+            utils::filesystem::expand_wildcard_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

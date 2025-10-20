@@ -4,6 +4,7 @@
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
 import { addLogEntry } from '../logs/logs.js';
+import { expandFfmpegCommand } from './utils.js';
 import * as core from './core.js';
 
 // Execution state
@@ -149,32 +150,18 @@ function initializeExecution() {
             cmds = commandChain.map(b => `${b.ffmpeg} ${b.command}`);
             envs = commandChain.map(b => b.envs);
             addLogEntry("info", `Executing ffmpeg commands chain: ${cmds.join(" | ")}`);
+            startTranscding(cmds, envs);
         }
         else {
-            cmds = [`${window.FFMPEG_BIN} ${get_ffmpeg_command()}`];
-            envs = [ window.FFMPEG_ENV];
-            addLogEntry("info", `Executing ffmpeg command: ${cmds[0]}`);
+            expandFfmpegCommand(`${window.FFMPEG_BIN} ${get_ffmpeg_command()}`).then(list => {
+                list.forEach(cmd => {
+                    cmds = [cmd];
+                    envs = [window.FFMPEG_ENV];
+                    startTranscding(cmds, envs);
+                    addLogEntry("info", `Expanded ffmpeg command: ${cmd}`);
+                });
+            });
         }
-
-        startTranscding(cmds, envs);
-        
-        // Update button state
-       /* loading.showLoading('Processing Graph', true);
-    
-        executeBtn.classList.add('executing');
-        executeBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> <span class="footer-title">Executing...</span>';
-        window.isTranscoding = true;
-    
-        // Show loading modal
-        loading.updateLoadingDetails('Initializing FFmpeg processing...<br>Estimated time: Calculating...');
-    
-        // Simulate processing steps
-        let progress = 0;
-        window.loadingInterval = setInterval(() => {
-            progress += Math.random() * ((75 - progress) / 8.0);
-            if (progress <= 0) progress = 1;
-            loading.updateLoadingProgress(progress);
-        }, 600);*/
     });
 
     window.action_button_listener = setInterval(() => {

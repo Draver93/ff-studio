@@ -18,6 +18,8 @@ export function initLogs() {
 // Log system module
 export function addLogEntry(type, message) {
     const logsContent = document.querySelector('.logs-content');
+    const shouldAutoScroll = logsContent.scrollTop + logsContent.clientHeight >= logsContent.scrollHeight - 50;
+    
     const time = new Date().toLocaleTimeString();
     const logEntry = document.createElement('div');
     logEntry.className = `log-entry ${type}`;
@@ -39,7 +41,10 @@ export function addLogEntry(type, message) {
         <span>${message}</span>
     `;
     logsContent.appendChild(logEntry);
-    logsContent.scrollTop = logsContent.scrollHeight;
+
+    // Auto-scroll only if user is near the bottom
+    if (shouldAutoScroll) logsContent.scrollTop = logsContent.scrollHeight;
+    
     const logCount = logsContent.querySelectorAll('.log-entry').length;
     const badge = document.querySelector('.badge');
     if(badge) badge.textContent = `${logCount} entries`;

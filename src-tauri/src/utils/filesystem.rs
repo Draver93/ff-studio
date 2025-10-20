@@ -1,4 +1,5 @@
 use std::fs;
+use glob::glob;
 use std::path::PathBuf;
 
 use super::hash::short_hash;
@@ -106,4 +107,20 @@ pub fn save_nodes(ffmpeg_path: &str, nodes: &Vec<Node>) -> Result<()> {
         ffmpeg_path
     );
     Ok(())
+}
+
+#[tauri::command]
+pub fn expand_wildcard_path(pattern: String) -> Result<Vec<String>> {
+    let matches: Vec<String> = glob(&pattern)?
+        .filter_map(|entry| {
+            entry.ok().and_then(|path| {
+                if path.is_file() {
+                    Some(path.to_string_lossy().to_string())
+                } else {
+                    None
+                }
+            })
+        })
+        .collect();
+    Ok(matches)
 }
