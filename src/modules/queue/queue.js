@@ -111,7 +111,6 @@ function updateQueueTabBadge(runningCount, queuedCount) {
     // Update states
     queueTab.classList.toggle('has-jobs', totalActive > 0);
     queueTab.classList.toggle('running', runningCount > 0);
-    queueTab.classList.toggle('high-priority', totalActive >= 8);
     
     // Pulse animation for any count change
     if (oldValue !== totalActive) {
