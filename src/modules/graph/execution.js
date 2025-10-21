@@ -60,7 +60,12 @@ function get_ffmpeg_command(selected_only = false) {
 }
 
 async function startTranscding(cmds, envs) {
-    invoke('queue_transcode', { cmds: cmds,  envs: envs });
+    invoke('queue_transcode', { cmds: cmds,  envs: envs,
+        desc: JSON.stringify({
+            "tag": cmds.length > 1 ? "chain transcode" : "single transcode", 
+            "cmd": cmds.join(" | "), 
+            "workflow": window.selectedWorkflow})
+        });
 }
 
 // Initialize execution system

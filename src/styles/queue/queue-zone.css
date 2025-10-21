@@ -36,7 +36,6 @@
     padding: var(--spacing-md);
     background: var(--secondary-bg);
     border-bottom: 1px solid var(--border-primary);
-    align-items: center;
 }
 
 .queue-concurrency-control {
@@ -46,6 +45,18 @@
 }
 
 .queue-concurrency-control label {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+.queue-action-buttons {
+    display: flex;
+    align-items: center;
+    margin-left: auto; 
+    gap: var(--spacing-sm);
+}
+
+.queue-action-buttons label {
     font-size: var(--font-size-sm);
     color: var(--text-muted);
 }
@@ -94,6 +105,26 @@
     color: var(--text-primary);
 }
 
+#queue-zone-stop {
+    margin-left: auto;
+    padding: 6px 12px;
+    background: #ff6b6b25;
+    border: 1px solid #cc7a7a;
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    color: #cc7a7a;
+    transition: all var(--transition-fast);
+}
+
+#queue-zone-stop:hover {
+    background: #ff6b6b25;
+    color: #ff6b6b;
+    border: 1px solid #ff6b6b;
+}
+
+
 .queue-badge {
     padding: 4px 12px;
     background: rgba(77, 171, 247, 0.1);
@@ -124,6 +155,7 @@
     padding: var(--spacing-md);
     border-left: 3px solid var(--border-primary);
     transition: all var(--transition-fast);
+    overflow: hidden;
 }
 
 .queue-entry:hover {
@@ -147,9 +179,8 @@
 
 .queue-id {
     color: var(--text-muted);
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-md);
     font-family: var(--font-family-mono);
-    margin-left: auto;
 }
 
 /* Status badge */

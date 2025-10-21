@@ -64,3 +64,128 @@
 .tab[data-tab="queue"]:hover .queue-badge {
     transform: scale(1.1);
 }
+
+/* Queue Entry Header Layout */
+.queue-entry-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Status Group - Status + Command Button */
+.queue-status-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Meta Group - Tag + Workflow + ID */
+.queue-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+/* Command Button */
+.queue-cmd-btn {
+    background: rgba(108, 117, 125, 0.1);
+    border: 1px solid rgba(108, 117, 125, 0.2);
+    border-radius: var(--radius-sm);
+    padding: 4px 8px;
+    color: var(--secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+}
+
+.queue-cmd-btn:hover {
+    background: rgba(108, 117, 125, 0.2);
+    border-color: rgba(108, 117, 125, 0.4);
+    color: var(--light);
+}
+
+.queue-cmd-btn.copied {
+    background: rgba(40, 167, 69, 0.2);
+    border-color: rgba(40, 167, 69, 0.4);
+    color: var(--success);
+}
+
+/* Tag Badge - Base Style */
+.queue-tag {
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid;
+}
+
+/* Tag Color Variants */
+.queue-tag-preview {
+    background: rgba(156, 39, 176, 0.15);
+    color: #ce93d8;
+    border-color: rgba(156, 39, 176, 0.3);
+}
+
+.queue-tag-single-transcode {
+    background: rgba(33, 150, 243, 0.15);
+    color: #64b5f6;
+    border-color: rgba(33, 150, 243, 0.3);
+}
+
+.queue-tag-chain-transcode {
+    background: rgba(76, 175, 80, 0.15);
+    color: #81c784;
+    border-color: rgba(76, 175, 80, 0.3);
+}
+
+/* Default fallback for unknown tags */
+.queue-tag:not([class*="queue-tag-"]) {
+    background: rgba(108, 117, 125, 0.15);
+    color: #b0bec5;
+    border-color: rgba(108, 117, 125, 0.3);
+}
+
+/* Workflow Badge */
+.queue-workflow {
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Command Tooltip */
+.command-tooltip {
+    position: fixed;
+    background: rgba(20, 20, 30, 0.98);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    color: var(--light);
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    max-width: 600px;
+    word-wrap: break-word;
+    z-index: 10000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+    animation: tooltip-fadein 0.15s ease;
+}
+
+@keyframes tooltip-fadein {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

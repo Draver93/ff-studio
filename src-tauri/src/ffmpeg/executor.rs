@@ -16,6 +16,7 @@ use std::os::windows::process::CommandExt;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TranscodeJob {
     pub id: String,
+    pub desc: String,
     pub cmds: Vec<String>,
     pub envs: Vec<String>,
     pub status: JobStatus,
@@ -32,6 +33,7 @@ pub enum JobStatus {
 
 pub struct RunningJob {
     pub id: String,
+    pub desc: String,
     pub pipeline: Vec<Child>,
 }
 
@@ -61,10 +63,11 @@ impl TranscodeQueue {
         format!("job_{}", *counter)
     }
 
-    pub fn add_job(&self, cmds: Vec<String>, envs: Vec<String>) -> String {
+    pub fn add_job(&self, cmds: Vec<String>, envs: Vec<String>, desc: String) -> String {
         let job_id = self.generate_job_id();
         let job = TranscodeJob {
             id: job_id.clone(),
+            desc: desc,
             cmds,
             envs,
             status: JobStatus::Queued,
@@ -84,6 +87,7 @@ impl TranscodeQueue {
             for rj in running.iter() {
                 all_jobs.push(TranscodeJob {
                     id: rj.id.clone(),
+                    desc: rj.desc.clone(),
                     cmds: vec![],
                     envs: vec![],
                     status: JobStatus::Running,
@@ -128,6 +132,32 @@ impl TranscodeQueue {
         false
     }
 
+    pub fn cancel_all_jobs(&self) -> usize {
+        let mut cancelled_count = 0;
+        
+        // Cancel all queued jobs
+        {
+            let mut queue = self.queue.lock().unwrap();
+            cancelled_count += queue.len();
+            queue.clear();
+        }
+        
+        // Kill all running jobs
+        {
+            let mut running = self.running.lock().unwrap();
+            for job in running.iter_mut() {
+                for child in job.pipeline.iter_mut() {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                }
+            }
+            cancelled_count += running.len();
+            running.clear();
+        }
+        
+        cancelled_count
+    }
+
     pub fn process_queue(&self, window: Window) {
         let (max_concurrent, running_count) = {
             let max = *self.max_concurrent.lock().unwrap();
@@ -166,6 +196,7 @@ impl TranscodeQueue {
         use std::time::Duration;
 
         let job_id = job.id.clone();
+        let job_desc = job.desc.clone();
         let cmds = job.cmds;
         let envs = job.envs;
 
@@ -288,6 +319,7 @@ impl TranscodeQueue {
             let mut running = self.running.lock().unwrap();
             running.push(RunningJob {
                 id: job_id.clone(),
+                desc: job_desc,
                 pipeline,
             });
         }
@@ -455,12 +487,13 @@ pub fn make_preview_cmd(
 pub fn queue_transcode(
     cmds: Vec<String>,
     envs: Vec<String>,
+    desc: String,
     window: Window,
     queue: tauri::State<TranscodeQueue>,
 ) -> String {
     assert_eq!(cmds.len(), envs.len(), "Each command must have an env");
     
-    let job_id = queue.add_job(cmds, envs);
+    let job_id = queue.add_job(cmds, envs, desc);
     
     // Try to process queue
     queue.process_queue(window.clone());
@@ -510,10 +543,22 @@ pub fn cancel_job(job_id: String, window: Window, queue: tauri::State<TranscodeQ
 }
 
 #[tauri::command]
+pub fn cancel_all_jobs(window: Window, queue: tauri::State<TranscodeQueue>) -> usize {
+    let count = queue.cancel_all_jobs();
+    
+    if count > 0 {
+        let _ = window.emit("queue_status_changed", queue.get_queue_status());
+    }
+    
+    count
+}
+
+#[tauri::command]
 pub fn render_preview_request(
     window: Window,
     cmd: String,
     env: String,
+    desc: String,
     start: String,
     end: String,
     queue: tauri::State<TranscodeQueue>,
@@ -526,7 +571,7 @@ pub fn render_preview_request(
         make_preview_cmd(&cmd, tmp_path, &start, None).unwrap()
     };
 
-    let job_id = queue.add_job(vec![final_cmd], vec![env]);
+    let job_id = queue.add_job(vec![final_cmd], vec![env], desc);
     
     let window_clone = window.clone();
     let target_path_clone = target_file_path.clone();

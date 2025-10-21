@@ -227,6 +227,11 @@ export class TimelinePlayer {
         invoke('render_preview_request', { 
             cmd: window.FFMPEG_BIN + " " + cmd, 
             env: window.FFMPEG_ENV, 
+            desc: JSON.stringify({
+                "tag": "preview", 
+                "cmd": window.FFMPEG_BIN + " " + cmd,
+                "workflow": window.selectedWorkflow
+            }),
             start: formatTime(this.timeline.selection.start), 
             end: formatTime(this.timeline.selection.end) 
         });

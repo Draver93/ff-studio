@@ -1,6 +1,7 @@
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
 
+import { textToPastelColor } from '../core/format.js';
 import { addLogEntry } from '../logs/logs.js';
 import { ERROR_REGEX, WARNING_REGEX, PROGRESS_REGEX } from './constants.js';
 
@@ -14,7 +15,10 @@ export function initializeQueue() {
     queueClearBtn.addEventListener('click', (e) => {
         clearCompletedJobs();
     });
-
+    const queueStopBtn = document.getElementById('queue-zone-stop');
+    queueStopBtn.addEventListener('click', (e) => {
+        cancelAllJobs();
+    });
     const queueConcurrencyInput = document.getElementById('queue-concurrency');
     const queueConcurrencyBtn = document.getElementById('queue-concurrency-set');
     
@@ -131,14 +135,72 @@ function createJobEntry(job) {
     const statusClass = getStatusClass(job.status);
     const icon = getStatusIcon(job.status);
     
+    // Parse description if available
+    let descData = {};
+    try {
+        if (job.desc) {
+            descData = typeof job.desc === 'string' ? JSON.parse(job.desc) : job.desc;
+        }
+    } catch (e) {
+        console.warn('Failed to parse job description:', e);
+    }
+    
+    // Build tag element if available
+    const tagHTML = descData.tag ? `
+        <span class="queue-tag queue-tag-${descData.tag.replace(' ', '-')}">${descData.tag}</span>
+    ` : '';
+    
+    // Build workflow element if available
+    let workflowHTML = ``;
+    if (descData.workflow) {
+        const baseColor = textToPastelColor(descData.workflow); 
+        
+        // Extract H, S, L from HSL
+        const hslMatch = baseColor.match(/hsl\((\d+),\s*(\d+)%?,\s*(\d+)%?\)/);
+        let bgColor = baseColor;
+        let borderColor = baseColor;
+
+        if (hslMatch) {
+            const [_, h, s, l] = hslMatch.map(Number);
+            bgColor = `hsla(${h}, ${s}%, ${Math.max(0, l - 20)}%, 0.15)`; // darker, transparent background
+            borderColor = `hsla(${h}, ${s}%, ${Math.max(0, l - 15)}%, 0.4)`; // darker, semi-transparent border
+        }
+        workflowHTML = `
+            <span 
+            class="queue-workflow" 
+            style="
+                border: 1px solid ${borderColor};
+                background: ${bgColor};
+                color: ${baseColor};
+            "
+            >
+            ${descData.workflow}
+            </span>
+        `;
+    }
+    
+    // Build command button if available
+    const cmdHTML = descData.cmd ? `
+        <button class="queue-cmd-btn" data-cmd="${escapeHtml(descData.cmd)}" title="Click to copy command">
+            <i class="fas fa-terminal"></i>
+        </button>
+    ` : '';
+    
     entry.innerHTML = `
         <div class="queue-entry-header">
             <span class="queue-time">${time}</span>
-            <span class="queue-status ${statusClass}">
-                <i class="${icon}"></i>
-                ${job.status}
-            </span>
+            <div class="queue-status-group">
+                <span class="queue-status ${statusClass}">
+                    <i class="${icon}"></i>
+                    ${job.status}
+                </span>
+                ${cmdHTML}
+            </div>
             <span class="queue-id">${job.id}</span>
+            <div class="queue-meta">
+                ${tagHTML}
+                ${workflowHTML}
+            </div>
         </div>
         <div class="queue-entry-progress">
             <div class="progress-bar">
@@ -162,6 +224,35 @@ function createJobEntry(job) {
     cancelBtn.addEventListener('click', () => {
         cancelJob(job.id);
     });
+    
+    // Add command button listener if present
+    const cmdBtn = entry.querySelector('.queue-cmd-btn');
+    if (cmdBtn) {
+        // Show full command on hover
+        cmdBtn.addEventListener('mouseenter', () => {
+            showCommandTooltip(cmdBtn, descData.cmd);
+        });
+        
+        cmdBtn.addEventListener('mouseleave', () => {
+            hideCommandTooltip();
+        });
+        
+        // Copy to clipboard on click
+        cmdBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            try {
+                await navigator.clipboard.writeText(descData.cmd);
+                cmdBtn.classList.add('copied');
+                cmdBtn.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    cmdBtn.classList.remove('copied');
+                    cmdBtn.innerHTML = '<i class="fas fa-terminal"></i>';
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy command:', err);
+            }
+        });
+    }
 
     // Listen for job-specific events and forward to both queue and logs
     listen(`transcode_${job.id}`, (event) => {
@@ -179,6 +270,44 @@ function createJobEntry(job) {
         startTime: Date.now(),
         errorLogs: []
     };
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Tooltip management for command preview
+let commandTooltip = null;
+
+function showCommandTooltip(button, command) {
+    hideCommandTooltip();
+    
+    commandTooltip = document.createElement('div');
+    commandTooltip.className = 'command-tooltip';
+    commandTooltip.textContent = command;
+    document.body.appendChild(commandTooltip);
+    
+    const rect = button.getBoundingClientRect();
+    commandTooltip.style.top = `${rect.bottom + 8}px`;
+    commandTooltip.style.left = `${rect.left}px`;
+    
+    // Adjust if tooltip goes off screen
+    setTimeout(() => {
+        const tooltipRect = commandTooltip.getBoundingClientRect();
+        if (tooltipRect.right > window.innerWidth) {
+            commandTooltip.style.left = `${window.innerWidth - tooltipRect.width - 16}px`;
+        }
+    }, 0);
+}
+
+function hideCommandTooltip() {
+    if (commandTooltip) {
+        commandTooltip.remove();
+        commandTooltip = null;
+    }
 }
 
 function updateJobEntry(entry, job) {
@@ -368,6 +497,30 @@ async function cancelJob(jobId) {
         }
     } catch (err) {
         addLogEntry('error', `Failed to cancel job: ${err}`);
+    }
+}
+
+async function cancelAllJobs() {
+    try {
+        const count = await invoke('cancel_all_jobs');
+        if (count) {
+            for (const [jobId, entry] of queueJobs.entries()) {
+                if (entry.status === 'Queued' || entry.status === 'Running') {
+                    entry.status = 'Cancelled';
+                    updateJobEntry(entry, { id: jobId, status: 'Cancelled' });
+                    
+                    const progressText = entry.element.querySelector('.progress-text');
+                    const progressFill = entry.element.querySelector('.progress-fill');
+                    progressText.textContent = 'Cancelled';
+                    progressFill.style.width = '100%';
+                    progressFill.style.backgroundColor = 'var(--warning)';
+                }
+            }
+            
+            addLogEntry('info', `All ${count} Jobs cancelled`);
+        }
+    } catch (err) {
+        addLogEntry('error', `Failed to cancel all jobs: ${err}`);
     }
 }
 

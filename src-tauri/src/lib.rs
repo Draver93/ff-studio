@@ -36,6 +36,7 @@ pub fn run() {
             ffmpeg::executor::get_max_concurrent,
             ffmpeg::executor::get_queue_status,
             ffmpeg::executor::cancel_job,
+            ffmpeg::executor::cancel_all_jobs,
             ffmpeg::executor::render_preview_request,
             ffmpeg::executor::render_preview_request,
             commands::workflow_ops::save_graph,
