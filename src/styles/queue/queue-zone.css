@@ -155,7 +155,6 @@
     padding: var(--spacing-md);
     border-left: 3px solid var(--border-primary);
     transition: all var(--transition-fast);
-    overflow: hidden;
 }
 
 .queue-entry:hover {
