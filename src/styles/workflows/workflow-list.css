@@ -27,7 +27,7 @@
     transition: all var(--transition-fast);
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
     box-shadow: var(--shadow-sm);
 }
 
