@@ -20,9 +20,7 @@ pub fn get_mediainfo(name: &str, ffmpeg: &str, env_str: &str) -> Result<Vec<Stri
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     apply_env(&mut cmd, &env_map);
-    let out = cmd
-        .output()
-        .with_context(|| format!("spawning {ffmpeg}"))?;
+    let out = cmd.output().with_context(|| format!("spawning {ffmpeg}"))?;
 
     let mut lines = Vec::new();
     if !out.stdout.is_empty() {

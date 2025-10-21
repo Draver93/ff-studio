@@ -213,10 +213,8 @@ impl TranscodeQueue {
             let parts = match shellwords::split(&safe_cmd) {
                 Ok(data) => data,
                 Err(e) => {
-                    let _ = window.emit(
-                        &format!("transcode_{job_id}"),
-                        format!("Parse failed: {e}"),
-                    );
+                    let _ =
+                        window.emit(&format!("transcode_{job_id}"), format!("Parse failed: {e}"));
                     let _ = window.emit(&format!("transcode_{job_id}"), "EOT_FAILED".to_string());
                     return;
                 }
@@ -249,10 +247,8 @@ impl TranscodeQueue {
             let mut child = match c.spawn() {
                 Ok(ch) => ch,
                 Err(e) => {
-                    let _ = window.emit(
-                        &format!("transcode_{job_id}"),
-                        format!("Spawn failed: {e}"),
-                    );
+                    let _ =
+                        window.emit(&format!("transcode_{job_id}"), format!("Spawn failed: {e}"));
                     let _ = window.emit(&format!("transcode_{job_id}"), "EOT_FAILED".to_string());
                     return;
                 }
@@ -376,8 +372,7 @@ impl TranscodeQueue {
 
                         // Emit appropriate completion event based on error flag
                         if error_flag.load(Ordering::Relaxed) {
-                            let _ =
-                                win.emit(&format!("transcode_{jid}"), "EOT_FAILED".to_string());
+                            let _ = win.emit(&format!("transcode_{jid}"), "EOT_FAILED".to_string());
                         } else {
                             let _ = win.emit(&format!("transcode_{jid}"), "EOT".to_string());
                         }
@@ -425,9 +420,7 @@ pub fn make_preview_cmd(
         return Err("No input file after -i".to_string());
     }
 
-    let mut input_opts = Vec::new();
-    input_opts.push("-ss".to_string());
-    input_opts.push(start.to_string());
+    let input_opts = vec!["-ss".to_string(), start.to_string()];
 
     let mut new_tokens = Vec::new();
     new_tokens.extend_from_slice(&tokens[..i_idx]);

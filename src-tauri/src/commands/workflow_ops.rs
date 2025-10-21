@@ -17,7 +17,7 @@ pub fn add_workflow(
     env: String,
     desc: String,
     nodes: &Vec<Node>,
-    version_data: &Vec<String>,
+    version_data: &[String],
 ) -> Result<()> {
     if name.trim().is_empty() {
         return Err(FFStudioError::workflow("Workflow name cannot be empty"));
@@ -42,7 +42,7 @@ pub fn add_workflow(
         path,
         env,
         desc,
-        version: version_data.clone(),
+        version: version_data.to_owned(),
         graph: "".to_string(),
     };
 
