@@ -1,0 +1,353 @@
+
+/**
+ * Queue Display Zone
+ * Scrollable queue list with job status, progress bars, and controls
+ */
+
+/* ========================================
+   QUEUE ZONE CONTAINER
+   ======================================== */
+.queue-zone {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    border-radius: var(--radius-sm);
+}
+
+/* Header area with controls */
+.queue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: var(--secondary-bg);
+    border-bottom: 1px solid var(--border-primary);
+}
+
+/* Queue controls section */
+.queue-controls {
+    display: flex;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--secondary-bg);
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.queue-concurrency-control {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.queue-concurrency-control label {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+.queue-action-buttons {
+    display: flex;
+    align-items: center;
+    margin-left: auto; 
+    gap: var(--spacing-sm);
+}
+
+.queue-action-buttons label {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+#queue-concurrency {
+    width: 60px;
+    padding: 6px 10px;
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    text-align: center;
+    font-family: var(--font-family-mono);
+}
+
+#queue-concurrency-set {
+    padding: 6px 12px;
+    border: 1px solid var(--border-primary);
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    transition: all var(--transition-fast);
+}
+
+#queue-concurrency-set:hover {
+    background: var(--secondary-bg);
+}
+
+#queue-zone-clear {
+    margin-left: auto;
+    padding: 6px 12px;
+    background: var(--tertiary-bg);
+    border: 1px solid var(--border-primary);
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    transition: all var(--transition-fast);
+}
+
+#queue-zone-clear:hover {
+    background: var(--secondary-bg);
+    color: var(--text-primary);
+}
+
+#queue-zone-stop {
+    margin-left: auto;
+    padding: 6px 12px;
+    background: #ff6b6b25;
+    border: 1px solid #cc7a7a;
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    color: #cc7a7a;
+    transition: all var(--transition-fast);
+}
+
+#queue-zone-stop:hover {
+    background: #ff6b6b25;
+    color: #ff6b6b;
+    border: 1px solid #ff6b6b;
+}
+
+
+.queue-badge {
+    padding: 4px 12px;
+    background: rgba(77, 171, 247, 0.1);
+    color: var(--info);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+}
+
+/* Scrollable queue content */
+.queue-content {
+    flex: 1;
+    background: #00000044;
+    padding: var(--spacing-md);
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+/* ========================================
+   INDIVIDUAL QUEUE ENTRY
+   ======================================== */
+.queue-entry {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-md);
+    border-left: 3px solid var(--border-primary);
+    transition: all var(--transition-fast);
+}
+
+.queue-entry:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Entry header with time, status, and ID */
+.queue-entry-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+}
+
+.queue-time {
+    min-width: 80px;
+    color: var(--text-code);
+    font-size: var(--font-size-sm);
+    font-family: var(--font-family-mono);
+}
+
+.queue-id {
+    color: var(--text-muted);
+    font-size: var(--font-size-md);
+    font-family: var(--font-family-mono);
+}
+
+/* Status badge */
+.queue-status {
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.status-running {
+    background: rgba(77, 171, 247, 0.15);
+    color: var(--info);
+}
+
+.queue-entry.status-running {
+    border-left-color: var(--info);
+    background: rgba(77, 171, 247, 0.05);
+}
+
+.status-queued {
+    background: rgba(158, 158, 158, 0.15);
+    color: var(--text-muted);
+}
+
+.queue-entry.status-queued {
+    border-left-color: var(--text-muted);
+    background: rgba(158, 158, 158, 0.03);
+}
+
+.status-completed {
+    background: rgba(107, 207, 127, 0.15);
+    color: var(--success);
+}
+
+.queue-entry.status-completed {
+    border-left-color: var(--success);
+    background: rgba(107, 207, 127, 0.05);
+}
+
+.status-failed {
+    background: rgba(255, 107, 107, 0.15);
+    color: var(--error);
+}
+
+.queue-entry.status-failed {
+    border-left-color: var(--error);
+    background: rgba(255, 107, 107, 0.05);
+}
+
+.status-cancelled {
+    background: rgba(255, 217, 61, 0.15);
+    color: var(--warning);
+}
+
+.queue-entry.status-cancelled {
+    border-left-color: var(--warning);
+    background: rgba(255, 217, 61, 0.05);
+}
+
+/* Progress section */
+.queue-entry-progress {
+    margin-bottom: var(--spacing-sm);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-bottom: var(--spacing-xs);
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--info), var(--info-light, #21cbf3));
+    transition: width var(--transition-fast);
+    border-radius: var(--radius-sm);
+}
+
+.queue-entry.status-completed .progress-fill {
+    background: var(--success);
+}
+
+.queue-entry.status-failed .progress-fill {
+    background: var(--error);
+}
+
+.queue-entry.status-cancelled .progress-fill {
+    background: var(--warning);
+}
+
+.queue-entry.status-queued .progress-fill {
+    background: var(--text-muted);
+}
+
+.progress-text {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    font-family: var(--font-family-mono);
+}
+
+/* Info section for completion time or error messages */
+.queue-entry-info {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    margin-bottom: var(--spacing-sm);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.queue-entry-info i {
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.queue-entry-info .info-text {
+    flex: 1;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.info-success {
+    color: var(--success);
+    background: rgba(107, 207, 127, 0.1);
+    border: 1px solid rgba(107, 207, 127, 0.2);
+}
+
+.info-error {
+    color: var(--error);
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.2);
+}
+
+/* Action buttons within a queue entry */
+.queue-entry-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: flex-end;
+}
+
+.queue-cancel-btn {
+    background: var(--tertiary-bg);
+    border: 1px solid var(--border-primary);
+    box-shadow: var(--shadow-sm);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    color: var(--error);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    transition: all var(--transition-fast);
+}
+
+.queue-cancel-btn:hover {
+    background: rgba(255, 107, 107, 0.1);
+    border-color: var(--error);
+}
+
+.queue-cancel-btn:active {
+    transform: scale(0.95);
+}

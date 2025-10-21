@@ -2,6 +2,7 @@ import * as player from './player/player.js';
 import * as workflows from './workflows/workflows.js';
 import * as logs from './logs/logs.js';
 import * as graph from './graph/graph.js';
+import * as queue from './queue/queue.js';
 const { invoke } = window.__TAURI__.core;
 
 
@@ -30,6 +31,8 @@ appContainer.addEventListener('contextmenu', function (e) { e.preventDefault(); 
 
 window.addEventListener('resize', function () { });
 
+queue.initializeQueue();
+
 // Initialize graph
 graph.initializeGraph();
 
@@ -46,6 +49,7 @@ workflows.initWorkflows();
 const tabs = document.querySelectorAll('.tab');
 const graphZone = document.getElementById('graph-zone');
 const playerZone = document.getElementById('player-zone');
+const queueZone = document.getElementById('queue-zone');
 const logsZone = document.getElementById('logs-zone');
 const errorBadge = document.getElementById('error-badge');
 const version_full = document.querySelector('.version-full #vf-text');
@@ -58,11 +62,14 @@ tabs.forEach(tab => {
         graphZone.style.display = 'none';
         playerZone.style.display = 'none';
         logsZone.style.display = 'none';
+        queueZone.style.display = 'none';
         const tabType = tab.getAttribute('data-tab');
         if (tabType === 'graph') {
             graphZone.style.display = 'block';
         } else if (tabType === 'player') {
             playerZone.style.display = 'flex';
+        } else if (tabType === 'queue') {
+            queueZone.style.display = 'flex';
         } else if (tabType === 'logs') {
             logsZone.style.display = 'flex';
             errorBadge.style.display = "none";

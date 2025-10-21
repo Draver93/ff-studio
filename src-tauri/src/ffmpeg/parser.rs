@@ -11,7 +11,7 @@ use std::os::windows::process::CommandExt;
 
 pub fn apply_env<'a>(cmd: &'a mut Command, env_map: &HashMap<String, String>) -> &'a mut Command {
     cmd.env_clear();
-    cmd.envs(env_map.iter().map(|(k, v)| (k, v)));
+    cmd.envs(env_map.iter());
     cmd
 }
 pub fn parse_env_map(env_str: &str) -> HashMap<String, String> {
@@ -115,7 +115,7 @@ fn parse_general(
         cmd.creation_flags(CREATE_NO_WINDOW);
     }
 
-    cmd.arg(format!("-{}s", name))
+    cmd.arg(format!("-{name}s"))
         .arg("-hide_banner")
         .stdout(Stdio::piped())
         .stderr(Stdio::null());
@@ -140,12 +140,12 @@ fn parse_general(
             continue;
         }
         let words: Vec<&str> = line.split_whitespace().collect();
-        if words.len() == 0 {
+        if words.is_empty() {
             continue;
         }
 
         let global_name = if words.len() == 1 {
-            words.get(0).unwrap_or(&"").to_string()
+            words.first().unwrap_or(&"").to_string()
         } else {
             words.get(1).unwrap_or(&"").to_string()
         };
@@ -167,7 +167,7 @@ fn parse_general(
         }
 
         help_cmd
-            .args(["-h", &format!("{}={}", name, global_name), "-hide_banner"])
+            .args(["-h", &format!("{name}={global_name}"), "-hide_banner"])
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
 
@@ -199,28 +199,31 @@ fn parse_general(
                 if let Some(mut prev) = current_node.take() {
                     // --- Add "enable" option if timeline support is mentioned ---
                     if timeline_re.is_match(&String::from_utf8_lossy(help_text)) {
-                        let mut opt = OptionEntry::default();
-                        opt.flag = "enable".to_string();
-                        opt.no_args = false;
-                        opt.desc = Some("Enable timeline support for this filter".to_string());
+                        let opt = OptionEntry {
+                            flag: "enable".to_string(),
+                            no_args: false,
+                            desc: Some("Enable timeline support for this filter".to_string()),
+                            ..OptionEntry::default()
+                        };
                         prev.options.push(opt);
                     }
                     nodes.push(prev);
                 }
 
-                let mut node = Node::default();
-                node.name = if is_main_node {
-                    global_name.clone()
-                } else {
-                    opt_line.split_whitespace().take(1).collect()
+                let node = Node {
+                    name: if is_main_node {
+                        global_name.clone()
+                    } else {
+                        opt_line.split_whitespace().take(1).collect()
+                    },
+                    is_av_option: is_main_node,
+                    desc: global_desc.clone(),
+                    category: String::new(),
+                    pcategory: format!("{name}s"),
+                    full_desc: full_desc.clone(),
+                    options: Vec::new(),
                 };
 
-                node.is_av_option = is_main_node;
-                node.desc = global_desc.clone();
-                node.category = String::new();
-                node.pcategory = format!("{}s", name);
-                node.full_desc = full_desc.clone();
-                node.options = Vec::new();
                 current_node = Some(node);
                 repeated_opt.clear();
                 is_main_node = false;
@@ -243,10 +246,13 @@ fn parse_general(
                             if let Some(prev) = current_opt.take() {
                                 n.options.push(prev);
                             }
-                            let mut opt = OptionEntry::default();
-                            opt.flag = parts[0].to_string();
-                            opt.r#type = Some(parts[1].to_string());
-                            opt.category = Some(parts[2].to_string());
+                            let opt = OptionEntry {
+                                flag: parts[0].to_string(),
+                                r#type: Some(parts[1].to_string()),
+                                category: Some(parts[2].to_string()),
+                                enum_vals: Vec::new(),
+                                ..OptionEntry::default()
+                            };
 
                             n.category = if n.category.is_empty() {
                                 parts[2].to_string()
@@ -256,7 +262,6 @@ fn parse_general(
                                 n.category.to_string()
                             };
 
-                            opt.enum_vals = Vec::new();
                             current_opt = Some(opt);
                         }
                     } else if !is_dup_fields {
@@ -278,10 +283,13 @@ fn parse_general(
             }
             // --- Add "enable" option if timeline support is mentioned ---
             if timeline_re.is_match(&String::from_utf8_lossy(help_text)) {
-                let mut opt = OptionEntry::default();
-                opt.flag = "enable".to_string();
-                opt.no_args = false;
-                opt.desc = Some("Enable timeline support for this filter".to_string());
+                let opt = OptionEntry {
+                    flag: "enable".to_string(),
+                    no_args: false,
+                    desc: Some("Enable timeline support for this filter".to_string()),
+                    ..OptionEntry::default()
+                };
+
                 n.options.push(opt);
             }
 
@@ -290,14 +298,15 @@ fn parse_general(
 
         if is_main_node {
             //means no info about this node is exists.
-            let mut node = Node::default();
-            node.is_av_option = is_main_node;
-            node.name = global_name.clone();
-            node.desc = global_desc.clone();
-            node.category = String::new();
-            node.pcategory = format!("{}s", name);
-            node.full_desc = full_desc.clone();
-            node.options = Vec::new();
+            let node = Node {
+                name: global_name.clone(),
+                desc: global_desc.clone(),
+                is_av_option: is_main_node,
+                category: String::new(),
+                pcategory: format!("{name}s"),
+                full_desc: full_desc.clone(),
+                options: Vec::new(),
+            };
             nodes.push(node);
         }
     }
@@ -306,6 +315,8 @@ fn parse_general(
 
 fn parse_globals(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<Vec<Node>> {
     let mut cmd = Command::new(ffmpeg);
+    let re = Regex::new(r" {2,}").unwrap(); // 2 or more literal spaces
+
     #[cfg(windows)]
     {
         // Prevent a new terminal from appearing
@@ -351,15 +362,15 @@ fn parse_globals(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<Vec<
             if let Some(n) = current.take() {
                 nodes.push(n);
             }
-            let mut node = Node::default();
-            node.is_av_option = false;
-            node.name = line.clone();
-            node.options = Vec::new();
+            let node = Node {
+                is_av_option: false,
+                name: line.clone(),
+                ..Node::default()
+            };
+
             current = Some(node);
         } else {
             let mut opt = OptionEntry::default();
-
-            let re = Regex::new(r" {2,}").unwrap(); // 2 or more literal spaces
             let parts: Vec<&str> = re.splitn(&line, 2).collect();
             if let Some(first_part) = parts.first() {
                 let parts: Vec<&str> = first_part.split_whitespace().collect();
@@ -419,11 +430,13 @@ fn parse_bsfs(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<Vec<Nod
         if words.is_empty() {
             continue;
         }
-        let mut node = Node::default();
-        node.is_av_option = false;
-        node.name = words[0].to_string();
-        node.desc = "No info".to_string();
-        node.options = Vec::new();
+        let node = Node {
+            is_av_option: false,
+            name: words[0].to_string(),
+            desc: "No info".to_string(),
+            ..Node::default()
+        };
+
         nodes.push(node);
     }
     Ok(nodes)
@@ -452,15 +465,19 @@ fn parse_pix_fmts(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<Nod
         lines.clear();
     }
 
-    let mut node = Node::default();
-    node.name = "pixel format".to_string();
-    node.desc = "No info".to_string();
-    node.is_av_option = false;
+    let mut node = Node {
+        name: "pixel format".to_string(),
+        desc: "No info".to_string(),
+        is_av_option: false,
+        ..Node::default()
+    };
 
-    let mut option = OptionEntry::default();
-    option.category = Some(String::new());
-    option.flag = "-pix_fmt".to_string();
-    option.no_args = true;
+    let mut option = OptionEntry {
+        category: Some(String::new()),
+        flag: "-pix_fmt".to_string(),
+        no_args: true,
+        ..OptionEntry::default()
+    };
 
     for line in lines {
         if line.trim().is_empty() {
@@ -468,7 +485,7 @@ fn parse_pix_fmts(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<Nod
         }
         let parts: Vec<&str> = line.split_whitespace().collect();
         if parts.len() >= 2 {
-            option.enum_vals.push(format!("{}", parts[1]));
+            option.enum_vals.push(parts[1].to_string());
         }
     }
     node.options.push(option);
@@ -491,22 +508,26 @@ fn parse_sample_fmts(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<
     let out = cmd.output()?;
     let text = String::from_utf8_lossy(&out.stdout);
 
-    let mut node = Node::default();
-    node.name = "sample format".to_string();
-    node.desc = "No info".to_string();
-    node.is_av_option = false;
+    let mut node = Node {
+        name: "sample format".to_string(),
+        desc: "No info".to_string(),
+        is_av_option: false,
+        ..Node::default()
+    };
 
-    let mut option = OptionEntry::default();
-    option.category = Some(String::new());
-    option.flag = "-sample_fmt".to_string();
-    option.no_args = true;
+    let mut option = OptionEntry {
+        category: Some(String::new()),
+        flag: "-sample_fmt".to_string(),
+        no_args: true,
+        ..OptionEntry::default()
+    };
 
     for line in text.lines().skip(1) {
         if line.trim().is_empty() {
             continue;
         }
         let parts: Vec<&str> = line.split_whitespace().collect();
-        if let Some(fmt) = parts.get(0) {
+        if let Some(fmt) = parts.first() {
             option.enum_vals.push((*fmt).to_string());
         }
     }

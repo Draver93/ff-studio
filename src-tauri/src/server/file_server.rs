@@ -44,7 +44,7 @@ async fn serve_file(req: Request<Body>, state: SharedState) -> Result<Response<B
         return Ok(Response::builder()
             .status(StatusCode::NOT_FOUND)
             .header("Access-Control-Allow-Origin", "*")
-            .body(Body::from(format!("File not found: {:?}", path)))
+            .body(Body::from(format!("File not found: {path:?}")))
             .unwrap());
     }
 
@@ -102,7 +102,7 @@ async fn serve_file(req: Request<Body>, state: SharedState) -> Result<Response<B
     if status == StatusCode::PARTIAL_CONTENT {
         builder = builder.header(
             header::CONTENT_RANGE,
-            format!("bytes {}-{}/{}", start, end, file_size),
+            format!("bytes {start}-{end}/{file_size}"),
         );
     }
 
@@ -118,6 +118,6 @@ pub async fn start_server(addr: SocketAddr) {
 
     let server = Server::bind(&addr).serve(make_svc);
     if let Err(e) = server.await {
-        eprintln!("Server error: {}", e);
+        eprintln!("Server error: {e}");
     }
 }

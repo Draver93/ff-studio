@@ -34,7 +34,6 @@ export function addNewWorkflow(name, path, select = false) {
         </div>
         <div class="workflow-details">
             <span class="workflow-path">${path}</span>
-            <span class="workflow-date">Just now</span>
         </div>
     `;
     workflowsContainer.appendChild(newWorkflow);

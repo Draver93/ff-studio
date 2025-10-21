@@ -17,41 +17,41 @@ pub fn add_workflow(
     env: String,
     desc: String,
     nodes: &Vec<Node>,
-    version_data: &Vec<String>,
+    version_data: &[String],
 ) -> Result<()> {
     if name.trim().is_empty() {
         return Err(FFStudioError::workflow("Workflow name cannot be empty"));
     }
 
     let data_path = get_data_dir()
-        .map_err(|e| FFStudioError::file_system(format!("Failed to get data directory: {}", e)))?;
+        .map_err(|e| FFStudioError::file_system(format!("Failed to get data directory: {e}")))?;
 
     let wf_path: PathBuf = data_path.join("workflows");
     let wf_full_path = wf_path.join(name.clone() + ".json");
 
     // Check if workflow already exists
     if wf_full_path.exists() {
-        log::warn!("Workflow '{}' already exists, overwriting", name);
+        log::warn!("Workflow '{name}' already exists, overwriting");
     }
 
     // Save nodes to cache
-    let _ = save_nodes(&path, &nodes);
+    let _ = save_nodes(&path, nodes);
 
     let data_struct = WorkflowStructure {
         name: name.clone(),
         path,
         env,
         desc,
-        version: version_data.clone(),
+        version: version_data.to_owned(),
         graph: "".to_string(),
     };
 
     let json_data = json!(data_struct).to_string();
     std::fs::write(&wf_full_path, json_data).map_err(|e| {
-        FFStudioError::file_system(format!("Failed to save workflow '{}': {}", name, e))
+        FFStudioError::file_system(format!("Failed to save workflow '{name}': {e}"))
     })?;
 
-    log::info!("Workflow '{}' saved successfully", name);
+    log::info!("Workflow '{name}' saved successfully");
     Ok(())
 }
 
@@ -75,7 +75,7 @@ pub async fn get_nodes_request(window: Window, ffmpeg_path: String) -> Result<()
             Ok(())
         }
         Err(e) => {
-            let error = FFStudioError::from(e);
+            let error = e;
             log_error(&error, "loading nodes");
             let _ = window.emit("get_nodes_listener", error.clone());
             Err(error)
@@ -110,7 +110,7 @@ pub async fn get_workflow(window: Window, name: String) -> Result<()> {
     let workflow = match workflow_opt {
         Some(wf) => wf,
         None => {
-            let error_msg = format!("Workflow '{}' not found", name);
+            let error_msg = format!("Workflow '{name}' not found");
             log_error(&FFStudioError::workflow(&error_msg), "get_workflow");
             let _ = window.emit(
                 "get_workflow_listener",
@@ -140,7 +140,7 @@ pub async fn get_workflow(window: Window, name: String) -> Result<()> {
             nodes
         }
         Err(_) => {
-            log::info!("Cache miss for workflow '{}', parsing FFmpeg", name);
+            log::info!("Cache miss for workflow '{name}', parsing FFmpeg");
             match parse_ffmpeg(&workflow.path, &workflow.env) {
                 Ok(nodes) => {
                     let _ = save_nodes(&workflow.path, &nodes);
@@ -184,7 +184,7 @@ pub async fn get_workflow(window: Window, name: String) -> Result<()> {
         Response {
             message: response_message.to_string(),
             build: workflow.version.get(1).cloned().unwrap_or_default(),
-            version: workflow.version.get(0).cloned().unwrap_or_default(),
+            version: workflow.version.first().cloned().unwrap_or_default(),
             nodes,
             graph: workflow.graph.clone(),
             env: workflow.env.clone(),
@@ -246,7 +246,7 @@ pub async fn create_workflow(
     // Get FFmpeg version
     let version_data = match get_ffmpeg_version(&path, &env) {
         Ok(version) => {
-            log::info!("Successfully got FFmpeg version for workflow '{}'", name);
+            log::info!("Successfully got FFmpeg version for workflow '{name}'");
             version
         }
         Err(e) => {
@@ -280,7 +280,7 @@ pub async fn create_workflow(
             nodes
         }
         Err(_) => {
-            log::info!("Cache miss for workflow '{}', parsing FFmpeg", name);
+            log::info!("Cache miss for workflow '{name}', parsing FFmpeg");
             match parse_ffmpeg(&path, &env) {
                 Ok(nodes) => {
                     let _ = save_nodes(&path, &nodes);
@@ -350,7 +350,7 @@ pub async fn create_workflow(
         Response {
             message: response_message.to_string(),
             build: version_data.get(1).cloned().unwrap_or_default(),
-            version: version_data.get(0).cloned().unwrap_or_default(),
+            version: version_data.first().cloned().unwrap_or_default(),
             nodes,
             path,
             desc,
@@ -369,21 +369,21 @@ pub async fn delete_workflow(name: String) -> Result<()> {
     }
 
     let data_path = get_data_dir()
-        .map_err(|e| FFStudioError::file_system(format!("Failed to get data directory: {}", e)))?;
+        .map_err(|e| FFStudioError::file_system(format!("Failed to get data directory: {e}")))?;
 
     let wf_path = data_path.join("workflows");
     let wf_full_path = wf_path.join(name.clone() + ".json");
 
     if !wf_full_path.exists() {
-        log::warn!("Attempted to delete non-existent workflow: {}", name);
+        log::warn!("Attempted to delete non-existent workflow: {name}");
         return Ok(()); // Not an error if it doesn't exist
     }
 
     std::fs::remove_file(&wf_full_path).map_err(|e| {
-        FFStudioError::file_system(format!("Failed to delete workflow '{}': {}", name, e))
+        FFStudioError::file_system(format!("Failed to delete workflow '{name}': {e}"))
     })?;
 
-    log::info!("Successfully deleted workflow: {}", name);
+    log::info!("Successfully deleted workflow: {name}");
     Ok(())
 }
 
@@ -400,24 +400,23 @@ pub async fn edit_workflow(
     }
 
     let data_path = get_data_dir()
-        .map_err(|e| FFStudioError::file_system(format!("Failed to get data directory: {}", e)))?;
+        .map_err(|e| FFStudioError::file_system(format!("Failed to get data directory: {e}")))?;
 
     let wf_path = data_path.join("workflows");
     let wf_full_path = wf_path.join(name.clone() + ".json");
 
     if !wf_full_path.exists() {
         return Err(FFStudioError::workflow(format!(
-            "Workflow '{}' not found",
-            name
+            "Workflow '{name}' not found"
         )));
     }
 
     let data = std::fs::read_to_string(&wf_full_path).map_err(|e| {
-        FFStudioError::file_system(format!("Failed to read workflow '{}': {}", name, e))
+        FFStudioError::file_system(format!("Failed to read workflow '{name}': {e}"))
     })?;
 
     let mut workflow: WorkflowStructure = serde_json::from_str(&data)
-        .map_err(|e| FFStudioError::json(format!("Failed to parse workflow '{}': {}", name, e)))?;
+        .map_err(|e| FFStudioError::json(format!("Failed to parse workflow '{name}': {e}")))?;
 
     workflow.path = path;
     workflow.env = env;
@@ -425,10 +424,10 @@ pub async fn edit_workflow(
 
     let json_data = json!(workflow).to_string();
     std::fs::write(&wf_full_path, json_data).map_err(|e| {
-        FFStudioError::file_system(format!("Failed to save workflow '{}': {}", name, e))
+        FFStudioError::file_system(format!("Failed to save workflow '{name}': {e}"))
     })?;
 
-    log::info!("Successfully updated workflow: {}", name);
+    log::info!("Successfully updated workflow: {name}");
     Ok(())
 }
 
@@ -439,33 +438,32 @@ pub async fn save_graph(window: Window, name: String, graph: String) -> Result<(
     }
 
     let data_path = get_data_dir()
-        .map_err(|e| FFStudioError::file_system(format!("Failed to get data directory: {}", e)))?;
+        .map_err(|e| FFStudioError::file_system(format!("Failed to get data directory: {e}")))?;
 
     let wf_path = data_path.join("workflows");
     let wf_full_path = wf_path.join(name.clone() + ".json");
 
     if !wf_full_path.exists() {
         return Err(FFStudioError::workflow(format!(
-            "Workflow '{}' not found",
-            name
+            "Workflow '{name}' not found"
         )));
     }
 
     let data = std::fs::read_to_string(&wf_full_path).map_err(|e| {
-        FFStudioError::file_system(format!("Failed to read workflow '{}': {}", name, e))
+        FFStudioError::file_system(format!("Failed to read workflow '{name}': {e}"))
     })?;
 
     let mut workflow: WorkflowStructure = serde_json::from_str(&data)
-        .map_err(|e| FFStudioError::json(format!("Failed to parse workflow '{}': {}", name, e)))?;
+        .map_err(|e| FFStudioError::json(format!("Failed to parse workflow '{name}': {e}")))?;
 
     workflow.graph = graph;
 
     let json_data = json!(workflow).to_string();
     std::fs::write(&wf_full_path, json_data).map_err(|e| {
-        FFStudioError::file_system(format!("Failed to save workflow '{}': {}", name, e))
+        FFStudioError::file_system(format!("Failed to save workflow '{name}': {e}"))
     })?;
 
     let _ = window.emit("save_graph_listener", "OK");
-    log::info!("Successfully saved graph for workflow: {}", name);
+    log::info!("Successfully saved graph for workflow: {name}");
     Ok(())
 }

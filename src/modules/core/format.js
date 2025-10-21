@@ -13,3 +13,26 @@ export function formatTime(seconds) {
     const s = Math.floor(seconds % 60);
     return [h, m, s].map(v => String(v).padStart(2, "0")).join(":");
 }
+
+// Convert text to a simple hash
+function textToHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash);
+}
+
+// Convert hash to a pastel color (HSL)
+function hashToPastelColor(hash) {
+  const hue = hash % 360;        // Hue between 0–360
+  const saturation = 70 + (hash % 10); // Keep saturation soft (~70–80%)
+  const lightness = 80;          // High lightness = pastel look
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
+
+// Combine both steps
+export function textToPastelColor(text) {
+  const hash = textToHash(text);
+  return hashToPastelColor(hash);
+}

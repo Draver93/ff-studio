@@ -20,9 +20,7 @@ pub fn get_mediainfo(name: &str, ffmpeg: &str, env_str: &str) -> Result<Vec<Stri
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     apply_env(&mut cmd, &env_map);
-    let out = cmd
-        .output()
-        .with_context(|| format!("spawning {}", ffmpeg))?;
+    let out = cmd.output().with_context(|| format!("spawning {ffmpeg}"))?;
 
     let mut lines = Vec::new();
     if !out.stdout.is_empty() {
@@ -58,8 +56,8 @@ pub fn get_ffmpeg_version(name: &str, env_str: &str) -> Result<Vec<String>> {
     apply_env(&mut cmd, &env_map);
     let out = cmd
         .output()
-        .with_context(|| format!("spawning {} -version", name))?;
-    let text = String::from_utf8_lossy(&if out.stdout.is_empty() {
+        .with_context(|| format!("spawning {name} -version"))?;
+    let text = String::from_utf8_lossy(if out.stdout.is_empty() {
         &out.stderr
     } else {
         &out.stdout
@@ -67,7 +65,7 @@ pub fn get_ffmpeg_version(name: &str, env_str: &str) -> Result<Vec<String>> {
 
     let lines: Vec<String> = text.lines().map(|s| s.to_string()).collect();
     if lines.len() <= 1 {
-        return Err(anyhow!("Unexpected ffmpeg output: {:?}", lines));
+        return Err(anyhow!("Unexpected ffmpeg output: {lines:?}"));
     }
 
     Ok(lines)

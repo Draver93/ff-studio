@@ -4,9 +4,8 @@
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
 import { addLogEntry } from '../logs/logs.js';
-import * as loading from '../ui/loading.js';
+import { expandFfmpegCommand } from './utils.js';
 import * as core from './core.js';
-import { ERROR_REGEX, WARNING_REGEX, PROGRESS_REGEX } from './constants.js';
 
 // Execution state
 window.loadingInterval = null;
@@ -16,7 +15,6 @@ window.action_button_listener = false;
 
 // DOM elements
 const executeBtn = document.getElementById('execute-btn');
-const cancelLoadBtn = document.getElementById('cancel-load-btn');
 const proModeToggle = document.getElementById('pro-mode-toggle');
 const executionBarExpanded = document.getElementById('execution-bar-expanded');
 const addChainElement = document.getElementById('add-chain-element');
@@ -61,114 +59,17 @@ function get_ffmpeg_command(selected_only = false) {
     return result_cmd;
 }
 
-// Finish transcoding process
-function finishTranscoding(success) {
-    window.isTranscoding = false;
-    clearInterval(window.loadingInterval);
-    
-    if (success) {
-        loading.updateLoadingProgress(100);
-        loading.updateLoadingDetails('Transcoding completed successfully!');
-        addLogEntry('success', 'Execution complete: Transcoding completed successfully!');
-    } else {
-        loading.updateLoadingDetails('Transcoding completed with errors!');
-        addLogEntry('error', 'Execution complete: Transcoding completed with errors!');
-    }
-
-    // Hide modal after delay
-    setTimeout(() => {
-        loading.hideLoading();
-        executeBtn.classList.remove('executing');
-
-        const proModeToggle = document.getElementById('pro-mode-toggle');
-        let state = proModeToggle.classList.contains('active');
-        executeBtn.innerHTML = `<i class="fas fa-play"></i> <span class="footer-title">${state ? "Execute Pipeline" : "Execute Graph"}</span>`;
-
-    }, 1500);
-}
-
-// Cancel transcoding process
-function cancelTranscoding() {
-    if (!window.isTranscoding) return;
-
-    invoke('stop_transcode', {});
-
-    window.isTranscoding = false;
-    clearInterval(window.loadingInterval);
-    
-    loading.updateLoadingDetails('Cancelling transcoding process...');
-    
-    setTimeout(() => {
-        loading.hideLoading();
-        executeBtn.classList.remove('executing');
-
-        const proModeToggle = document.getElementById('pro-mode-toggle');
-        let state = proModeToggle.classList.contains('active');
-        executeBtn.innerHTML = `<i class="fas fa-play"></i> <span class="footer-title">${state ? "Execute Pipeline" : "Execute Graph"}</span>`;
-
-        addLogEntry('warning', 'Transcoding cancelled by user');
-    }, 800);
-}
-
 async function startTranscding(cmds, envs) {
-    invoke('start_transcode', { cmds: cmds,  envs: envs });
+    invoke('queue_transcode', { cmds: cmds,  envs: envs,
+        desc: JSON.stringify({
+            "tag": cmds.length > 1 ? "chain transcode" : "single transcode", 
+            "cmd": cmds.join(" | "), 
+            "workflow": window.selectedWorkflow})
+        });
 }
 
 // Initialize execution system
 function initializeExecution() {
-    // Event listeners
-    cancelLoadBtn.addEventListener('click', cancelTranscoding);
-
-    // Transcoding result tracking
-    window.cmd_execution_success = true;
-    window.last_message = "";
-    window.last_message_interval = null;
-
-    // Listen for transcoding events
-    listen('start_transcode_listener', (event) => {
-        const data = event.payload;
-        
-        if (data === "EOT") {
-            loading.updateLoadingProgress(100);
-            finishTranscoding(window.cmd_execution_success);
-            window.cmd_execution_success = true;
-            if (window.last_message_interval) clearInterval(window.last_message_interval);
-            return;
-        }
-
-        if (PROGRESS_REGEX.test(data)) {
-            loading.updateLoadingDetails(data);
-            addLogEntry("debug", data);
-            if (window.last_message_interval) clearInterval(window.last_message_interval);
-            return;
-        }
-
-        if (ERROR_REGEX.test(data)) {
-            addLogEntry("error", data);
-            window.cmd_execution_success = false;
-            if (window.last_message_interval) clearInterval(window.last_message_interval);
-            return;
-        }
-
-        if (WARNING_REGEX.test(data)) {
-            addLogEntry("warning", data);
-            if (window.last_message_interval) clearInterval(window.last_message_interval);
-            return;
-        }
-
-        window.last_message = data;
-
-        if (!window.last_message_interval) {
-            window.last_message_interval = setInterval(() => {
-                if (window.last_message && window.last_message.trim() !== "") {
-                    addLogEntry("debug", window.last_message);
-                    window.last_message = "";
-                }
-                window.last_message_interval = null;
-            }, 5000);
-        }
-    });
-
     // Canvas and chain state
     const ctx = chain_canvas.getContext('2d');
     const BLOCK_WIDTH = 270;
@@ -246,7 +147,6 @@ function initializeExecution() {
 
     // Execute functions
     executeBtn.addEventListener('click', () => {
-        if (window.isTranscoding) { cancelTranscoding(); return; }
 
         let cmds = [];
         let envs = [];
@@ -255,32 +155,18 @@ function initializeExecution() {
             cmds = commandChain.map(b => `${b.ffmpeg} ${b.command}`);
             envs = commandChain.map(b => b.envs);
             addLogEntry("info", `Executing ffmpeg commands chain: ${cmds.join(" | ")}`);
+            startTranscding(cmds, envs);
         }
         else {
-            cmds = [`${window.FFMPEG_BIN} ${get_ffmpeg_command()}`];
-            envs = [ window.FFMPEG_ENV];
-            addLogEntry("info", `Executing ffmpeg command: ${cmds[0]}`);
+            expandFfmpegCommand(`${window.FFMPEG_BIN} ${get_ffmpeg_command()}`).then(list => {
+                list.forEach(cmd => {
+                    cmds = [cmd];
+                    envs = [window.FFMPEG_ENV];
+                    startTranscding(cmds, envs);
+                    addLogEntry("info", `Expanded ffmpeg command: ${cmd}`);
+                });
+            });
         }
-
-        startTranscding(cmds, envs);
-        
-        // Update button state
-        loading.showLoading('Processing Graph', true);
-    
-        executeBtn.classList.add('executing');
-        executeBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> <span class="footer-title">Executing...</span>';
-        window.isTranscoding = true;
-    
-        // Show loading modal
-        loading.updateLoadingDetails('Initializing FFmpeg processing...<br>Estimated time: Calculating...');
-    
-        // Simulate processing steps
-        let progress = 0;
-        window.loadingInterval = setInterval(() => {
-            progress += Math.random() * ((75 - progress) / 8.0);
-            if (progress <= 0) progress = 1;
-            loading.updateLoadingProgress(progress);
-        }, 600);
     });
 
     window.action_button_listener = setInterval(() => {
@@ -532,4 +418,4 @@ function initializeExecution() {
 }
 
 
-export { startTranscding, cancelTranscoding, get_ffmpeg_command, initializeExecution };
+export { startTranscding, get_ffmpeg_command, initializeExecution };
