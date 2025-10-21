@@ -1,5 +1,5 @@
-use std::fs;
 use glob::glob;
+use std::fs;
 use std::path::PathBuf;
 
 use super::hash::short_hash;

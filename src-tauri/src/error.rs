@@ -127,7 +127,6 @@ impl FFStudioError {
     pub fn pattern(msg: impl Into<String>) -> Self {
         FFStudioError::Pattern(msg.into())
     }
-    
 }
 
 /// Error context trait for adding context to errors
@@ -215,7 +214,7 @@ pub fn to_user_message(error: &FFStudioError) -> String {
             } else {
                 format!("IO error: {}", msg)
             }
-        }   
+        }
         FFStudioError::Glob(msg) => {
             format!("Glob error: {}", msg)
         }

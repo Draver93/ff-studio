@@ -75,13 +75,13 @@ impl TranscodeQueue {
 
         let mut queue = self.queue.lock().unwrap();
         queue.push_back(job);
-        
+
         job_id
     }
 
     pub fn get_queue_status(&self) -> Vec<TranscodeJob> {
         let mut all_jobs = Vec::new();
-        
+
         {
             let running = self.running.lock().unwrap();
             for rj in running.iter() {
@@ -94,14 +94,14 @@ impl TranscodeQueue {
                 });
             }
         }
-        
+
         {
             let queue = self.queue.lock().unwrap();
             for job in queue.iter() {
                 all_jobs.push(job.clone());
             }
         }
-        
+
         all_jobs
     }
 
@@ -134,14 +134,14 @@ impl TranscodeQueue {
 
     pub fn cancel_all_jobs(&self) -> usize {
         let mut cancelled_count = 0;
-        
+
         // Cancel all queued jobs
         {
             let mut queue = self.queue.lock().unwrap();
             cancelled_count += queue.len();
             queue.clear();
         }
-        
+
         // Kill all running jobs
         {
             let mut running = self.running.lock().unwrap();
@@ -154,7 +154,7 @@ impl TranscodeQueue {
             cancelled_count += running.len();
             running.clear();
         }
-        
+
         cancelled_count
     }
 
@@ -179,9 +179,9 @@ impl TranscodeQueue {
 
             if let Some(mut job) = job {
                 job.status = JobStatus::Running;
-                
+
                 let _ = window.emit("queue_status_changed", self.get_queue_status());
-                
+
                 self.execute_job(job, window.clone());
             } else {
                 break;
@@ -202,7 +202,7 @@ impl TranscodeQueue {
 
         let mut prev_stdin: Option<Stdio> = None;
         let mut pipeline: Vec<Child> = Vec::new();
-        
+
         // Track if any errors occurred during execution
         let had_error = Arc::new(AtomicBool::new(false));
 
@@ -264,23 +264,23 @@ impl TranscodeQueue {
                 let win = window.clone();
                 let jid = job_id.clone();
                 let error_flag = had_error.clone();
-                
+
                 std::thread::spawn(move || {
                     let mut buf = [0; 1024];
                     let mut leftover = String::new();
-                    
+
                     // Simple error detection regex patterns
                     let is_error = |s: &str| {
                         let lower = s.to_lowercase();
-                        lower.contains("error") || 
-                        lower.contains("failed") || 
-                        lower.contains("invalid argument") ||
-                        lower.contains("cannot") ||
-                        lower.contains("matches no streams") ||
-                        lower.contains("no such file or directory") ||
-                        lower.contains("already exists")
+                        lower.contains("error")
+                            || lower.contains("failed")
+                            || lower.contains("invalid argument")
+                            || lower.contains("cannot")
+                            || lower.contains("matches no streams")
+                            || lower.contains("no such file or directory")
+                            || lower.contains("already exists")
                     };
-                    
+
                     loop {
                         let n = stderr.read(&mut buf).unwrap_or(0);
                         if n == 0 {
@@ -341,7 +341,7 @@ impl TranscodeQueue {
                         if let Some(pos) = guard.iter().position(|j| j.id == jid) {
                             let job = &mut guard[pos];
                             let mut everything_exited = true;
-                            
+
                             for child in job.pipeline.iter_mut() {
                                 match child.try_wait() {
                                     Ok(Some(status)) => {
@@ -373,14 +373,15 @@ impl TranscodeQueue {
                             guard.remove(pos);
                         }
                         drop(guard); // Explicitly drop lock before other operations
-                        
+
                         // Emit appropriate completion event based on error flag
                         if error_flag.load(Ordering::Relaxed) {
-                            let _ = win.emit(&format!("transcode_{}", jid), "EOT_FAILED".to_string());
+                            let _ =
+                                win.emit(&format!("transcode_{}", jid), "EOT_FAILED".to_string());
                         } else {
                             let _ = win.emit(&format!("transcode_{}", jid), "EOT".to_string());
                         }
-                        
+
                         // Process next job in queue
                         queue_clone.process_queue(win.clone());
                         let _ = win.emit("queue_status_changed", queue_clone.get_queue_status());
@@ -492,28 +493,24 @@ pub fn queue_transcode(
     queue: tauri::State<TranscodeQueue>,
 ) -> String {
     assert_eq!(cmds.len(), envs.len(), "Each command must have an env");
-    
+
     let job_id = queue.add_job(cmds, envs, desc);
-    
+
     // Try to process queue
     queue.process_queue(window.clone());
-    
+
     let _ = window.emit("queue_status_changed", queue.get_queue_status());
-    
+
     job_id
 }
 
 #[tauri::command]
-pub fn set_max_concurrent(
-    max: usize,
-    window: Window,
-    queue: tauri::State<TranscodeQueue>,
-) {
+pub fn set_max_concurrent(max: usize, window: Window, queue: tauri::State<TranscodeQueue>) {
     {
         let mut max_concurrent = queue.max_concurrent.lock().unwrap();
         *max_concurrent = max.max(1); // At least 1
     }
-    
+
     // Try to start more jobs if we increased concurrency
     queue.process_queue(window.clone());
     let _ = window.emit("queue_status_changed", queue.get_queue_status());
@@ -532,24 +529,24 @@ pub fn get_queue_status(queue: tauri::State<TranscodeQueue>) -> Vec<TranscodeJob
 #[tauri::command]
 pub fn cancel_job(job_id: String, window: Window, queue: tauri::State<TranscodeQueue>) -> bool {
     let result = queue.cancel_job(&job_id);
-    
+
     if result {
         // Try to start next job
         queue.process_queue(window.clone());
         let _ = window.emit("queue_status_changed", queue.get_queue_status());
     }
-    
+
     result
 }
 
 #[tauri::command]
 pub fn cancel_all_jobs(window: Window, queue: tauri::State<TranscodeQueue>) -> usize {
     let count = queue.cancel_all_jobs();
-    
+
     if count > 0 {
         let _ = window.emit("queue_status_changed", queue.get_queue_status());
     }
-    
+
     count
 }
 
@@ -572,10 +569,10 @@ pub fn render_preview_request(
     };
 
     let job_id = queue.add_job(vec![final_cmd], vec![env], desc);
-    
+
     let window_clone = window.clone();
     let target_path_clone = target_file_path.clone();
-    
+
     window.listen(&format!("transcode_{}", job_id), move |event| {
         let payload = event.payload();
         if payload == "\"EOT\"" || payload == "\"EOT_FAILED\"" {
@@ -586,6 +583,6 @@ pub fn render_preview_request(
 
     queue.process_queue(window.clone());
     let _ = window.emit("queue_status_changed", queue.get_queue_status());
-    
+
     job_id
 }
