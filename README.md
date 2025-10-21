@@ -151,6 +151,20 @@ FFStudio is designed to make advanced FFmpeg usage accessible and visual. Instea
    # Or build and run release version
    tauri build
    ```
+### 🧩 Troubleshooting
+
+#### Graphical issues on startup
+
+If you experience graphical glitches, black screens, or rendering problems when running **FFStudio**, you can try disabling GPU compositing.
+
+Run the following command before starting the app:
+
+```bash
+export WEBKIT_DISABLE_COMPOSITING_MODE=1
+./FFStudio
+```
+
+This disables GPU acceleration for WebKit and may resolve rendering issues on some systems.
 
 ### Usage
 

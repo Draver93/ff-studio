@@ -499,22 +499,19 @@ async function cancelJob(jobId) {
 async function cancelAllJobs() {
     try {
         const count = await invoke('cancel_all_jobs');
-        if (count) {
-            for (const [jobId, entry] of queueJobs.entries()) {
-                if (entry.status === 'Queued' || entry.status === 'Running') {
-                    entry.status = 'Cancelled';
-                    updateJobEntry(entry, { id: jobId, status: 'Cancelled' });
-                    
-                    const progressText = entry.element.querySelector('.progress-text');
-                    const progressFill = entry.element.querySelector('.progress-fill');
-                    progressText.textContent = 'Cancelled';
-                    progressFill.style.width = '100%';
-                    progressFill.style.backgroundColor = 'var(--warning)';
-                }
+        for (const [jobId, entry] of queueJobs.entries()) {
+            if (entry.status === 'Queued' || entry.status === 'Running') {
+                entry.status = 'Cancelled';
+                updateJobEntry(entry, { id: jobId, status: 'Cancelled' });
+                
+                const progressText = entry.element.querySelector('.progress-text');
+                const progressFill = entry.element.querySelector('.progress-fill');
+                progressText.textContent = 'Cancelled';
+                progressFill.style.width = '100%';
+                progressFill.style.backgroundColor = 'var(--warning)';
             }
-            
-            addLogEntry('info', `All ${count} Jobs cancelled`);
         }
+        addLogEntry('info', `All ${count} Jobs cancelled`);
     } catch (err) {
         addLogEntry('error', `Failed to cancel all jobs: ${err}`);
     }
