@@ -67,7 +67,7 @@ impl TranscodeQueue {
         let job_id = self.generate_job_id();
         let job = TranscodeJob {
             id: job_id.clone(),
-            desc: desc,
+            desc,
             cmds,
             envs,
             status: JobStatus::Queued,
@@ -214,10 +214,10 @@ impl TranscodeQueue {
                 Ok(data) => data,
                 Err(e) => {
                     let _ = window.emit(
-                        &format!("transcode_{}", job_id),
-                        format!("Parse failed: {}", e),
+                        &format!("transcode_{job_id}"),
+                        format!("Parse failed: {e}"),
                     );
-                    let _ = window.emit(&format!("transcode_{}", job_id), "EOT_FAILED".to_string());
+                    let _ = window.emit(&format!("transcode_{job_id}"), "EOT_FAILED".to_string());
                     return;
                 }
             };
@@ -250,10 +250,10 @@ impl TranscodeQueue {
                 Ok(ch) => ch,
                 Err(e) => {
                     let _ = window.emit(
-                        &format!("transcode_{}", job_id),
-                        format!("Spawn failed: {}", e),
+                        &format!("transcode_{job_id}"),
+                        format!("Spawn failed: {e}"),
                     );
-                    let _ = window.emit(&format!("transcode_{}", job_id), "EOT_FAILED".to_string());
+                    let _ = window.emit(&format!("transcode_{job_id}"), "EOT_FAILED".to_string());
                     return;
                 }
             };
@@ -297,7 +297,7 @@ impl TranscodeQueue {
                                 if is_error(clean) {
                                     error_flag.store(true, Ordering::Relaxed);
                                 }
-                                let _ = win.emit(&format!("transcode_{}", jid), clean.to_string());
+                                let _ = win.emit(&format!("transcode_{jid}"), clean.to_string());
                             }
                         }
                     }
@@ -306,7 +306,7 @@ impl TranscodeQueue {
                         if is_error(&leftover) {
                             error_flag.store(true, Ordering::Relaxed);
                         }
-                        let _ = win.emit(&format!("transcode_{}", jid), leftover);
+                        let _ = win.emit(&format!("transcode_{jid}"), leftover);
                     }
                 });
             }
@@ -324,7 +324,7 @@ impl TranscodeQueue {
             });
         }
 
-        let _ = window.emit(&format!("transcode_{}", job_id), "Pipeline started");
+        let _ = window.emit(&format!("transcode_{job_id}"), "Pipeline started");
 
         // Spawn watcher thread
         {
@@ -377,9 +377,9 @@ impl TranscodeQueue {
                         // Emit appropriate completion event based on error flag
                         if error_flag.load(Ordering::Relaxed) {
                             let _ =
-                                win.emit(&format!("transcode_{}", jid), "EOT_FAILED".to_string());
+                                win.emit(&format!("transcode_{jid}"), "EOT_FAILED".to_string());
                         } else {
-                            let _ = win.emit(&format!("transcode_{}", jid), "EOT".to_string());
+                            let _ = win.emit(&format!("transcode_{jid}"), "EOT".to_string());
                         }
 
                         // Process next job in queue
@@ -441,9 +441,9 @@ pub fn make_preview_cmd(
         .to_string_lossy()
         .to_string();
 
-    let mut new_output_file = PathBuf::from(cache_dir);
+    let mut new_output_file = cache_dir;
     new_output_file.push(seg_name);
-    if end == None {
+    if end.is_none() {
         new_output_file.set_extension("png");
     } else {
         new_output_file.set_extension("mp4");
@@ -457,7 +457,7 @@ pub fn make_preview_cmd(
             .file_stem()
             .unwrap_or_default()
             .to_string_lossy();
-        let out = orig_output.with_file_name(format!("{}.png", base_name));
+        let out = orig_output.with_file_name(format!("{base_name}.png"));
         new_tokens.splice(
             i_idx + 4..i_idx + 4,
             ["-frames:v".to_string(), "1".to_string()],
@@ -473,7 +473,7 @@ pub fn make_preview_cmd(
         .into_iter()
         .map(|t| {
             if t.contains(' ') {
-                format!("\"{}\"", t)
+                format!("\"{t}\"")
             } else {
                 t
             }
@@ -573,7 +573,7 @@ pub fn render_preview_request(
     let window_clone = window.clone();
     let target_path_clone = target_file_path.clone();
 
-    window.listen(&format!("transcode_{}", job_id), move |event| {
+    window.listen(format!("transcode_{job_id}"), move |event| {
         let payload = event.payload();
         if payload == "\"EOT\"" || payload == "\"EOT_FAILED\"" {
             window_clone.unlisten(event.id());

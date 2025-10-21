@@ -18,7 +18,7 @@ pub fn run() {
     // Initialize working directories
     if let Err(e) = utils::filesystem::init_workdir() {
         log_error(&e, "initializing working directories");
-        eprintln!("Failed to initialize working directories: {}", e);
+        eprintln!("Failed to initialize working directories: {e}");
     }
 
     tauri::Builder::default()

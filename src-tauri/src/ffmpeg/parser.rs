@@ -11,7 +11,7 @@ use std::os::windows::process::CommandExt;
 
 pub fn apply_env<'a>(cmd: &'a mut Command, env_map: &HashMap<String, String>) -> &'a mut Command {
     cmd.env_clear();
-    cmd.envs(env_map.iter().map(|(k, v)| (k, v)));
+    cmd.envs(env_map.iter());
     cmd
 }
 pub fn parse_env_map(env_str: &str) -> HashMap<String, String> {
@@ -115,7 +115,7 @@ fn parse_general(
         cmd.creation_flags(CREATE_NO_WINDOW);
     }
 
-    cmd.arg(format!("-{}s", name))
+    cmd.arg(format!("-{name}s"))
         .arg("-hide_banner")
         .stdout(Stdio::piped())
         .stderr(Stdio::null());
@@ -140,12 +140,12 @@ fn parse_general(
             continue;
         }
         let words: Vec<&str> = line.split_whitespace().collect();
-        if words.len() == 0 {
+        if words.is_empty() {
             continue;
         }
 
         let global_name = if words.len() == 1 {
-            words.get(0).unwrap_or(&"").to_string()
+            words.first().unwrap_or(&"").to_string()
         } else {
             words.get(1).unwrap_or(&"").to_string()
         };
@@ -167,7 +167,7 @@ fn parse_general(
         }
 
         help_cmd
-            .args(["-h", &format!("{}={}", name, global_name), "-hide_banner"])
+            .args(["-h", &format!("{name}={global_name}"), "-hide_banner"])
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
 
@@ -218,7 +218,7 @@ fn parse_general(
                 node.is_av_option = is_main_node;
                 node.desc = global_desc.clone();
                 node.category = String::new();
-                node.pcategory = format!("{}s", name);
+                node.pcategory = format!("{name}s");
                 node.full_desc = full_desc.clone();
                 node.options = Vec::new();
                 current_node = Some(node);
@@ -295,7 +295,7 @@ fn parse_general(
             node.name = global_name.clone();
             node.desc = global_desc.clone();
             node.category = String::new();
-            node.pcategory = format!("{}s", name);
+            node.pcategory = format!("{name}s");
             node.full_desc = full_desc.clone();
             node.options = Vec::new();
             nodes.push(node);
@@ -468,7 +468,7 @@ fn parse_pix_fmts(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<Nod
         }
         let parts: Vec<&str> = line.split_whitespace().collect();
         if parts.len() >= 2 {
-            option.enum_vals.push(format!("{}", parts[1]));
+            option.enum_vals.push(parts[1].to_string());
         }
     }
     node.options.push(option);
@@ -506,7 +506,7 @@ fn parse_sample_fmts(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<
             continue;
         }
         let parts: Vec<&str> = line.split_whitespace().collect();
-        if let Some(fmt) = parts.get(0) {
+        if let Some(fmt) = parts.first() {
             option.enum_vals.push((*fmt).to_string());
         }
     }

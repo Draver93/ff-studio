@@ -8,7 +8,7 @@ pub fn pick_file(app: AppHandle) -> Result<Option<String>> {
     match app.dialog().file().blocking_pick_file() {
         Some(pathbuf) => {
             let path_str = pathbuf.to_string();
-            log::info!("File selected: {}", path_str);
+            log::info!("File selected: {path_str}");
             Ok(Some(path_str))
         }
         None => {

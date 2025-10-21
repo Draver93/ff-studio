@@ -11,7 +11,7 @@ pub fn get_data_dir() -> Result<PathBuf> {
     if let Some(proj_dirs) = ProjectDirs::from("com", "FAI", "FFStudio") {
         let dir = proj_dirs.data_dir().to_path_buf();
         fs::create_dir_all(&dir).map_err(|e| {
-            FFStudioError::file_system(format!("Failed to create data directory: {}", e))
+            FFStudioError::file_system(format!("Failed to create data directory: {e}"))
         })?;
         Ok(dir)
     } else {
@@ -31,23 +31,23 @@ pub fn init_workdir() -> Result<()> {
     // Create directories if they don't exist
     if !workflow_path.exists() {
         fs::create_dir_all(&workflow_path).map_err(|e| {
-            FFStudioError::file_system(format!("Failed to create workflows directory: {}", e))
+            FFStudioError::file_system(format!("Failed to create workflows directory: {e}"))
         })?;
-        log::info!("Created workflows directory: {:?}", workflow_path);
+        log::info!("Created workflows directory: {workflow_path:?}");
     }
 
     if !cache_path.exists() {
         fs::create_dir_all(&cache_path).map_err(|e| {
-            FFStudioError::file_system(format!("Failed to create cache directory: {}", e))
+            FFStudioError::file_system(format!("Failed to create cache directory: {e}"))
         })?;
-        log::info!("Created cache directory: {:?}", cache_path);
+        log::info!("Created cache directory: {cache_path:?}");
     }
 
     if !tmp_path.exists() {
         fs::create_dir_all(&tmp_path).map_err(|e| {
-            FFStudioError::file_system(format!("Failed to create tmp directory: {}", e))
+            FFStudioError::file_system(format!("Failed to create tmp directory: {e}"))
         })?;
-        log::info!("Created tmp directory: {:?}", tmp_path);
+        log::info!("Created tmp directory: {tmp_path:?}");
     }
 
     log::info!("Initialized working directories successfully");
@@ -66,16 +66,15 @@ pub fn load_nodes(ffmpeg_path: &str) -> Result<Vec<Node>> {
 
     if !full_path.exists() {
         return Err(FFStudioError::file_system(format!(
-            "Cache file not found for FFmpeg path: {}",
-            ffmpeg_path
+            "Cache file not found for FFmpeg path: {ffmpeg_path}"
         )));
     }
 
     let data = std::fs::read_to_string(&full_path)
-        .map_err(|e| FFStudioError::file_system(format!("Failed to read cache file: {}", e)))?;
+        .map_err(|e| FFStudioError::file_system(format!("Failed to read cache file: {e}")))?;
 
     let nodes: Vec<Node> = serde_json::from_str(&data)
-        .map_err(|e| FFStudioError::json(format!("Failed to parse cached nodes: {}", e)))?;
+        .map_err(|e| FFStudioError::json(format!("Failed to parse cached nodes: {e}")))?;
 
     log::debug!(
         "Loaded {} nodes from cache for FFmpeg path: {}",
@@ -96,10 +95,10 @@ pub fn save_nodes(ffmpeg_path: &str, nodes: &Vec<Node>) -> Result<()> {
     let full_path = cache_path.join(filename + ".json");
 
     let data = serde_json::to_string_pretty(nodes)
-        .map_err(|e| FFStudioError::json(format!("Failed to serialize nodes: {}", e)))?;
+        .map_err(|e| FFStudioError::json(format!("Failed to serialize nodes: {e}")))?;
 
     std::fs::write(&full_path, data)
-        .map_err(|e| FFStudioError::file_system(format!("Failed to write cache file: {}", e)))?;
+        .map_err(|e| FFStudioError::file_system(format!("Failed to write cache file: {e}")))?;
 
     log::debug!(
         "Saved {} nodes to cache for FFmpeg path: {}",
