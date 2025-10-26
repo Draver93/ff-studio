@@ -514,7 +514,7 @@ fn parse_contexts(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<Vec
                         if let Some(type_end) = rest.find('>') {
                             let type_str = &rest[type_start + 1..type_end];
                             opt.r#type = Some(format!("<{}>", type_str));
-                            opt.no_args = matches!(type_str, "boolean" | "flags");
+                            opt.no_args = matches!(type_str, "boolean");
 
                             // Extract category (scope markers like E..V.., ED.VA..)
                             let after_type = rest[type_end + 1..].trim_start();
@@ -544,7 +544,12 @@ fn parse_contexts(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<Vec
             // Enum value line (indented further, no dash prefix)
             else if line.starts_with("     ") && !line.trim_start().starts_with('-') {
                 if let Some(ref mut opt) = current_opt {
-                    if let Some(enum_val) = line.split_whitespace().next() {
+                    if opt.r#type.as_deref() == Some("<flags>") {
+                        match &mut opt.desc {
+                            Some(desc) => desc.push_str(&format!("<br>{line}")),
+                            None => opt.desc = Some(line.to_string()),
+                        };
+                    } else if let Some(enum_val) = line.split_whitespace().next() {
                         opt.enum_vals.push(enum_val.to_string());
 
                         // Mark as enum type if not already
