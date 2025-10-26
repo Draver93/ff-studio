@@ -92,6 +92,18 @@ pub fn parse_ffmpeg(ffmpeg: &str, env_str: &str) -> Result<Vec<Node>> {
         });
         handles.push(h);
     }
+    // contexts
+    {
+        let ff = ffmpeg.to_string();
+        let envc = env_map.clone();
+        let accc = Arc::clone(&acc);
+        let h = thread::spawn(move || {
+            if let Ok(nodes) = parse_contexts(&ff, &envc) {
+                accc.lock().unwrap().extend(nodes);
+            }
+        });
+        handles.push(h);
+    }
 
     for h in handles {
         let _ = h.join();
@@ -400,6 +412,162 @@ fn parse_globals(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<Vec<
     }
     if let Some(n) = current.take() {
         nodes.push(n);
+    }
+
+    Ok(nodes)
+}
+
+fn parse_contexts(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<Vec<Node>> {
+    // Execute ffmpeg command to get help output
+    let mut cmd = Command::new(ffmpeg);
+
+    #[cfg(windows)]
+    {
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+
+    cmd.args(["-h", "full", "-hide_banner"])
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null());
+    apply_env(&mut cmd, env_map);
+
+    let out = cmd.output()?;
+    let text = String::from_utf8_lossy(&out.stdout);
+
+    // Parse the output into nodes
+    let mut nodes: Vec<Node> = Vec::new();
+    let mut lines = text.lines().peekable();
+
+    let target_sections = [
+        "AVCodecContext AVOptions:",
+        "AVFormatContext AVOptions:",
+        "AVIOContext AVOptions:",
+        "URLContext AVOptions:",
+    ];
+
+    while let Some(line) = lines.next() {
+        // Check if this line matches a target section header
+        if !target_sections.contains(&line.trim()) {
+            continue;
+        }
+
+        // Create node for this section
+        let mut node = Node {
+            is_av_option: false,
+            name: line
+                .split_whitespace()
+                .next()
+                .unwrap_or("undefined")
+                .to_string(),
+            pcategory: "contexts".to_string(),
+            full_desc: vec![line.to_string()],
+            ..Node::default()
+        };
+
+        let mut current_opt: Option<OptionEntry> = None;
+
+        // Parse options within this section
+        while let Some(&next_line) = lines.peek() {
+            let next_trimmed = next_line.trim();
+
+            // Stop if we hit another section header (ends with ':' and not indented)
+            if !next_trimmed.is_empty()
+                && next_trimmed.ends_with(':')
+                && !next_line.starts_with(' ')
+            {
+                break;
+            }
+
+            let line = lines.next().unwrap();
+
+            // Skip empty lines
+            if line.trim().is_empty() {
+                continue;
+            }
+
+            node.full_desc.push(line.to_string());
+
+            // Main option line (starts with "  -")
+            if line.starts_with("  -") {
+                // Save previous option if exists
+                if let Some(opt) = current_opt.take() {
+                    node.options.push(opt);
+                }
+
+                // Parse the option line inline
+                // Format: "  -flag <type> <scope> description"
+                let mut opt = OptionEntry {
+                    enum_vals: Vec::new(),
+                    ..OptionEntry::default()
+                };
+
+                let trimmed = line.trim_start();
+
+                // Extract flag name (everything before first whitespace)
+                if let Some(flag_end) = trimmed.find(char::is_whitespace) {
+                    opt.flag = trimmed[..flag_end].to_string();
+                    let rest = trimmed[flag_end..].trim_start();
+
+                    // Extract type (e.g., <int64>, <flags>, <float>)
+                    if let Some(type_start) = rest.find('<') {
+                        if let Some(type_end) = rest.find('>') {
+                            let type_str = &rest[type_start + 1..type_end];
+                            opt.r#type = Some(format!("<{}>", type_str));
+                            opt.no_args = matches!(type_str, "boolean");
+
+                            // Extract category (scope markers like E..V.., ED.VA..)
+                            let after_type = rest[type_end + 1..].trim_start();
+                            if let Some(category_end) = after_type.find(char::is_whitespace) {
+                                let category = &after_type[..category_end];
+                                if !category.is_empty() {
+                                    opt.category = Some(category.to_string());
+                                }
+
+                                // Extract description
+                                let desc = after_type[category_end..].trim();
+                                if !desc.is_empty() {
+                                    opt.desc = Some(desc.to_string());
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Fallback: use full line as description if parsing failed
+                if opt.desc.is_none() {
+                    opt.desc = Some(line.to_string());
+                }
+
+                current_opt = Some(opt);
+            }
+            // Enum value line (indented further, no dash prefix)
+            else if line.starts_with("     ") && !line.trim_start().starts_with('-') {
+                if let Some(ref mut opt) = current_opt {
+                    if opt.r#type.as_deref() == Some("<flags>") {
+                        match &mut opt.desc {
+                            Some(desc) => desc.push_str(&format!("<br>{line}")),
+                            None => opt.desc = Some(line.to_string()),
+                        };
+                    } else if let Some(enum_val) = line.split_whitespace().next() {
+                        opt.enum_vals.push(enum_val.to_string());
+
+                        // Mark as enum type if not already
+                        if opt.r#type.as_deref() != Some("<enum>") {
+                            opt.r#type = Some("<enum>".to_string());
+                            opt.no_args = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Push the last option if exists
+        if let Some(opt) = current_opt {
+            node.options.push(opt);
+        }
+
+        nodes.push(node);
     }
 
     Ok(nodes)
