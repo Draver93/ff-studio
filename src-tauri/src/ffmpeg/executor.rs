@@ -420,7 +420,7 @@ pub fn make_preview_cmd(
         return Err("No input file after -i".to_string());
     }
 
-    let input_opts = vec!["-ss".to_string(), start.to_string()];
+    let input_opts = vec!["-y".to_string(), "-ss".to_string(), start.to_string()];
 
     let mut new_tokens = Vec::new();
     new_tokens.extend_from_slice(&tokens[..i_idx]);
@@ -443,7 +443,7 @@ pub fn make_preview_cmd(
     }
 
     if let Some(e) = end {
-        new_tokens.splice(i_idx + 2..i_idx + 2, ["-to".to_string(), e.to_string()]);
+        new_tokens.splice(i_idx + 3..i_idx + 3, ["-to".to_string(), e.to_string()]);
         orig_output.clone()
     } else {
         let base_name = Path::new(&filename)
@@ -452,7 +452,7 @@ pub fn make_preview_cmd(
             .to_string_lossy();
         let out = orig_output.with_file_name(format!("{base_name}.png"));
         new_tokens.splice(
-            i_idx + 4..i_idx + 4,
+            i_idx + 5..i_idx + 5,
             ["-frames:v".to_string(), "1".to_string()],
         );
         out

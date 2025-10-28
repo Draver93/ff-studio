@@ -194,6 +194,8 @@ export class Timeline {
         if (index >= 0 && index < this.segments.length) {
             this.segments.splice(index, 1);
             this.invalidate();
+            this.activeSegmentIndex = -1;
+            hideMedia();
             return true;
         }
         return false;
