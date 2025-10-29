@@ -456,7 +456,7 @@ pub fn make_preview_cmd(
     }
 
     // Add format before output (NUT is more robust than MPEG-TS, but both work)
-    let output_opts = vec!["-f".to_string(), "mpegts".to_string()];
+    let output_opts = vec!["-f".to_string(), "nut".to_string()];
     let insert_pos = step1_tokens.len() - 1;
     step1_tokens.splice(insert_pos..insert_pos, output_opts);
 
@@ -479,6 +479,9 @@ pub fn make_preview_cmd(
         // Single frame output
         step2_tokens.push("-frames:v".to_string());
         step2_tokens.push("1".to_string());
+        step2_tokens.push("-update".to_string());
+        step2_tokens.push("1".to_string());
+
         step2_tokens.push("-y".to_string());
         new_output_file.set_extension("png");
     } else {
