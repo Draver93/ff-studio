@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use regex::Regex;
 use std::collections::VecDeque;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Child;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
@@ -395,7 +395,8 @@ pub fn make_preview_cmd(
     cache_dir: PathBuf,
     start: &str,
     end: Option<&str>,
-) -> Result<(String, String), String> {
+) -> Result<(Vec<String>, String), String> {
+    // Changed return type
     let seg_name: String = {
         let mut unique_str = String::from_str(cmd).unwrap();
         unique_str.push_str(start);
@@ -420,49 +421,70 @@ pub fn make_preview_cmd(
         return Err("No input file after -i".to_string());
     }
 
-    let input_opts = vec!["-y".to_string(), "-ss".to_string(), start.to_string()];
-
-    let mut new_tokens = Vec::new();
-    new_tokens.extend_from_slice(&tokens[..i_idx]);
-    new_tokens.extend(input_opts);
-    new_tokens.extend_from_slice(&tokens[i_idx..]);
-
-    let orig_output = PathBuf::from(tokens.last().unwrap());
-    let filename = orig_output
-        .file_name()
-        .ok_or_else(|| "Invalid output file".to_string())?
-        .to_string_lossy()
-        .to_string();
-
     let mut new_output_file = cache_dir;
     new_output_file.push(seg_name);
-    if end.is_none() {
-        new_output_file.set_extension("png");
-    } else {
-        new_output_file.set_extension("mp4");
-    }
 
     if let Some(e) = end {
-        new_tokens.splice(i_idx + 3..i_idx + 3, ["-to".to_string(), e.to_string()]);
-        orig_output.clone()
-    } else {
-        let base_name = Path::new(&filename)
-            .file_stem()
-            .unwrap_or_default()
-            .to_string_lossy();
-        let out = orig_output.with_file_name(format!("{base_name}.png"));
-        new_tokens.splice(
-            i_idx + 5..i_idx + 5,
-            ["-frames:v".to_string(), "1".to_string()],
-        );
-        out
-    };
+        // Original video preview logic for start != end
+        if start != e {
+            let input_opts = vec!["-y".to_string(), "-ss".to_string(), start.to_string()];
 
-    if let Some(last) = new_tokens.last_mut() {
-        *last = new_output_file.to_string_lossy().into_owned();
+            let mut new_tokens = Vec::new();
+            new_tokens.extend_from_slice(&tokens[..i_idx]);
+            new_tokens.extend(input_opts);
+            new_tokens.extend_from_slice(&tokens[i_idx..]);
+            new_output_file.set_extension("mp4");
+            new_tokens.splice(i_idx + 3..i_idx + 3, ["-to".to_string(), e.to_string()]);
+
+            if let Some(last) = new_tokens.last_mut() {
+                *last = new_output_file.to_string_lossy().into_owned();
+            }
+
+            let final_cmd = new_tokens
+                .into_iter()
+                .map(|t| {
+                    if t.contains(' ') {
+                        format!("\"{t}\"")
+                    } else {
+                        t
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join(" ");
+
+            return Ok((
+                vec![final_cmd],
+                new_output_file.to_string_lossy().into_owned(),
+            ));
+        }
     }
 
-    let final_cmd = new_tokens
+    // New two-step process for single frame generation (start == end)
+    // Step 1: Extract 1-second segment to pipe
+    let input_opts = vec![
+        "-y".to_string(),
+        "-ss".to_string(),
+        start.to_string(),
+        "-t".to_string(),
+        "1".to_string(),
+    ];
+
+    let mut step1_tokens = Vec::new();
+    step1_tokens.extend_from_slice(&tokens[..i_idx]);
+    step1_tokens.extend(input_opts);
+    step1_tokens.extend_from_slice(&tokens[i_idx..]);
+
+    // Replace output with pipe
+    if let Some(last) = step1_tokens.last_mut() {
+        *last = "pipe:1".to_string();
+    }
+
+    // Add format before last token
+    let output_opts = vec!["-f".to_string(), "mpegts".to_string()];
+    let insert_pos = step1_tokens.len() - 1;
+    step1_tokens.splice(insert_pos..insert_pos, output_opts);
+
+    let step1_cmd = step1_tokens
         .into_iter()
         .map(|t| {
             if t.contains(' ') {
@@ -474,7 +496,36 @@ pub fn make_preview_cmd(
         .collect::<Vec<_>>()
         .join(" ");
 
-    Ok((final_cmd, new_output_file.to_string_lossy().into_owned()))
+    // Step 2: Convert pipe input to PNG
+    let program = tokens.first().unwrap().clone();
+    let mut step2_tokens = vec![
+        program,
+        "-i".to_string(),
+        "pipe:0".to_string(),
+        "-frames:v".to_string(),
+        "1".to_string(),
+        "-y".to_string(),
+    ];
+
+    new_output_file.set_extension("png");
+    step2_tokens.push(new_output_file.to_string_lossy().into_owned());
+
+    let step2_cmd = step2_tokens
+        .into_iter()
+        .map(|t| {
+            if t.contains(' ') {
+                format!("\"{t}\"")
+            } else {
+                t
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    Ok((
+        vec![step1_cmd, step2_cmd],
+        new_output_file.to_string_lossy().into_owned(),
+    ))
 }
 
 #[tauri::command]
@@ -555,13 +606,13 @@ pub fn render_preview_request(
 ) -> String {
     let data_path = filesystem::get_data_dir().unwrap();
     let tmp_path = data_path.join("tmp");
-    let (final_cmd, target_file_path) = if start != end {
-        make_preview_cmd(&cmd, tmp_path, &start, Some(&end)).unwrap()
-    } else {
-        make_preview_cmd(&cmd, tmp_path, &start, None).unwrap()
-    };
 
-    let job_id = queue.add_job(vec![final_cmd], vec![env], desc);
+    let real_end: Option<&str> = if start != end { Some(&end) } else { None };
+
+    let (final_cmds, target_file_path) =
+        make_preview_cmd(&cmd, tmp_path, &start, real_end).unwrap();
+    let count = final_cmds.len();
+    let job_id = queue.add_job(final_cmds, vec![env.clone(); count], desc);
 
     let window_clone = window.clone();
     let target_path_clone = target_file_path.clone();
