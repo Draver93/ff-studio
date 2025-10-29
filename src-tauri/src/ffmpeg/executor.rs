@@ -396,7 +396,6 @@ pub fn make_preview_cmd(
     start: &str,
     end: Option<&str>,
 ) -> Result<(Vec<String>, String), String> {
-    // Changed return type
     let seg_name: String = {
         let mut unique_str = String::from_str(cmd).unwrap();
         unique_str.push_str(start);
@@ -424,50 +423,27 @@ pub fn make_preview_cmd(
     let mut new_output_file = cache_dir;
     new_output_file.push(seg_name);
 
+    let program = tokens.first().unwrap().clone();
+    let is_single_frame = end.is_none() || (end.is_some() && start == end.unwrap());
+
+    // Step 1: Extract segment/frame to pipe
+    let mut input_opts = vec!["-y".to_string(), "-ss".to_string(), start.to_string()];
+
     if let Some(e) = end {
-        // Original video preview logic for start != end
         if start != e {
-            let input_opts = vec!["-y".to_string(), "-ss".to_string(), start.to_string()];
-
-            let mut new_tokens = Vec::new();
-            new_tokens.extend_from_slice(&tokens[..i_idx]);
-            new_tokens.extend(input_opts);
-            new_tokens.extend_from_slice(&tokens[i_idx..]);
-            new_output_file.set_extension("mp4");
-            new_tokens.splice(i_idx + 3..i_idx + 3, ["-to".to_string(), e.to_string()]);
-
-            if let Some(last) = new_tokens.last_mut() {
-                *last = new_output_file.to_string_lossy().into_owned();
-            }
-
-            let final_cmd = new_tokens
-                .into_iter()
-                .map(|t| {
-                    if t.contains(' ') {
-                        format!("\"{t}\"")
-                    } else {
-                        t
-                    }
-                })
-                .collect::<Vec<_>>()
-                .join(" ");
-
-            return Ok((
-                vec![final_cmd],
-                new_output_file.to_string_lossy().into_owned(),
-            ));
+            // Segment with duration
+            input_opts.push("-to".to_string());
+            input_opts.push(e.to_string());
+        } else {
+            // Single frame - extract 1 second
+            input_opts.push("-t".to_string());
+            input_opts.push("1".to_string());
         }
+    } else {
+        // Single frame - extract 1 second
+        input_opts.push("-t".to_string());
+        input_opts.push("1".to_string());
     }
-
-    // New two-step process for single frame generation (start == end)
-    // Step 1: Extract 1-second segment to pipe
-    let input_opts = vec![
-        "-y".to_string(),
-        "-ss".to_string(),
-        start.to_string(),
-        "-t".to_string(),
-        "1".to_string(),
-    ];
 
     let mut step1_tokens = Vec::new();
     step1_tokens.extend_from_slice(&tokens[..i_idx]);
@@ -479,7 +455,7 @@ pub fn make_preview_cmd(
         *last = "pipe:1".to_string();
     }
 
-    // Add format before last token
+    // Add format before output (NUT is more robust than MPEG-TS, but both work)
     let output_opts = vec!["-f".to_string(), "mpegts".to_string()];
     let insert_pos = step1_tokens.len() - 1;
     step1_tokens.splice(insert_pos..insert_pos, output_opts);
@@ -496,18 +472,21 @@ pub fn make_preview_cmd(
         .collect::<Vec<_>>()
         .join(" ");
 
-    // Step 2: Convert pipe input to PNG
-    let program = tokens.first().unwrap().clone();
-    let mut step2_tokens = vec![
-        program,
-        "-i".to_string(),
-        "pipe:0".to_string(),
-        "-frames:v".to_string(),
-        "1".to_string(),
-        "-y".to_string(),
-    ];
+    // Step 2: Convert pipe input to final format
+    let mut step2_tokens = vec![program, "-i".to_string(), "pipe:0".to_string()];
 
-    new_output_file.set_extension("png");
+    if is_single_frame {
+        // Single frame output
+        step2_tokens.push("-frames:v".to_string());
+        step2_tokens.push("1".to_string());
+        step2_tokens.push("-y".to_string());
+        new_output_file.set_extension("png");
+    } else {
+        // Video segment output
+        step2_tokens.push("-y".to_string());
+        new_output_file.set_extension("mp4");
+    }
+
     step2_tokens.push(new_output_file.to_string_lossy().into_owned());
 
     let step2_cmd = step2_tokens
