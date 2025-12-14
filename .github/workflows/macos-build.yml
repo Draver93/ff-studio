@@ -24,7 +24,7 @@ jobs:
 
       - name: Build Tauri app (macOS)
         working-directory: ./src-tauri
-        run: cargo tauri build --no-bundle
+        run: cargo tauri build
 
       - name: Create ZIP from .app (Gatekeeper-safe)
         run: |
