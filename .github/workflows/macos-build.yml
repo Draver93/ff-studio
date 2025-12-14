@@ -28,7 +28,11 @@ jobs:
 
       - name: Create ZIP from .app (Gatekeeper-safe)
         run: |
-          APP_DIR=$(ls src-tauri/target/release/bundle/macos/*.app)
+          APP_DIR=$(find src-tauri/target/release/bundle/macos -name "*.app" -maxdepth 1)
+          if [ -z "$APP_DIR" ]; then
+            echo "ERROR: .app bundle not found"
+            exit 1
+          fi
           APP_NAME=$(basename "$APP_DIR" .app)
           ditto -c -k --keepParent "$APP_DIR" "$APP_NAME-macos.zip"
 
