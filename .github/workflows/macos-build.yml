@@ -1,4 +1,4 @@
-name: macOS Build
+name: macOS Build (Unsigned ZIP)
 
 on:
   push:
@@ -24,18 +24,16 @@ jobs:
 
       - name: Build Tauri app (macOS)
         working-directory: ./src-tauri
-        run: cargo tauri build
+        run: cargo tauri build --no-bundle
 
-      - name: Rename artifacts with commit SHA
+      - name: Create ZIP from .app (Gatekeeper-safe)
         run: |
-          SHA=$(git rev-parse --short HEAD)
-          for f in ./src-tauri/target/release/bundle/dmg/*; do
-            mv "$f" "${f%.dmg}-$SHA.dmg"
-          done
-        shell: bash
+          APP_DIR=$(ls src-tauri/target/release/bundle/macos/*.app)
+          APP_NAME=$(basename "$APP_DIR" .app)
+          ditto -c -k --keepParent "$APP_DIR" "$APP_NAME-macos.zip"
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
-          name: macos-dmg
-          path: ./src-tauri/target/release/bundle/dmg/*
+          name: macos-unsigned-zip
+          path: "*.zip"
