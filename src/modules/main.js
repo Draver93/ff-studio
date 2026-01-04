@@ -57,6 +57,7 @@ const graphZone = document.getElementById('graph-zone');
 const playerZone = document.getElementById('player-zone');
 const queueZone = document.getElementById('queue-zone');
 const logsZone = document.getElementById('logs-zone');
+const helpZone = document.getElementById('help-zone');
 const errorBadge = document.getElementById('error-badge');
 const version_full = document.querySelector('.version-full #vf-text');
 const version_short = document.querySelector('.version-short #vs-text');
@@ -69,6 +70,7 @@ tabs.forEach(tab => {
         playerZone.style.display = 'none';
         logsZone.style.display = 'none';
         queueZone.style.display = 'none';
+        if (helpZone) helpZone.style.display = 'none';
         const tabType = tab.getAttribute('data-tab');
         if (tabType === 'graph') {
             graphZone.style.display = 'block';
@@ -79,6 +81,8 @@ tabs.forEach(tab => {
         } else if (tabType === 'logs') {
             logsZone.style.display = 'flex';
             errorBadge.style.display = "none";
+        } else if (tabType === 'help') {
+            if (helpZone) helpZone.style.display = 'block';
         }
     });
 });

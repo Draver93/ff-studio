@@ -1,0 +1,78 @@
+/* Help cards styles */
+.help-zone {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    border-radius: var(--radius-sm);
+}
+
+.help-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.help-card {
+    background: #00000044;
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.help-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--secondary-bg);
+    border: none;
+    cursor: pointer;
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-md);
+    color: var(--text-primary);
+}
+
+.help-card-header i {
+    transition: transform 0.25s ease;
+}
+
+.help-card.open .help-card-header i {
+    transform: rotate(180deg);
+}
+
+.help-card-body {
+    display: flex;
+    gap: 12px;
+    /* start closed with zero vertical padding so collapse reaches 0 height */
+    padding: 0 16px;
+    align-items: flex-start;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.28s ease, padding 0.22s ease;
+}
+
+.help-card.open .help-card-body {
+    /* max-height will be set inline by JS for smooth expand */
+    padding: 12px 16px;
+}
+
+.help-card-img {
+    width: 120px;
+    height: 80px;
+    background: linear-gradient(135deg, rgba(0,0,0,0.08), rgba(0,0,0,0.02));
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.help-text {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.4;
+}

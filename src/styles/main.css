@@ -64,6 +64,8 @@
 /* Workflow Management */
 @import 'workflows/workflow-list.css';
 @import 'workflows/workflow-icons.css';
+/* Help Section */
+@import 'help/help.css';
 
 /* ========================================
    UI COMPONENTS
