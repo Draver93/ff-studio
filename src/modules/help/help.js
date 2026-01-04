@@ -1,5 +1,6 @@
 export function initHelp() {
-	// Attach toggle behavior to help cards
+	// Load help cards fragment and attach toggle behavior
+
 	const attach = () => {
 		document.querySelectorAll('.help-card').forEach(card => {
 			const header = card.querySelector('.help-card-header');
@@ -9,7 +10,7 @@ export function initHelp() {
 			header.setAttribute('aria-expanded', 'false');
 			body.style.display = 'none';
 
-			header.addEventListener('click', (e) => {
+			header.addEventListener('click', () => {
 				const expanded = header.getAttribute('aria-expanded') === 'true';
 				if (!expanded) {
 					// Open
@@ -22,22 +23,37 @@ export function initHelp() {
 					// Close
 					card.classList.remove('open');
 					header.setAttribute('aria-expanded', 'false');
-					// animate to 0 then hide after transition
 					const height = body.scrollHeight;
 					body.style.maxHeight = height + 'px';
-					requestAnimationFrame(() => {
-						body.style.maxHeight = '0px';
+					requestAnimationFrame(() => { body.style.maxHeight = '0px'; });
+					body.addEventListener('transitionend', function handler(e) {
+						if (e.propertyName === 'max-height') {
+							body.style.display = 'none';
+							body.removeEventListener('transitionend', handler);
+						}
 					});
-					setTimeout(() => { body.style.display = 'none'; }, 320);
 				}
 			});
 		});
 	};
 
-	// Initialize when DOM is ready
+	const loadCards = async () => {
+		const container = document.getElementById('help-list');
+		if (!container) return;
+		try {
+			const res = await fetch('modules/help/help-cards.html');
+			if (!res.ok) throw new Error('Failed to load help cards');
+			const html = await res.text();
+			container.innerHTML = html;
+			attach();
+		} catch (err) {
+			console.warn('Help cards could not be loaded:', err);
+		}
+	};
+
 	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', attach);
+		document.addEventListener('DOMContentLoaded', loadCards);
 	} else {
-		attach();
+		loadCards();
 	}
 }

@@ -190,6 +190,56 @@
     text-decoration: underline;
 }
 
+/* Screenshot container and caption for in-app help images */
+.screenshot-container {
+    width: 100%;
+    max-height: 220px;
+    overflow: hidden;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.03);
+    border: 1px solid rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.help-card-screenshot {
+    width: 100%;
+    height: auto;
+    max-height: 180px;
+    object-fit: cover;
+    display: block;
+}
+
+.screenshot-caption {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    padding: 8px 10px;
+    border-top: 1px solid rgba(0,0,0,0.03);
+    background: transparent;
+}
+
+.screenshot-notes {
+    margin-top: 8px;
+}
+
+.screenshot-notes ol {
+    margin: 0 0 8px 18px;
+    padding: 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.screenshot-notes li {
+    margin: 6px 0;
+}
+
+.notes-hint {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 6px;
+}
+
 @media (max-width: 720px) {
     .header-content {
         flex-direction: column;
