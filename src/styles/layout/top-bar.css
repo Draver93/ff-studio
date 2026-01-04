@@ -12,7 +12,7 @@
     display: flex;
     align-items: center;
     height: var(--topbar-height);
-    padding: 0 var(--spacing-lg);
+    padding-left: var(--spacing-lg);
     box-shadow: var(--shadow-sm);
     position: relative;
     z-index: var(--z-sticky);
@@ -38,6 +38,7 @@
     display: flex;
     gap: 0;
     height: 100%;
+    flex: 1;
 }
 
 .tab {
@@ -67,6 +68,13 @@
     background: var(--tertiary-bg);
     color: var(--accent);
     border-bottom: 3px solid var(--accent);
+}
+
+/* Push the Help tab to the far right while keeping others left-aligned */
+.tab[data-tab="help"] {
+    margin-left: auto;
+    padding: 0 calc(var(--spacing-md) + 1px);    
+    font-size: x-large;
 }
 
 /* ========================================

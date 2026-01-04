@@ -3,6 +3,8 @@ import * as workflows from './workflows/workflows.js';
 import * as logs from './logs/logs.js';
 import * as graph from './graph/graph.js';
 import * as queue from './queue/queue.js';
+import * as help from './help/help.js';
+
 const { invoke } = window.__TAURI__.core;
 
 
@@ -31,6 +33,10 @@ appContainer.addEventListener('contextmenu', function (e) { e.preventDefault(); 
 
 window.addEventListener('resize', function () { });
 
+// Initialize help
+help.initHelp();
+
+// Initialize queue
 queue.initializeQueue();
 
 // Initialize graph
