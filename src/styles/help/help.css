@@ -211,6 +211,47 @@
     display: block;
 }
 
+/* Card image styling */
+.help-card-image {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    border-radius: 12px;
+    object-fit: cover;
+    display: block;
+    margin: 8px 0;
+}
+
+/* Container for multiple images */
+.help-card-images {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    margin: 8px 0;
+}
+
+.help-card-images.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.help-card-images.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.help-card-images.grid-3 .help-card-image {
+    max-height: 280px;
+    aspect-ratio: 16 / 9;
+}
+
+.help-card-images.grid-2 .help-card-image {
+    max-height: 220px;
+}
+
 .screenshot-caption {
     font-size: 12px;
     color: var(--text-tertiary);
@@ -228,10 +269,38 @@
     padding: 0;
     color: var(--text-secondary);
     font-size: 13px;
+    line-height: 1.6;
 }
 
 .screenshot-notes li {
-    margin: 6px 0;
+    margin: 8px 0;
+    line-height: 1.5;
+}
+
+.screenshot-notes li strong {
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+}
+
+.screenshot-notes li code {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+.screenshot-notes ul {
+    margin: 6px 0 6px 24px;
+    padding: 0;
+    list-style-type: disc;
+}
+
+.screenshot-notes ul li {
+    margin: 4px 0;
+    color: var(--text-secondary);
+    font-size: 13px;
 }
 
 .notes-hint {
