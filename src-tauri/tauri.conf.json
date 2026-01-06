@@ -33,6 +33,19 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "resources": [
+      "../LICENSE",
+      "icons/icon.png"
+    ],
+    "linux": {
+      "deb": {
+        "depends": [],
+        "files": {
+          "/usr/share/applications/ffstudio.desktop": "ffstudio.desktop",
+          "/usr/share/pixmaps/ffstudio.png": "icons/icon.png"
+        }
+      }
+    }
   }
 }
