@@ -10,6 +10,7 @@ license = "GPL-3.0 license"
 rust-version = "1.70"
 
 [package.metadata.deb]
+name = "FFStudio"
 section = "multimedia"
 categories = ["AudioVideo", "Video", "Audio", "Editing"]
 maintainer = "Finoshkin Aleksei <alexeyf.160620@gmail.com>"
