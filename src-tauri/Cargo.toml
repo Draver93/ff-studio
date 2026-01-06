@@ -1,21 +1,28 @@
 [package]
-name = "FFStudio"
+name = "ffstudio"
 version = "0.2.4"
 edition = "2021"
 authors = ["Finoshkin Aleksei <alexeyf.160620@gmail.com>"]
 description = "Visual workflows for FFmpeg"
 readme = "../README.md"
 homepage = "https://ffstudio.app"
-license = "GPL-3.0 license"
+license = "GPL-3.0"               # SPDX identifier
 rust-version = "1.70"
 
 [package.metadata.deb]
-name = "FFStudio"
-section = "multimedia"
-categories = ["AudioVideo", "Video", "Audio", "Editing"]
+name = "ffstudio"
 maintainer = "Finoshkin Aleksei <alexeyf.160620@gmail.com>"
-homepage = "https://ffstudio.app"
 license-file = ["../LICENSE"]
+section = "multimedia"
+priority = "optional"
+
+# extended-description gives a longer control file description
+extended-description = """
+FFStudio provides a graphical interface to build and run FFmpeg workflows,
+simplifying video and audio processing tasks.
+"""
+
+# assets define what is installed and where
 assets = [
     ["target/release/FFStudio", "/usr/bin/FFStudio", "755"],
     ["icons/icon.png", "/usr/share/pixmaps/ffstudio.png", "644"],
