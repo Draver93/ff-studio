@@ -15,9 +15,7 @@ maintainer = "Finoshkin Aleksei <alexeyf.160620@gmail.com>"
 license-file = ["../LICENSE"]
 section = "multimedia"
 priority = "optional"
-
-deb-description = "Level up your FFmpeg experience!"
-deb-categories = "AudioVideo;AudioVideoEditing;Video;Audio;"  # desktop menu categories
+no-desktop = true
 
 # extended-description gives a longer control file description
 extended-description = """
@@ -28,7 +26,8 @@ simplifying video and audio processing tasks.
 # assets define what is installed and where
 assets = [
     ["target/release/FFStudio", "/usr/bin/FFStudio", "755"],
-    ["icons/icon.png", "/usr/share/pixmaps/ffstudio.png", "644"]
+    ["icons/icon.png", "/usr/share/pixmaps/ffstudio.png", "644"],
+    ["ffstudio.desktop", "/usr/share/applications/ffstudio.desktop", "644"]
 ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
