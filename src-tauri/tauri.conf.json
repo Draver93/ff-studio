@@ -27,6 +27,9 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "shortDescription": "Visual workflows for FFmpeg",
+    "longDescription": "FFStudio provides a graphical interface to build and run FFmpeg workflows.",
+    "category": "AudioVideo",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -37,15 +40,6 @@
     "resources": [
       "../LICENSE",
       "icons/icon.png"
-    ],
-    "linux": {
-      "deb": {
-        "depends": [],
-        "files": {
-          "/usr/share/applications/ffstudio.desktop": "ffstudio.desktop",
-          "/usr/share/pixmaps/ffstudio.png": "icons/icon.png"
-        }
-      }
-    }
+    ]
   }
 }
