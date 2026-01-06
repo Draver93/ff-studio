@@ -6,7 +6,7 @@ authors = ["Finoshkin Aleksei <alexeyf.160620@gmail.com>"]
 description = "Visual workflows for FFmpeg"
 readme = "../README.md"
 homepage = "https://ffstudio.app"
-license = "MIT OR Apache-2.0"
+license = "GPL-3.0 license"
 rust-version = "1.70"
 
 [package.metadata.deb]
