@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>com.fai.ffstudio</id>
+  <name>FFStudio</name>
+  <summary>Visual workflows for FFmpeg</summary>
+  <description>
+    FFStudio provides a graphical interface to build and run FFmpeg workflows,
+    simplifying video and audio processing tasks.
+  </description>
+  <metadata_license>GPL-3.0-only</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <url type="homepage">https://ffstudio.app</url>
+  <icon type="cached">ffstudio</icon>
+  <categories>
+    <category>AudioVideo</category>
+    <category>Video</category>
+    <category>Audio</category>
+    <category>AudioVideoEditing</category>
+  </categories>
+  <provides>
+    <binary>FFStudio</binary>
+  </provides>
+</component>

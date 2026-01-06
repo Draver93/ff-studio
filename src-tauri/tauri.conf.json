@@ -32,7 +32,8 @@
     "linux": {
       "deb": {
         "files": {
-          "/usr/share/doc/ffstudio/copyright": "../debian/copyright"
+          "/usr/share/doc/ffstudio/copyright": "../debian/copyright",
+          "/usr/share/metainfo/com.fai.ffstudio.metainfo.xml": "../debian/metainfo.xml"
         }
       }
     },
