@@ -29,7 +29,7 @@
     "targets": "all",
     "shortDescription": "Visual workflows for FFmpeg",
     "longDescription": "FFStudio provides a graphical interface to build and run FFmpeg workflows.",
-    "category": "AudioVideo",
+    "category": "Utility",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
