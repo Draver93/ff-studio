@@ -29,6 +29,13 @@
     "targets": "all",
     "license": "GPL-3.0-only",
     "licenseFile": "../LICENSE",
+    "linux": {
+      "deb": {
+        "files": {
+          "/usr/share/doc/ffstudio/copyright": "../debian/copyright"
+        }
+      }
+    },
     "shortDescription": "Visual workflows for FFmpeg",
     "longDescription": "FFStudio provides a graphical interface to build and run FFmpeg workflows.",
     "category": "Utility",

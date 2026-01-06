@@ -1,0 +1,15 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: FFStudio
+Upstream-Contact: Finoshkin Aleksei <alexeyf.160620@gmail.com>
+Source: https://ffstudio.app
+
+Files: *
+Copyright: 2024 Finoshkin Aleksei
+License: GPL-3.0-only
+
+License: GPL-3.0-only
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License version 3.
+ .
+ On Debian systems, the full text of the GPL-3 license can be found in
+ /usr/share/common-licenses/GPL-3.
