@@ -27,6 +27,8 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "license": "GPL-3.0-only",
+    "licenseFile": "../LICENSE",
     "shortDescription": "Visual workflows for FFmpeg",
     "longDescription": "FFStudio provides a graphical interface to build and run FFmpeg workflows.",
     "category": "Utility",
