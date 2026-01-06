@@ -1,12 +1,19 @@
 [package]
 name = "FFStudio"
 version = "0.2.4"
-description = "Visual workflows for FFmpeg"
-authors = ["Finoshkin Aleksei"]
 edition = "2021"
+authors = ["Finoshkin Aleksei <alexeyf.160620@gmail.com>"]
+description = "Visual workflows for FFmpeg"
+readme = "../README.md"
+homepage = "https://ffstudio.app"
+license = "MIT OR Apache-2.0"
+rust-version = "1.70"
 
 [package.metadata.deb]
-maintainer = "alexeyf.160620@gmail.com"
+section = "multimedia"
+categories = ["AudioVideo", "Video", "Audio", "Editing"]
+maintainer = "Finoshkin Aleksei <alexeyf.160620@gmail.com>"
+homepage = "https://ffstudio.app"
 license-file = ["../LICENSE"]
 assets = [
     ["target/release/FFStudio", "/usr/bin/FFStudio", "755"],
