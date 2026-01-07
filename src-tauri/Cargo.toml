@@ -15,21 +15,6 @@ maintainer = "Finoshkin Aleksei <alexeyf.160620@gmail.com>"
 license-file = ["../LICENSE"]
 section = "multimedia"
 priority = "optional"
-no-desktop = true
-
-# extended-description gives a longer control file description
-extended-description = """
-FFStudio provides a graphical interface to build and run FFmpeg workflows,
-simplifying video and audio processing tasks.
-"""
-
-# assets define what is installed and where
-assets = [
-    ["target/release/FFStudio", "/usr/bin/FFStudio", "755"],
-    ["icons/icon.png", "/usr/share/pixmaps/ffstudio.png", "644"]
-]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
 # The `_lib` suffix may seem redundant but it is necessary
