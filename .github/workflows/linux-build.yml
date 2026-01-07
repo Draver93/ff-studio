@@ -14,7 +14,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Install Linux dependencies
         run: |
@@ -42,7 +43,7 @@ jobs:
           node-version: 20
 
       - name: Install Rust
-        uses: actions/setup-rust@v1
+        uses: actions/setup-rust@v3
         with:
           rust-version: 1.70
 
