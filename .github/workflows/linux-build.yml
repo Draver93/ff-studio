@@ -14,8 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Install Linux dependencies
         run: |
@@ -30,42 +29,19 @@ jobs:
             libwebkit2gtk-4.1-dev \
             pkg-config \
             build-essential \
-            curl \
-            libssl-dev \
-            libdbus-1-dev \
-            zlib1g-dev \
-            cmake \
-            git
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
-
-      - name: Setup Rust
-        uses: rust-lang/setup-rust@v2
-        with:
-          rust-version: 1.70
+            curl
 
       - name: Install Tauri CLI
         run: cargo install tauri-cli
-
-      - name: Install cargo-deb
-        run: cargo install cargo-deb
 
       - name: Build Tauri app (Linux)
         working-directory: ./src-tauri
         run: cargo tauri build
 
-      - name: Build .deb package
-        working-directory: ./src-tauri
-        run: cargo deb --no-build
-
-      - name: Append Git SHA to .deb
-        working-directory: ./src-tauri
+      - name: Upload Linux .deb
         run: |
           SHA=$(git rev-parse --short HEAD)
-          for f in ./target/debian/*.deb; do
+          for f in ./src-tauri/target/release/bundle/deb/*; do
             mv "$f" "${f%.deb}-$SHA.deb"
           done
         shell: bash
@@ -74,4 +50,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: linux-deb
-          path: ./src-tauri/target/debian/*.deb
+          path: ./src-tauri/target/release/bundle/deb/*
