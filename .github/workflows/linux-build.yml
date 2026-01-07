@@ -43,7 +43,7 @@ jobs:
           node-version: 20
 
       - name: Install Rust
-        uses: actions/setup-rust@v3
+        uses: actions/setup-rust@v2
         with:
           rust-version: 1.70
 
