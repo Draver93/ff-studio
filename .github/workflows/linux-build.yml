@@ -37,13 +37,13 @@ jobs:
             cmake \
             git
 
-      - name: Install Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
 
-      - name: Install Rust
-        uses: actions/setup-rust@v2
+      - name: Setup Rust
+        uses: rust-lang/setup-rust@v2
         with:
           rust-version: 1.70
 
