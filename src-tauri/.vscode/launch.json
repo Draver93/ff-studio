@@ -14,7 +14,7 @@
                     "test",
                     "--no-run",
                     "--lib",
-                    "--package=FFStudio"
+                    "--package=ffstudio"
                 ],
                 "filter": {
                     "name": "ffstudio_lib",
@@ -31,11 +31,11 @@
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=FFStudio",
-                    "--package=FFStudio"
+                    "--bin=ffstudio",
+                    "--package=ffstudio"
                 ],
                 "filter": {
-                    "name": "FFStudio",
+                    "name": "ffstudio",
                     "kind": "bin"
                 }
             },
