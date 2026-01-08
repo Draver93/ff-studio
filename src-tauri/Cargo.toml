@@ -7,7 +7,7 @@ description = "Visual workflows for FFmpeg"
 readme = "../README.md"
 homepage = "https://ffstudio.app"
 license = "GPL-3.0-only"               
-rust-version = "1.70"
+rust-version = "1.81"
 
 [package.metadata.deb]
 name = "ffstudio"
