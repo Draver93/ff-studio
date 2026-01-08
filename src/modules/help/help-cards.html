@@ -1,0 +1,566 @@
+<!-- User-focused help cards fragment: loaded into #help-list by modules/help/help.js -->
+
+<div class="help-card">
+    <button class="help-card-header" aria-expanded="false">
+        <span class="help-title">What is FFStudio?</span>
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="help-card-body" hidden>
+        <div class="help-text">
+            <p>FFStudio is a visual video processing tool powered by FFmpeg. Build workflows by connecting nodes
+                representing processing steps, then run them on your videos.</p>
+        </div>
+        <div class="screenshot-notes">
+            <ol>
+                <li><strong>Common workflows:</strong>
+                    <!-- Image: Main UI showing the graph editor with an example workflow (input → scale filter → h.264 encoder → output) -->
+                    <img src="./assets/what_is.webp" alt="FFStudio main interface with example workflow" class="help-card-image">
+                    <ul>
+                        <li>Convert video to GIF with palette generation</li>
+                        <li>Transcode to H.264+AAC in MP4 container</li>
+                        <li>Scale/resize video (maintain aspect ratio)</li>
+                        <li>Change frame rate (FPS)</li>
+                        <li>Trim videos without re-encoding</li>
+                        <li>Concatenate multiple videos with padding</li>
+                        <li>Add overlays or text to video</li>
+                        <li>Crop or rotate video</li>
+                    </ul>
+                </li>
+                <li>Example: load video → scale to 1080p → encode as H.264 → save output.</li>
+                <li>Build once, reuse the workflow on different files.</li>
+            </ol>
+            <div class="notes-hint">Tip: FFStudio requires FFmpeg installed. Visit ffstudio.app/graph-viewer.html for
+                ready-to-use templates.</div>
+        </div>
+    </div>
+</div>
+
+<div class="help-card">
+    <button class="help-card-header" aria-expanded="false">
+        <span class="help-title">Getting Started</span>
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="help-card-body" hidden>
+        <div class="help-text">
+            <p>Quick start: install FFmpeg, create a workflow (specify the FFmpeg path), build your processing graph,
+                then Execute.</p>
+        </div>
+        <div class="screenshot-notes">
+            <ol>
+                <li><strong>Install FFmpeg:</strong> Download from ffmpeg.org and extract it. Remember the full path to
+                    the ffmpeg executable (e.g., <code>C:\\ffmpeg\\bin\\ffmpeg.exe</code> or
+                    <code>/usr/bin/ffmpeg</code>).</li>
+                <li>Click <strong>New Workflow</strong> in the sidebar.
+                    <!-- Image: New Workflow dialog showing form fields (name, FFmpeg path, env vars, description) and Add button -->
+                    <img src="./assets/getting_started.webp" alt="New Workflow dialog" class="help-card-image">
+                </li>
+                <li>Fill the form: workflow name, FFmpeg path, optional environment variables and description.</li>
+                <li>Click <strong>Add Workflow</strong>. The app will parse FFmpeg (first time ~10-30 seconds; faster
+                    next time with same FFmpeg).</li>
+                <li>Workflow opens in the <strong>Graph</strong> tab. Right-click to open the LiteGraph menu and search
+                    for nodes to add.</li>
+                <li>Connect nodes by dragging from output port to input port.</li>
+                <li>Click <strong>Execute Graph</strong> to run the workflow.</li>
+            </ol>
+            <div class="notes-hint">Tip: First workflow creation with a new FFmpeg path is slow (parsing all filters).
+                Subsequent workflows are instant.</div>
+        </div>
+    </div>
+</div>
+
+<div class="help-card">
+    <button class="help-card-header" aria-expanded="false">
+        <span class="help-title">Batch & Wildcards (Patterns)</span>
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="help-card-body" hidden>
+        <div class="help-text">
+            <p>Use shell-style wildcards to run the same workflow over many files. FFStudio expands wildcards on the
+                backend and generates one job per matching input set.</p>
+        </div>
+        <div class="screenshot-notes">
+            <ol>
+                <li><strong>Supported patterns:</strong> Standard shell-style globs (e.g., <code>*.mp4</code>,
+                    <code>input/**/*.mov</code>, <code>image_?.webp</code>) are expanded on the backend via the Tauri
+                    command <code>expand_wildcard_path</code>.
+                    <!-- Image: Input node with wildcard pattern (e.g., input/*.mp4) showing multiple files being matched, with output renaming examples using {index}, {name}, {hash} -->
+                    <img src="./assets/wildcard_expansion.webp" alt="Wildcard expansion with multiple files" class="help-card-image">
+                </li>
+                <li><strong>How inputs expand:</strong> The app detects wildcards right after <code>-i</code> (the code
+                    checks <code>argv[i] === '-i'</code> and that <code>argv[i+1]</code> contains <code>*</code>).
+                    FFStudio calls the backend to get matches and substitutes them into the command.</li>
+                <li><strong>Multiple input wildcards:</strong> When you have multiple <code>-i</code> wildcards,
+                    FFStudio pairs files by index (not a cartesian product). The number of generated jobs equals the
+                    smallest matched-set size (<code>comboCount = Math.min(...lengths)</code>), so extra files in larger
+                    sets are ignored.</li>
+                <li><strong>Output pattern selection:</strong> The app scans arguments from the end and picks the last
+                    argument containing <code>*</code> or a placeholder (<code>{name}</code>, <code>{hash}</code>,
+                    <code>{index}</code>) as the output pattern. If none is found, it uses the last non-option argument
+                    as the output.</li>
+                <li><strong>Injection mode (how output names are created):</strong>
+                    <ul>
+                        <li>If the output contains <code>{index}</code> → use numeric index (0-based).</li>
+                        <li>Else if there is at least one input wildcard → use combined input basenames joined with
+                            underscores (<code>{name}</code>).</li>
+                        <li>Else if the output contains <code>{hash}</code> → use short hash of input paths.</li>
+                        <li>Default fallback → short hash injected before the file extension.</li>
+                    </ul>
+                </li>
+                <li><strong>Replacement rules:</strong> <code>*</code> in the output is replaced with the injection
+                    string; placeholders <code>{name}</code>, <code>{hash}</code>, and <code>{index}</code> are
+                    substituted accordingly. If no placeholder or <code>*</code> present, the app injects the string
+                    before the extension.</li>
+                <li><strong>Quoting & spaces:</strong> Paths with spaces are quoted automatically when commands are
+                    generated; you can also wrap patterns in quotes yourself.</li>
+                <li><strong>Logging & verification:</strong> Each expanded command is logged (see Logs). You will see
+                    the exact command used for each generated job.</li>
+                <li><strong>Practical tips:</strong>
+                    <ul>
+                        <li>Use <code>{index}</code> when inputs are not named consistently but you want a guaranteed
+                            1:1 mapping.</li>
+                        <li>When using multiple <code>-i</code> wildcards, ensure matching sets have the same intended
+                            ordering (e.g., sort filenames) because FFStudio pairs by index.</li>
+                        <li>Run a small test with a single file or small glob to verify output naming and injection
+                            behavior.</li>
+                    </ul>
+                </li>
+            </ol>
+            <div class="notes-hint">Example: <code>ffmpeg -i "input/*.mp4" -vf scale=1280:720 "out/{name}.mp4"</code> →
+                generates one job per matched input; with multiple <code>-i</code> wildcards it pairs inputs by index
+                and uses the smallest set size for the number of jobs.</div>
+        </div>
+    </div>
+</div>
+
+<div class="help-card">
+    <button class="help-card-header" aria-expanded="false">
+        <span class="help-title">Creating a Workflow Explained</span>
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="help-card-body" hidden>
+        <div class="help-text">
+            <p>Understanding what happens when you create a new workflow helps you know what to expect.</p>
+        </div>
+        <div class="screenshot-notes">
+            <ol>
+                <li><strong>You fill the form:</strong> name, FFmpeg path, and optional settings. The FFmpeg path must
+                    be the exact location of your ffmpeg executable.</li>
+                <li><strong>App checks FFmpeg version:</strong> Verifies the binary exists and is executable.</li>
+                <li><strong>App parses all available filters:</strong> The first time with a new FFmpeg path, the app
+                    runs FFmpeg internally to extract all available filters and codecs. This creates node definitions.
+                    <strong>This can take 10-30 seconds.</strong>
+                    <!-- Image: Progress/loading screen showing FFmpeg parsing in progress with spinner and status text (e.g., "Parsing filters..." and progress percentage) -->
+                    <img src="./assets/parsing_example.webp" alt="Workflow creation parsing progress" class="help-card-image">
+                </li>
+                <li><strong>Results are cached:</strong> Next time you create a workflow with the same FFmpeg path, it
+                    uses the cached results (instant).</li>
+                <li><strong>Workflow is saved:</strong> The workflow name, FFmpeg path, and metadata are stored on disk
+                    in the app's data folder.</li>
+                <li><strong>Graph is ready:</strong> The workflow opens in the Graph tab with all available nodes ready
+                    to use.</li>
+            </ol>
+            <div class="notes-hint">If creation fails, check Logs for errors like "FFmpeg not found" or permission
+                issues.</div>
+        </div>
+    </div>
+</div>
+
+<div class="help-card">
+    <button class="help-card-header" aria-expanded="false">
+        <span class="help-title">Graph: Add & Connect Nodes</span>
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="help-card-body" hidden>
+        <div class="help-text">
+            <p>Build your workflow by adding and connecting nodes. Each node represents a processing step that FFmpeg
+                can perform.</p>
+        </div>
+        <div class="screenshot-notes">
+            <ol>
+                <li><strong>Add nodes:</strong> Right-click in the graph area to open the LiteGraph context menu. Type
+                    to search for a node (e.g., "scale", "fps", "overlay", "drawtext", "crop", "rotate").
+                    <!-- Image: Right-click context menu showing search/filter for nodes, and example connections between input, filter, and output nodes -->
+                    <img src="./assets/search_example.webp" alt="Node search menu and connected nodes" class="help-card-image">
+                </li>
+                <li><strong>Common node types:</strong>
+                    <ul>
+                        <li>Input/Output: load and save files</li>
+                        <li>Stream selector: choose video or audio streams</li>
+                        <li>Filters: scale, fps, pad, overlay, drawtext, crop, rotate</li>
+                        <li>Encoders: libx264 (H.264), aac (audio), etc.</li>
+                        <li>Global options: overwrite output (-y), presets</li>
+                    </ul>
+                </li>
+                <li><strong>Connect ports:</strong> Drag from an output port (right side) to an input port (left side)
+                    to pass data between nodes.</li>
+                <li><strong>Organize:</strong> Arrange nodes left to right: input → filters → output.</li>
+            </ol>
+            <div class="notes-hint">Tip: Browse ffstudio.app/graph-viewer.html for ready-made examples like "Video to
+                GIF", "H.264 Transcode", or "Concatenation+Padding".</div>
+        </div>
+    </div>
+</div>
+
+<div class="help-card">
+    <button class="help-card-header" aria-expanded="false">
+        <span class="help-title">Execute & Monitor</span>
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="help-card-body" hidden>
+        <div class="help-text">
+            <p>Run workflows with the Execute button. Monitor job status in the Queue tab and check technical details in
+                the Logs tab.</p>
+        </div>
+        <div class="screenshot-notes">
+            <ol>
+                <li>Click <strong>Execute Graph</strong> to start processing.
+                    <!-- Image: Execute button highlighted in the graph area, with Queue and Logs tabs visible in background -->
+                    <img src="./assets/execute_example.webp" alt="Execute button and monitoring tabs" class="help-card-image">
+                </li>
+                <li>A badge appears on the <strong>Queue</strong> tab showing the job count.</li>
+                <li>Open the <strong>Queue</strong> tab to see job status (running, completed, failed).</li>
+                <li>Open the <strong>Logs</strong> tab for detailed output and FFmpeg errors.</li>
+                <li>When complete, check the output folder or preview in the Player.</li>
+            </ol>
+            <div class="notes-hint">If a job fails, check the Logs tab for FFmpeg error messages; usually it's a missing
+                codec or invalid path.</div>
+        </div>
+    </div>
+</div>
+
+<div class="help-card">
+    <button class="help-card-header" aria-expanded="false">
+        <span class="help-title">Pro Mode (Advanced Pipeline)</span>
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="help-card-body" hidden>
+        <div class="help-text">
+            <p>Pro Mode lets you build and run multi-step FFmpeg pipelines visually. Use it when you need chained
+                commands, separate FFmpeg environments, or a clear pipeline overview.</p>
+        </div>
+        <div class="screenshot-notes">
+            <ol>
+                <li><strong>Toggle Pro Mode:</strong> Click the cog button next to the Execute button to switch to Pro
+                    Mode. The Execute button label changes to <strong>Execute Pipeline</strong>.
+                    <!-- Image: Pro Mode canvas showing 2-3 pipeline blocks with ffmpeg paths, connected by arrows, and control buttons (Add, Refresh, Remove) -->
+                    <img src="./assets/pro_mode.webp" alt="Pro Mode pipeline canvas with blocks" class="help-card-image">
+                </li>
+                <li><strong>Canvas Chain:</strong> The expanded view shows a canvas with blocks representing each
+                    pipeline step. Blocks can be added, removed, refreshed, dragged to reorder, and previewed.</li>
+                <li><strong>Add a chain element:</strong> Select nodes in the Graph (use the selection box or
+                    Ctrl+click) then click the <strong>+</strong> button to capture the selected nodes as a single
+                    FFmpeg command in the chain. The command uses only the selected nodes.</li>
+                <li><strong>Per-block settings:</strong> Each block stores its FFmpeg binary and environment variables.
+                    This allows mixing different FFmpeg builds or envs per step.</li>
+                <li><strong>Execution:</strong> Clicking <strong>Execute Pipeline</strong> submits the full chain as a
+                    pipeline. The app sends each block's command and env to the queue together (displayed as a joined
+                    pipeline in Logs).</li>
+                <li><strong>When to use:</strong> Use Pro Mode for multi-step workflows that must run in sequence or
+                    when you need to visually debug complex chains. For simple single-command runs or batch wildcards,
+                    regular Execute mode may be easier.</li>
+                <li><strong>Tips:</strong>
+                    <ul>
+                        <li>Use <strong>Refresh</strong> to re-generate the command for a selected block after editing
+                            nodes.</li>
+                        <li>Keep blocks small and focused (one logical step per block) to simplify debugging.</li>
+                        <li>Chain blocks are submitted together; check Logs for the combined pipeline output.</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<div class="help-card">
+    <button class="help-card-header" aria-expanded="false">
+        <span class="help-title">Queue: Manage Jobs</span>
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="help-card-body" hidden>
+        <div class="help-text">
+            <p>The Queue manages all your processing jobs. Submit jobs by clicking Execute, monitor their progress, and
+                control how many run simultaneously.</p>
+        </div>
+        <div class="screenshot-notes">
+            <ol>
+                <li><strong>Job Lifecycle:</strong> When you click Execute, a job is added to the queue with status
+                    <strong>Queued</strong>. As your system becomes available (respecting Max Concurrent), jobs
+                    transition to <strong>Running</strong>. Once complete, they show <strong>Completed</strong> with a
+                    checkmark.
+                    <!-- Image: Queue tab showing multiple jobs with statuses (Queued, Running, Completed), progress bars, frame counts, and control buttons -->
+                    <img src="./assets/queue.webp" alt="Queue tab with jobs and progress" class="help-card-image">
+                </li>
+                <li><strong>Job Statuses:</strong>
+                    <ul>
+                        <li><strong>Queued</strong> (clock icon): Waiting for a slot. Other jobs are running and Max
+                            Concurrent limit is reached.</li>
+                        <li><strong>Running</strong> (spinner): Currently processing. You'll see a progress bar with
+                            frame count, elapsed time, and playback speed.</li>
+                        <li><strong>Completed</strong> (checkmark): Finished successfully. Shows the total time taken
+                            (e.g., 2m 30s).</li>
+                        <li><strong>Failed</strong> (X icon): Encountered an error. Check Logs tab for the FFmpeg error
+                            message.</li>
+                        <li><strong>Cancelled</strong> (ban icon): Stopped by user. Job didn't complete.</li>
+                    </ul>
+                </li>
+                <li><strong>Progress Monitoring:</strong> Running jobs display:
+                    <ul>
+                        <li><strong>Frame Count:</strong> Current frame being processed (e.g., "frame=1500").</li>
+                        <li><strong>Elapsed Time:</strong> How long the job has been running (e.g., "0:02:15").</li>
+                        <li><strong>Speed:</strong> Playback speed multiplier. "2.5x" means processing 2.5 seconds per
+                            second of output.</li>
+                    </ul>
+                </li>
+                <li><strong>Control Concurrency:</strong> Set <strong>Max Concurrent</strong> to limit how many jobs run
+                    at the same time. Default is 1. Increase to run multiple jobs in parallel, but be mindful of CPU and
+                    memory usage. Lower it if your machine gets too slow.</li>
+                <li><strong>Cancel Individual Job:</strong> Click the <strong>×</strong> button next to a running job to
+                    stop just that one.</li>
+                <li><strong>Stop All:</strong> Click <strong>Stop All</strong> to cancel all active (Queued or Running)
+                    jobs at once.</li>
+                <li><strong>Clear Completed:</strong> Click <strong>Clear Completed</strong> to remove Completed,
+                    Failed, and Cancelled jobs from the queue view. This doesn't affect output files—only clears the UI.
+                </li>
+                <li><strong>View FFmpeg Command:</strong> Click on any job in the queue to see the exact FFmpeg command
+                    that was executed for that job. This is useful for debugging, understanding what was run, or
+                    reusing commands manually.</li>
+                <li><strong>Queue Badge:</strong> The Queue tab shows a badge with the count of active jobs (e.g., "2"
+                    means 2 Running or Queued). Cleared jobs don't count toward this.</li>
+                <li><strong>Job Details in Logs:</strong> Each job's output is prefixed with its ID in the Logs tab
+                    (e.g., "[Job#12345] frame=100"). This helps you track multiple jobs' output.</li>
+            </ol>
+            <div class="notes-hint">Tip: For heavy processing on older hardware, keep Max Concurrent at 1 or 2. For
+                modern multi-core systems, you can safely run 4-8 jobs in parallel. The queue auto-refreshes every 2
+                seconds to show latest progress.</div>
+        </div>
+    </div>
+</div>
+
+<div class="help-card">
+    <button class="help-card-header" aria-expanded="false">
+        <span class="help-title">Player & Preview</span>
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="help-card-body" hidden>
+        <div class="help-text">
+            <p>Use three specialized players to validate and debug your video workflows at different stages.</p>
+        </div>
+        <div class="screenshot-notes">
+            <ol>
+                <li><strong>Timeline Player (Graph Validation):</strong> Preview your graph output without rendering the full file. Select a frame range in the timeline and click Generate to run your graph on that range only. FFStudio renders the preview on-demand, so you can quickly validate graph logic, filters, and effects without waiting for full processing. Use selections to mark important segments and export clips.
+                    <img src="./assets/preview_player.webp" alt="Timeline Player for graph validation" class="help-card-image">
+                </li>
+                <li><strong>Stream Player (CDN Validation):</strong> Test HLS (.m3u8) and DASH (.mpd) streams locally before deploying to CDN. Load a stream URL or browse for a local manifest file. Select quality levels to test different bitrates. Built-in HTTP server (port 8893) serves local files, so you can test adaptive streaming and quality switching without uploading to a live CDN.
+                    <img src="./assets/stream_player.webp" alt="Stream Player for CDN validation" class="help-card-image">
+                </li>
+                <li><strong>Compare Player (A/B Comparison):</strong> Side-by-side video comparison with split divider and synchronized playback. Load two files to visually compare codecs, filters, or compression settings. Use the offset control to sync audio/video if timing differs, and the global timeline to navigate both videos together. Perfect for quality assessment and before/after validation.
+                    <img src="./assets/compare_player.webp" alt="Compare Player for side-by-side comparison" class="help-card-image">
+                </li>
+            </ol>
+            <div class="screenshot-notes-details">
+                <p><strong>Use Cases:</strong></p>
+                <ul>
+                    <li><strong>Graph Validation:</strong> After executing a workflow, load the output in Timeline to verify the graph produced the expected result (correct colors, frame rate, duration, etc.).</li>
+                    <li><strong>CDN Testing:</strong> Use Stream Player to test manifest files and quality switching before going live.</li>
+                    <li><strong>Quality Comparison:</strong> Compare original vs. transcoded video in Compare Player to assess codec efficiency and visual fidelity.</li>
+                </ul>
+            </div>
+            <div class="notes-hint">Tip: Timeline and Compare players support local files; Stream player supports HLS/DASH manifests served locally or remotely.</div>
+        </div>
+    </div>
+</div>
+
+<div class="help-card">
+    <button class="help-card-header" aria-expanded="false">
+        <span class="help-title">Parsing FFmpeg Commands into Graphs</span>
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="help-card-body" hidden>
+        <div class="help-text">
+            <p>FFStudio can automatically parse FFmpeg command-line syntax into visual node graphs. Paste a command and watch it convert to an editable graph.</p>
+        </div>
+        <div class="screenshot-notes">
+            <ol>
+                <li><strong>How it works:</strong> The parser analyzes the command structure and creates nodes for inputs, filters, stream selectors, encoders/decoders, muxers, and outputs. It then connects them according to the FFmpeg syntax logic.
+                    <!-- Image: Split view showing FFmpeg command on the left and the generated node graph on the right (before/after) -->
+                    <img src="./assets/copy_cmd.webp" alt="FFmpeg command parsed into node graph" class="help-card-image">
+                </li>
+                <li><strong>What gets parsed:</strong>
+                    <ul>
+                        <li><strong>Inputs:</strong> Files after <code>-i</code> flags become Input nodes.</li>
+                        <li><strong>Filters:</strong> <code>-filter_complex</code> and <code>-vf</code> expressions are broken into individual Filter nodes with their inputs, outputs, and options.</li>
+                        <li><strong>Stream Selectors:</strong> <code>-map</code> arguments create Stream Selector nodes that specify which video/audio/subtitle/data streams to use.</li>
+                        <li><strong>Encoders/Decoders:</strong> <code>-c:v</code>, <code>-c:a</code> (codec) flags create Encoder nodes.</li>
+                        <li><strong>Muxers:</strong> <code>-f</code> (format) flags create Muxer nodes.</li>
+                        <li><strong>Global Options:</strong> Parameters like <code>-b</code>, <code>-s</code>, <code>-profile</code>, <code>-preset</code>, <code>-y</code> become separate Option nodes connected to outputs.</li>
+                        <li><strong>Outputs:</strong> Filenames become Output nodes.</li>
+                    </ul>
+                </li>
+                <li><strong>Complex filter syntax:</strong> Filters with labels (e.g., <code>[0:v]scale=1280:720[scaled]</code>) are parsed to extract input/output labels and automatically connected to matching stream selectors.</li>
+                <li><strong>Piped commands:</strong> Multi-segment commands separated by <code>|</code> are parsed into multiple segments, each positioned side-by-side on the canvas.</li>
+                <li><strong>To use:</strong> Copy any FFmpeg command (e.g., from documentation, Stack Overflow, or your shell history) and paste it into the graph with <code>Ctrl+V</code>. FFStudio instantly creates a graph you can edit visually.</li>
+                <li><strong>Limitations:</strong>
+                    <ul>
+                        <li>Some advanced or obscure FFmpeg options may not have corresponding nodes and will be ignored silently.</li>
+                        <li>If a codec or filter isn't recognized (older FFmpeg version), that node will be skipped.</li>
+                        <li>Pipe syntax and complex stream routing may need manual adjustment after parsing.</li>
+                    </ul>
+                </li>
+                <li><strong>Tips:</strong>
+                    <ul>
+                        <li>After pasting a command, the nodes are automatically arranged. You can drag them to reorganize.</li>
+                        <li>Check the Logs tab for warnings if some options were skipped.</li>
+                        <li>Edit the parsed graph to add missing nodes or adjust parameters visually.</li>
+                        <li>Great way to learn: parse a command, then see how it looks as a graph!</li>
+                    </ul>
+                </li>
+            </ol>
+            <div class="notes-hint">Example: Paste <code>ffmpeg -i input.mp4 -vf "scale=1280:720,fps=30" -c:v libx264 -c:a aac output.mp4</code> → Creates Input, Scale Filter, FPS Filter, H.264 Encoder, AAC Encoder, and Output nodes, all connected.</div>
+        </div>
+    </div>
+</div>
+
+<div class="help-card">
+    <button class="help-card-header" aria-expanded="false">
+        <span class="help-title">Import / Export</span>
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="help-card-body" hidden>
+        <div class="help-text">
+            <p>Share and reuse graphs using copy/paste, import/export, or even paste FFmpeg commands directly into the
+                graph.</p>
+        </div>
+        <div class="screenshot-notes">
+            <ol>
+                <li><strong>Copy/Paste Graphs:</strong> Select nodes and press <code>Ctrl+C</code> to copy. Switch to
+                    another workflow and press <code>Ctrl+V</code> to paste. The graph will be inserted at the cursor
+                    location.
+                    <!-- Image: Keyboard shortcuts visible (Ctrl+C, Ctrl+V, Ctrl+X) and menu showing export/import options -->
+                    <img src="./assets/copy_paste.webp" alt="Copy/paste and import/export workflow" class="help-card-image">
+                </li>
+                <li><strong>Cut Nodes:</strong> Press <code>Ctrl+X</code> to cut selected nodes (copy + delete).</li>
+                <li><strong>Paste FFmpeg Commands:</strong> Copy an FFmpeg command (e.g.,
+                    <code>ffmpeg -i input.mp4 -vf scale=1920:1080 output.mp4</code>) and press <code>Ctrl+V</code> in
+                    the graph. FFStudio will automatically parse it into nodes!</li>
+                <li><strong>Export/Import:</strong> Use the top menu to export the entire graph as JSON. Re-import it
+                    later or share with others.</li>
+            </ol>
+            <div class="notes-hint">Tip: Pasting an FFmpeg command is a quick way to prototype—it auto-generates nodes
+                from the command syntax.</div>
+        </div>
+    </div>
+</div>
+
+<div class="help-card">
+    <button class="help-card-header" aria-expanded="false">
+        <span class="help-title">Media & Where Files Go</span>
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="help-card-body" hidden>
+        <div class="help-text">
+            <p>Specify input and output file paths in your graph nodes. Input files are read from the paths you provide, and output files are written after execution.</p>
+        </div>
+        <div class="screenshot-notes">
+            <ol>
+                <li><strong>Input files:</strong> Use the Input node to specify the source file path. You can type the full path directly (local or absolute).
+                    <!-- Image: Input node with file path field and Output node with destination path, showing how files flow through the graph -->
+                    <img src="./assets/src_path.webp" alt="Input and Output nodes with file paths" class="help-card-image">
+                </li>
+                <li><strong>Output files:</strong> Use the Output node to specify where the processed file should be written.</li>
+                <li><strong>Paths with spaces:</strong> Wrap paths in quotes if they contain spaces (e.g., <code>"C:\My Videos\input.mp4"</code>).</li>
+                <li><strong>Finding output files:</strong> After execution, check the output path you specified in the Output node. Look in the Queue tab to see job status and the exact command that was run.</li>
+                <li><strong>Keep files stable:</strong> If you move input files after saving a workflow, paths will break. Keep files in consistent locations or use wildcards/relative paths where possible.</li>
+            </ol>
+            <div class="notes-hint">Tip: You can use wildcard patterns (e.g., <code>input/*.mp4</code>) in Input nodes for batch processing multiple files.</div>
+        </div>
+    </div>
+</div>
+
+<div class="help-card">
+    <button class="help-card-header" aria-expanded="false">
+        <span class="help-title">FFmpeg Version Compatibility</span>
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="help-card-body" hidden>
+        <div class="help-text">
+            <p>FFStudio's available filters depend on your FFmpeg version. Older versions may not support newer features
+                like AI filters (whisper). Here's what to watch for.</p>
+        </div>
+        <div class="screenshot-notes">
+            <ol>
+                <li><strong>Red nodes mean incompatibility:</strong> If a node appears with a red background, your
+                    FFmpeg version doesn't support that filter. Example: whisper audio filter only exists in recent
+                    FFmpeg builds.
+                    <!-- Image: Graph showing normal nodes (green/blue) and red-highlighted incompatible nodes, indicating version mismatch -->
+                    <img src="./assets/red_errors.webp" alt="Red nodes indicating FFmpeg version incompatibility" class="help-card-image">
+                </li>
+                <li><strong>What to do with red nodes:</strong>
+                    <ul>
+                        <li>Upgrade FFmpeg to the latest version and create a new workflow.</li>
+                        <li>Or find an alternative filter that works with your version (e.g., use a different audio
+                            processing method).</li>
+                    </ul>
+                </li>
+                <li><strong>Parsing breaks graphs:</strong> When you paste an FFmpeg command or import a graph, FFStudio
+                    parses it. If a filter isn't recognized (because your FFmpeg version is older), that node is skipped
+                    silently. Result: a broken or incomplete graph.</li>
+                <li><strong>Fixing broken graphs:</strong> Open Logs to see parsing warnings. Manually add alternative
+                    nodes using available filters in the LiteGraph menu, or upgrade FFmpeg.</li>
+            </ol>
+            <div class="notes-hint">Tip: Always check FFmpeg version after creating a workflow. If you see red nodes or
+                import fails, verify you're using the latest FFmpeg from ffmpeg.org.</div>
+        </div>
+    </div>
+</div>
+
+<div class="help-card">
+    <button class="help-card-header" aria-expanded="false">
+        <span class="help-title">Common Problems & Fixes</span>
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="help-card-body" hidden>
+        <div class="help-text">
+            <p>Short fixes for frequent issues.</p>
+        </div>
+        <div class="screenshot-notes">
+            <ol>
+                <li><strong>No workflows visible:</strong> create or import one, or check app data folder permissions.
+                    <!-- Image: Logs tab showing error messages from failed jobs with red highlighting -->
+                    <img src="./assets/log_error.webp" alt="Error logs and troubleshooting" class="help-card-image">
+                </li>
+                <li><strong>Player blank:</strong> ensure the file/URL is valid and the correct Player tab is selected.
+                </li>
+                <li><strong>Jobs failing:</strong> open Logs to read the error; usually it's a missing input, invalid
+                    codec, or FFmpeg version mismatch.</li>
+                <li><strong>Red nodes in graph:</strong> your FFmpeg version is too old. Upgrade to latest or use
+                    different filters.</li>
+                <li><strong>Imported graph has missing nodes:</strong> some filters weren't recognized during parsing.
+                    Check Logs and manually add replacements.</li>
+            </ol>
+            <div class="notes-hint">If problems persist, capture the screen and logs and share them when asking for
+                help.</div>
+        </div>
+    </div>
+</div>
+
+<div class="help-card">
+    <button class="help-card-header" aria-expanded="false">
+        <span class="help-title">Where to Get More Help</span>
+        <i class="fas fa-chevron-down"></i>
+    </button>
+    <div class="help-card-body" hidden>
+        <div class="help-text">
+            <p>Find official guides, examples and videos on our website and channel.</p>
+        </div>
+        <div class="screenshot-notes">
+            <ol>
+                <li><strong>Website:</strong> Detailed guides, templates, and downloads at <strong>ffstudio.app</strong>.
+                    <!-- Image: Website homepage (ffstudio.app), YouTube channel video thumbnail, and Patreon support page -->
+                    <img src="./assets/info.webp" alt="ffstudio.app, YouTube channel, and Patreon" class="help-card-image">
+                </li>
+                <li><strong>Tutorials:</strong> Watch walkthroughs and examples on the <strong>FFStudio</strong> YouTube channel.</li>
+                <li><strong>Personal Help:</strong> For specific, paid help you can reach me via the <strong>FFStudio Patreon</strong>.</li>
+            </ol>
+        </div>
+    </div>
+</div>

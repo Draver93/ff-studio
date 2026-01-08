@@ -1,0 +1,331 @@
+/* Help cards styles */
+.help-zone {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.help-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+
+/* Hide scrollbar in WebKit browsers while keeping scroll functionality */
+.help-list::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    background: transparent;
+}
+
+.help-card {
+    background: var(--tertiary-bg);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-primary);
+}
+
+.help-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--secondary-bright-bg);
+    border: none;
+    cursor: pointer;
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-md);
+    color: var(--text-primary);
+}
+
+.help-card-header i.fa-chevron-down {
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+    margin-left: 12px;
+}
+
+.help-card.open .help-card-header i.fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.help-card-icon {
+    font-size: 18px;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.help-title {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.help-duration {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    background: rgba(0,0,0,0.15);
+    padding: 2px 8px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    font-weight: normal;
+}
+
+.help-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    /* start closed with zero vertical padding so collapse reaches 0 height */
+    padding: 0 16px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.28s ease, padding 0.22s ease;
+}
+
+.help-card.open .help-card-body {
+    /* max-height will be set inline by JS for smooth expand */
+    padding: 12px 16px;
+}
+
+.help-card-feature {
+    width: 100%;
+    max-height: 180px; /* constrain visual footprint so it doesn't push content */
+    background: linear-gradient(135deg, rgba(0,0,0,0.1), rgba(0,0,0,0.05));
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.help-card-feature img {
+    width: 100%;
+    height: 100%;
+    max-height: 180px;
+    object-fit: cover;
+    display: block;
+}
+
+.help-card-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.help-step {
+    display: flex;
+    gap: 12px;
+}
+
+.step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--accent);
+    color: var(--primary-bg);
+    border-radius: 50%;
+    font-weight: var(--font-weight-semibold);
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.step-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.step-content h4 {
+    margin: 0 0 6px 0;
+    font-size: 14px;
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+}
+
+.step-content p {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.step-tip {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(255,193,7,0.1);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.help-link {
+    display: inline-block;
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.help-link:hover {
+    color: rgba(255,193,7,0.8);
+    text-decoration: underline;
+}
+
+/* Screenshot container and caption for in-app help images */
+.screenshot-container {
+    width: 100%;
+    max-height: 220px;
+    overflow: hidden;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.03);
+    border: 1px solid rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.help-card-screenshot {
+    width: 100%;
+    height: auto;
+    max-height: 180px;
+    object-fit: cover;
+    display: block;
+}
+
+/* Card image styling */
+.help-card-image {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    border-radius: 12px;
+    object-fit: cover;
+    display: block;
+    margin: 8px 0;
+}
+
+/* Container for multiple images */
+.help-card-images {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    margin: 8px 0;
+}
+
+.help-card-images.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.help-card-images.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.help-card-images.grid-3 .help-card-image {
+    max-height: 280px;
+    aspect-ratio: 16 / 9;
+}
+
+.help-card-images.grid-2 .help-card-image {
+    max-height: 220px;
+}
+
+.screenshot-caption {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    padding: 8px 10px;
+    border-top: 1px solid rgba(0,0,0,0.03);
+    background: transparent;
+}
+
+.screenshot-notes {
+    margin-top: 8px;
+}
+
+.screenshot-notes ol {
+    margin: 0 0 8px 18px;
+    padding: 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.screenshot-notes li {
+    margin: 8px 0;
+    line-height: 1.5;
+}
+
+.screenshot-notes li strong {
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+}
+
+.screenshot-notes li code {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+.screenshot-notes ul {
+    margin: 6px 0 6px 24px;
+    padding: 0;
+    list-style-type: disc;
+}
+
+.screenshot-notes ul li {
+    margin: 4px 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.notes-hint {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 6px;
+}
+
+@media (max-width: 720px) {
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .help-card-feature {
+        height: 140px;
+    }
+    
+    .help-step {
+        gap: 10px;
+    }
+    
+    .step-number {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+}
