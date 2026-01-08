@@ -1,20 +1,20 @@
 [package]
-name = "FFStudio"
+name = "ffstudio"
 version = "0.2.4"
-description = "Visual workflows for FFmpeg"
-authors = ["Finoshkin Aleksei"]
 edition = "2021"
+authors = ["Finoshkin Aleksei <alexeyf.160620@gmail.com>"]
+description = "Visual workflows for FFmpeg"
+readme = "../README.md"
+homepage = "https://ffstudio.app"
+license = "GPL-3.0-only"               
+rust-version = "1.70"
 
 [package.metadata.deb]
-maintainer = "alexeyf.160620@gmail.com"
+name = "ffstudio"
+maintainer = "Finoshkin Aleksei <alexeyf.160620@gmail.com>"
 license-file = ["../LICENSE"]
-assets = [
-    ["target/release/FFStudio", "/usr/bin/FFStudio", "755"],
-    ["icons/icon.png", "/usr/share/pixmaps/ffstudio.png", "644"],
-    ["ffstudio.desktop", "/usr/share/applications/ffstudio.desktop", "644"]
-]
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+section = "multimedia"
+priority = "optional"
 
 [lib]
 # The `_lib` suffix may seem redundant but it is necessary

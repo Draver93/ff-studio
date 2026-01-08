@@ -27,12 +27,29 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "license": "GPL-3.0-only",
+    "licenseFile": "../LICENSE",
+    "linux": {
+      "deb": {
+        "files": {
+          "/usr/share/doc/FFStudio/copyright": "../debian/copyright",
+          "/usr/share/metainfo/com.fai.ffstudio.metainfo.xml": "../debian/metainfo.xml"
+        }
+      }
+    },
+    "shortDescription": "Visual workflows for FFmpeg",
+    "longDescription": "FFStudio provides a graphical interface to build and run FFmpeg workflows.",
+    "category": "Utility",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
+    ],
+    "resources": [
+      "../LICENSE",
+      "icons/icon.png"
     ]
   }
 }
