@@ -10,9 +10,12 @@ import * as graph_consts from './constants.js';
 
 const ffmpegTypeMap = {
     "<enum>": (node, opt) => {
-        let values = [""].concat(opt.enum_vals || []);
-        node.addProperty(opt.flag, "", "enum", { values });
-        node.addWidget("combo", opt.flag, "", { property: opt.flag, values });
+        if(opt.enum_vals) {
+            let values = [""].concat(opt.enum_vals);
+            node.addProperty(opt.flag, "", "enum", { values });
+            node.addWidget("combo", opt.flag, "", { property: opt.flag, values });
+        }
+        else ffmpegTypeMap["<string>"](node, opt);
     },
 
     "<bool>": (node, opt) => {
@@ -56,15 +59,21 @@ const ffmpegTypeMap = {
     },
 
     "<pix_fmt>": (node, opt) => {
-        let values = [""].concat(opt.values || []);
-        node.addProperty(opt.flag, "", "enum", { values });
-        node.addWidget("combo", opt.flag, "", { property: opt.flag, values });
+        if(opt.values) {
+            let values = [""].concat(opt.values);
+            node.addProperty(opt.flag, "", "enum", { values });
+            node.addWidget("combo", opt.flag, "", { property: opt.flag, values });
+        }
+        else ffmpegTypeMap["<string>"](node, opt);
     },
 
     "<sample_fmt>": (node, opt) => {
-        let values = [""].concat(opt.values || []);
-        node.addProperty(opt.flag, "", "enum", { values });
-        node.addWidget("combo", opt.flag, "", { property: opt.flag, values });
+        if(opt.values) {
+            let values = [""].concat(opt.values);
+            node.addProperty(opt.flag, "", "enum", { values });
+            node.addWidget("combo", opt.flag, "", { property: opt.flag, values });
+        }
+        else ffmpegTypeMap["<string>"](node, opt);
     },
 
     "<color>": (node, opt) => {
@@ -73,9 +82,12 @@ const ffmpegTypeMap = {
     },
 
     "<channel_layout>": (node, opt) => {
-        let values = [""].concat(opt.values || []);
-        node.addProperty(opt.flag, "", "enum", { values });
-        node.addWidget("combo", opt.flag, "", { property: opt.flag, values });
+        if(opt.values) {
+            let values = [""].concat(opt.values);
+            node.addProperty(opt.flag, "", "enum", { values });
+            node.addWidget("combo", opt.flag, "", { property: opt.flag, values });
+        }
+        else ffmpegTypeMap["<string>"](node, opt);
     }
 };
 
