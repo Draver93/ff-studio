@@ -11,6 +11,8 @@ const MARGIN = 50;
  * Expands ffmpeg command wildcards by calling Tauri backend (expand_wildcard_path)
  * and generates per-input output filenames automatically.
  *
+ * Supports multiple outputs with placeholders.
+ *
  * Automatically determines injection strategy:
  *  - Multiple -i wildcards → {name} = input1_input2
  *  - Single -i wildcard → {name} = input basename
@@ -18,88 +20,202 @@ const MARGIN = 50;
  */
 async function expandFfmpegCommand(ffmpegCommand, options = {}) {
     const { hashLength = 8, indexPadding = 0 } = options;
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // STEP 1: Parse command into arguments
+    // ═══════════════════════════════════════════════════════════════════════════
     const argv = splitArgs(ffmpegCommand);
 
-    // ---- find input wildcards ----
+    // ═══════════════════════════════════════════════════════════════════════════
+    // STEP 2: Find all input wildcards (-i with *)
+    // ═══════════════════════════════════════════════════════════════════════════
     const inputWildcards = [];
+    const inputWildcardIndices = [];
+    
     for (let i = 0; i < argv.length - 1; i++) {
         if (argv[i] === '-i' && argv[i + 1].includes('*')) {
             inputWildcards.push(argv[i + 1]);
+            inputWildcardIndices.push(i + 1);
         }
     }
 
-    // ---- find output pattern ----
+    // ═══════════════════════════════════════════════════════════════════════════
+    // STEP 3: Find ALL output patterns (args with * or placeholders after last -i)
+    // ═══════════════════════════════════════════════════════════════════════════
     const placeholderRegex = /\{(hash|name|index)\}/;
-    let outputPattern = null;
-    for (let i = argv.length - 1; i >= 0; i--) {
-        const a = argv[i];
-        if (a.includes('*') || placeholderRegex.test(a)) {
-            outputPattern = a;
-            break;
+    const outputPatterns = [];
+    const outputPatternIndices = [];
+    
+    // Find last -i position
+    let lastInputIndex = -1;
+    for (let i = 0; i < argv.length - 1; i++) {
+        if (argv[i] === '-i') {
+            lastInputIndex = i + 1;
         }
     }
-    if (!outputPattern) {
-        const lastArg = argv[argv.length - 1];
-        outputPattern = !lastArg.startsWith('-') ? lastArg : '*';
+
+    // Find all outputs after last input
+    for (let i = lastInputIndex + 1; i < argv.length; i++) {
+        const arg = argv[i];
+        
+        // Skip flags
+        if (arg.startsWith('-')) {
+            continue;
+        }
+        
+        // Check if this looks like an output (has wildcard, placeholder, or is a file path)
+        if (arg.includes('*') || placeholderRegex.test(arg)) {
+            outputPatterns.push(arg);
+            outputPatternIndices.push(i);
+        } else if (!arg.startsWith('[') && !arg.startsWith('-')) {
+            // Likely a regular output file (not a stream specifier)
+            outputPatterns.push(arg);
+            outputPatternIndices.push(i);
+        }
     }
 
-    if (inputWildcards.length === 0) return [ffmpegCommand];
+    // ═══════════════════════════════════════════════════════════════════════════
+    // STEP 4: Early exit if no wildcards AND no placeholders
+    // ═══════════════════════════════════════════════════════════════════════════
+    const hasPlaceholders = outputPatterns.some(p => placeholderRegex.test(p));
+    const hasInputWildcards = inputWildcards.length > 0;
+    const hasOutputWildcards = outputPatterns.some(p => p.includes('*'));
+    
+    if (!hasInputWildcards && !hasOutputWildcards && !hasPlaceholders) {
+        return [ffmpegCommand];
+    }
 
-    // ---- expand all wildcards via tauri command ----
+    // ═══════════════════════════════════════════════════════════════════════════
+    // STEP 5: Expand all input wildcards via Tauri backend
+    // ═══════════════════════════════════════════════════════════════════════════
     const expansions = {};
-    await Promise.all(
-        inputWildcards.map(async (pattern) => {
-            const list = await invoke('expand_wildcard_path', { pattern });
-            expansions[pattern] = Array.isArray(list) ? list : [];
-        })
-    );
+    
+    if (inputWildcards.length > 0) {
+        await Promise.all(
+            inputWildcards.map(async (pattern) => {
+                const list = await invoke('expand_wildcard_path', { pattern });
+                expansions[pattern] = Array.isArray(list) ? list : [];
+            })
+        );
+    }
 
-    // ---- determine number of combinations ----
-    const lengths = inputWildcards.map((p) => expansions[p].length);
-    const comboCount = Math.min(...lengths);
+    // ═══════════════════════════════════════════════════════════════════════════
+    // STEP 6: Determine combination count
+    // ═══════════════════════════════════════════════════════════════════════════
+    let comboCount = 1; // Default for placeholder-only mode
+    
+    if (inputWildcards.length > 0) {
+        const lengths = inputWildcards.map((p) => expansions[p].length);
+        
+        if (lengths.some(len => len === 0)) {
+            throw new Error('One or more wildcards expanded to zero files');
+        }
+        
+        if (new Set(lengths).size > 1) {
+            console.warn('Wildcard expansion length mismatch:', lengths);
+        }
+        
+        comboCount = Math.min(...lengths);
+    }
 
-    // ---- detect injection mode automatically ----
-    const outputHasName = outputPattern.includes('{name}') || outputPattern.includes('*');
-    const outputHasHash = outputPattern.includes('{hash}');
-    const outputHasIndex = outputPattern.includes('{index}');
-    let injectionMode = 'hash';
-    if (outputHasIndex) injectionMode = 'index';
-    else if (inputWildcards.length >= 1) injectionMode = 'name';
-    else if (outputHasHash) injectionMode = 'hash';
+    // ═══════════════════════════════════════════════════════════════════════════
+    // STEP 7: Detect injection mode automatically
+    // ═══════════════════════════════════════════════════════════════════════════
+    const hasNamePlaceholder = outputPatterns.some(p => p.includes('{name}') || p.includes('*'));
+    const hasHashPlaceholder = outputPatterns.some(p => p.includes('{hash}'));
+    const hasIndexPlaceholder = outputPatterns.some(p => p.includes('{index}'));
 
+    let injectionMode = 'hash'; // default
+    
+    if (hasIndexPlaceholder) {
+        injectionMode = 'index';
+    } else if (hasNamePlaceholder && inputWildcards.length >= 1) {
+        injectionMode = 'name';
+    } else if (hasHashPlaceholder) {
+        injectionMode = 'hash';
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // STEP 8: Generate commands for each combination
+    // ═══════════════════════════════════════════════════════════════════════════
     const commands = [];
+
     for (let idx = 0; idx < comboCount; idx++) {
-        const inputs = inputWildcards.map((p) => expansions[p][idx]);
-        const inputBasenames = await Promise.all(inputs.map(basenameNoExt));
-        const nameCombined = inputBasenames.join('_');
-        const hash = (await sha256Hex(inputs.join('|'))).slice(0, hashLength);
+        // ───────────────────────────────────────────────────────────────────────
+        // 8a: Get inputs for this combination (if any wildcards exist)
+        // ───────────────────────────────────────────────────────────────────────
+        const inputs = inputWildcards.length > 0 
+            ? inputWildcards.map((p) => expansions[p][idx])
+            : [];
+        
+        // ───────────────────────────────────────────────────────────────────────
+        // 8b: Generate injection values
+        // ───────────────────────────────────────────────────────────────────────
+        let nameCombined = '';
+        let hash = '';
+        
+        if (inputs.length > 0) {
+            const inputBasenames = await Promise.all(inputs.map(basenameNoExt));
+            nameCombined = inputBasenames.join('_');
+            hash = (await sha256Hex(inputs.join('|'))).slice(0, hashLength);
+        } else {
+            // No input wildcards - use command itself for hash or generic name
+            nameCombined = 'output';
+            hash = (await sha256Hex(ffmpegCommand + idx)).slice(0, hashLength);
+        }
+        
         const indexStr = padIndex(idx, indexPadding);
 
-        // Select actual injection string
+        // ───────────────────────────────────────────────────────────────────────
+        // 8c: Select injection string based on mode
+        // ───────────────────────────────────────────────────────────────────────
         const injection = (() => {
             if (injectionMode === 'name') return nameCombined;
             if (injectionMode === 'index') return indexStr;
             return hash;
         })();
 
-        // ---- build output path ----
-        let outPath = outputPattern;
-        if (outPath.includes('*')) {
-            outPath = outPath.replace(/\*/g, injection);
-        } else if (placeholderRegex.test(outPath)) {
-            outPath = outPath
-                .replace(/\{hash\}/g, hash)
-                .replace(/\{name\}/g, nameCombined)
-                .replace(/\{index\}/g, indexStr);
-        } else {
-            outPath = injectBeforeExtension(outPath, injection);
-        }
+        // ───────────────────────────────────────────────────────────────────────
+        // 8d: Build concrete output paths for ALL outputs
+        // ───────────────────────────────────────────────────────────────────────
+        const concreteOutputs = outputPatterns.map((pattern) => {
+            let outPath = pattern;
 
-        // ---- replace args ----
-        const concreteArgv = argv.map((arg) => {
-            if (arg === outputPattern) return quoteIfNeeded(outPath);
-            const idxInInputs = inputWildcards.indexOf(arg);
-            if (idxInInputs !== -1) return quoteIfNeeded(inputs[idxInInputs]);
+            if (outPath.includes('*')) {
+                // Replace wildcards
+                outPath = outPath.replace(/\*/g, injection);
+            } else if (placeholderRegex.test(outPath)) {
+                // Replace placeholders
+                outPath = outPath
+                    .replace(/\{hash\}/g, hash)
+                    .replace(/\{name\}/g, nameCombined)
+                    .replace(/\{index\}/g, indexStr);
+            } else if (outputPatterns.length === 1) {
+                // Single output without placeholder - inject before extension
+                outPath = injectBeforeExtension(outPath, injection);
+            }
+            // Multiple outputs without placeholders stay unchanged
+
+            return outPath;
+        });
+
+        // ───────────────────────────────────────────────────────────────────────
+        // 8e: Replace arguments with concrete values
+        // ───────────────────────────────────────────────────────────────────────
+        const concreteArgv = argv.map((arg, i) => {
+            // Replace output patterns by position
+            const outputIndex = outputPatternIndices.indexOf(i);
+            if (outputIndex !== -1) {
+                return quoteIfNeeded(concreteOutputs[outputIndex]);
+            }
+
+            // Replace input wildcards by position
+            const wildcardIndex = inputWildcardIndices.indexOf(i);
+            if (wildcardIndex !== -1) {
+                return quoteIfNeeded(inputs[wildcardIndex]);
+            }
+
+            // Keep all other arguments unchanged
             return arg;
         });
 
