@@ -92,6 +92,7 @@ pub fn parse_ffmpeg(ffmpeg: &str, env_str: &str) -> Result<Vec<Node>> {
         });
         handles.push(h);
     }
+
     // contexts
     {
         let ff = ffmpeg.to_string();
@@ -209,6 +210,10 @@ fn parse_general(
         for opt_line in filtered.iter() {
             if section_re.is_match(opt_line) {
                 if let Some(mut prev) = current_node.take() {
+                    if let Some(opt) = current_opt.take() {
+                        prev.options.push(opt);
+                    }
+
                     // --- Add "enable" option if timeline support is mentioned ---
                     if timeline_re.is_match(&String::from_utf8_lossy(help_text)) {
                         let opt = OptionEntry {
@@ -290,7 +295,7 @@ fn parse_general(
             }
         }
         if let Some(mut n) = current_node.take() {
-            if let Some(opt) = current_opt {
+            if let Some(opt) = current_opt.take() {
                 n.options.push(opt);
             }
             // --- Add "enable" option if timeline support is mentioned ---
