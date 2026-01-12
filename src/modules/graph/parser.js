@@ -247,12 +247,13 @@ function parseFilterComplex(expr) {
                 filterPart = idMatch[1] + idMatch[3]; // Reconstruct without ID for option parsing
             }
 
-            const [filterName, ...optParts] = filterPart.split('=');
-            filterObj.filter = filterName.trim();
-
             // Find first = to split filter name from options
-            if (optParts && optParts.length > 0) {
-                parseFilterOptions(optParts).forEach((opt, opt_id) => {
+            const firstEqIndex = filterPart.indexOf('=');
+            filterObj.filter = filterPart.substring(0, firstEqIndex);
+            if (firstEqIndex !== -1) {
+                const optsString = filterPart.substring(firstEqIndex + 1);
+                
+                parseFilterOptions(optsString).forEach((opt, opt_id) => {
                     const {name, val} = opt;
                     if (name && val) {
                         filterObj.options.push({name: name.trim(), val: val});
