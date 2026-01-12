@@ -51,6 +51,13 @@ function initializeClipboard() {
                 const text = await pasteFromClipboard();
                 if (!text) return;
 
+                // Check if text is an FFmpeg command
+                if (isFFmpegCommand(text)) {
+                    parseFFmpegCommand(text, graph);
+                    arrangeNodes(graph);
+                    return;
+                }
+
                 // First try JSON
                 try {
                     const data = JSON.parse(text);
@@ -62,16 +69,8 @@ function initializeClipboard() {
                         return;
                     }
 
-                } catch (jsonErr) { }
-
-                // Check if text is an FFmpeg command
-                if (isFFmpegCommand(text)) {
-                    parseFFmpegCommand(text, graph);
-                    arrangeNodes(graph);
-                    return;
-                }
+                } catch (jsonErr) { addLogEntry('error', `Clipboard data is not valid JSON: ${jsonErr}`); }
                 addLogEntry('error', `Clipboard data not recognized`);
-
             } catch (err) {
                 addLogEntry('error', `Failed to read clipboard: ${err}`);
             }
