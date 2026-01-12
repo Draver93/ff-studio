@@ -249,7 +249,7 @@ function parseFilterComplex(expr) {
 
             // Find first = to split filter name from options
             const firstEqIndex = filterPart.indexOf('=');
-            filterObj.filter = filterPart.substring(0, firstEqIndex);
+            filterObj.filter = firstEqIndex !== -1 ? filterPart.substring(0, firstEqIndex) : filterPart;
             if (firstEqIndex !== -1) {
                 const optsString = filterPart.substring(firstEqIndex + 1);
                 
