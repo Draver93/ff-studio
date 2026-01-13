@@ -2,13 +2,66 @@ import * as graph_consts from './constants.js';
 
 
 function splitArgs(cmd) {
-    const regex = /"([^"]*)"|'([^']*)'|(\S+)/g;
+    // First, normalize line continuations by removing backslash + newline/whitespace
+    // This handles both Unix (\\\n) and Windows (\\\r\n) line continuations
+    cmd = cmd.replace(/\\\s*[\r\n]+\s*/g, ' ');
+
     const args = [];
-    let match;
-    while ((match = regex.exec(cmd)) !== null) {
-        if (match[1]) args.push(match[1]);
-        else if (match[2]) args.push(match[2]);
-        else args.push(match[3]);
+    let current = '';
+    let inDoubleQuotes = false;
+    let inSingleQuotes = false;
+    let i = 0;
+    
+    while (i < cmd.length) {
+        const char = cmd[i];
+        const nextChar = cmd[i + 1];
+        
+        // Handle escape sequences
+        if (char === '\\' && !inSingleQuotes) {
+            // Check if it's escaping a special character
+            if (nextChar === '"' || nextChar === "'" || nextChar === '\\' || nextChar === ' ') {
+                current += nextChar;
+                i += 2;
+                continue;
+            }
+            // Otherwise, keep the backslash
+            current += char;
+            i++;
+            continue;
+        }
+        
+        // Handle quotes
+        if (char === '"' && !inSingleQuotes) {
+            inDoubleQuotes = !inDoubleQuotes;
+            i++;
+            continue;
+        }
+        
+        if (char === "'" && !inDoubleQuotes) {
+            inSingleQuotes = !inSingleQuotes;
+            i++;
+            continue;
+        }
+        
+        // Handle whitespace (argument separator)
+        if ((char === ' ' || char === '\t' || char === '\n' || char === '\r') && 
+            !inDoubleQuotes && !inSingleQuotes) {
+            if (current.length > 0) {
+                args.push(current.trim());
+                current = '';
+            }
+            i++;
+            continue;
+        }
+        
+        // Regular character
+        current += char;
+        i++;
+    }
+    
+    // Push the last argument if exists
+    if (current.length > 0) {
+        args.push(current.trim());
     }
     return args;
 }
@@ -41,17 +94,118 @@ function generateHash() {
     return Math.random().toString(36).substring(2, 8);
 }
 
+function parseFilterOptions(optsString) {
+    const options = [];
+    let current = '';
+    let inSingleQuote = false;
+    let inDoubleQuote = false;
+    let parenDepth = 0;
+    
+    for (let i = 0; i < optsString.length; i++) {
+        const char = optsString[i];
+        const prevChar = i > 0 ? optsString[i - 1] : '';
+        
+        // Handle escape sequences
+        if (char === '\\' && i + 1 < optsString.length) {
+            current += char + optsString[i + 1];
+            i++;
+            continue;
+        }
+        
+        // Track quote state FIRST (before checking for colon)
+        if (char === "'" && !inDoubleQuote && prevChar !== '\\') {
+            inSingleQuote = !inSingleQuote;
+            current += char;
+            continue;
+        }
+        if (char === '"' && !inSingleQuote && prevChar !== '\\') {
+            inDoubleQuote = !inDoubleQuote;
+            current += char;
+            continue;
+        }
+        
+        // Track parentheses depth (only outside quotes)
+        if (!inSingleQuote && !inDoubleQuote) {
+            if (char === '(') parenDepth++;
+            else if (char === ')') parenDepth--;
+        }
+        
+        // Only split on : if outside quotes and parentheses
+        if (char === ':' && !inSingleQuote && !inDoubleQuote && parenDepth === 0) {
+            if (current.trim()) {
+                options.push(parseFilterOption(current.trim()));
+                current = '';
+            }
+            continue;
+        }
+        
+        current += char;
+    }
+    
+    if (current.trim()) {
+        options.push(parseFilterOption(current.trim()));
+    }
+    
+    return options;
+}
+
+function parseFilterOption(optString) {
+    const eqIndex = optString.indexOf('=');
+    if (eqIndex === -1) {
+        return { val: optString };
+    }
+    return { 
+        name: optString.substring(0, eqIndex).trim(), 
+        val: optString.substring(eqIndex + 1).trim() 
+    };
+}
+
 function parseFilterComplex(expr) {
     const filters = [];
     
-    // First, replace commas with intermediate labels
-    let processedExpr = expr;
-    const commaRegex = /,(?![^\[]*\])/g; // Match commas not inside brackets
-    processedExpr = processedExpr.replace(commaRegex, () => {
-        const hash = generateHash();
-        return `[${hash}];[${hash}]`;
-    });
+    // Replace commas with intermediate labels, but NOT inside quotes, brackets, or parentheses
+    let processedExpr = '';
+    let inSingleQuote = false;
+    let inDoubleQuote = false;
+    let inBracket = false;
+    let parenDepth = 0;
     
+    for (let i = 0; i < expr.length; i++) {
+        const char = expr[i];
+        const prevChar = i > 0 ? expr[i - 1] : '';
+        
+        // Track escape sequences
+        if (char === '\\' && i + 1 < expr.length) {
+            processedExpr += char + expr[i + 1];
+            i++;
+            continue;
+        }
+        
+        // Track quotes
+        if (char === "'" && !inDoubleQuote && prevChar !== '\\') {
+            inSingleQuote = !inSingleQuote;
+        }
+        if (char === '"' && !inSingleQuote && prevChar !== '\\') {
+            inDoubleQuote = !inDoubleQuote;
+        }
+        
+        // Track brackets and parentheses (only outside quotes)
+        if (!inSingleQuote && !inDoubleQuote) {
+            if (char === '[') inBracket = true;
+            if (char === ']') inBracket = false;
+            if (char === '(') parenDepth++;
+            if (char === ')') parenDepth--;
+        }
+        
+        // Replace comma only if outside quotes, brackets, and parentheses
+        if (char === ',' && !inSingleQuote && !inDoubleQuote && !inBracket && parenDepth === 0) {
+            const hash = generateHash();
+            processedExpr += `[${hash}];[${hash}]`;
+        } else {
+            processedExpr += char;
+        }
+    }
+
     const chains = processedExpr.split(';').filter(chain => chain.trim());
     
     for (const chain of chains) {
@@ -92,17 +246,19 @@ function parseFilterComplex(expr) {
                 filterObj.id = idMatch[2].trim();
                 filterPart = idMatch[1] + idMatch[3]; // Reconstruct without ID for option parsing
             }
-            
-            const [filterName, ...optParts] = filterPart.split('=');
-            filterObj.filter = filterName.trim();
-            
-            if (optParts.length > 0) {
-                const optsString = optParts.join('=');
-                optsString.split(':').forEach((opt, opt_id) => {
-                    const [k, v] = opt.split('=');
-                    if (k && k.trim()) {
-                        if (v !== undefined) filterObj.options.push({name: k.trim(), val: v}); 
-                        else filterObj.options.push({val: k}); 
+
+            // Find first = to split filter name from options
+            const firstEqIndex = filterPart.indexOf('=');
+            filterObj.filter = firstEqIndex !== -1 ? filterPart.substring(0, firstEqIndex) : filterPart;
+            if (firstEqIndex !== -1) {
+                const optsString = filterPart.substring(firstEqIndex + 1);
+                
+                parseFilterOptions(optsString).forEach((opt, opt_id) => {
+                    const {name, val} = opt;
+                    if (name && val) {
+                        filterObj.options.push({name: name.trim(), val: val});
+                    } else if (val) {
+                        filterObj.options.push({val: val});
                     }
                 });
             }
