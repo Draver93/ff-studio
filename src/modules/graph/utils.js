@@ -29,13 +29,19 @@ async function expandFfmpegCommand(ffmpegCommand, options = {}) {
     // ═══════════════════════════════════════════════════════════════════════════
     // STEP 2: Find all input wildcards (-i with *)
     // ═══════════════════════════════════════════════════════════════════════════
+    const regularInputs = [];
     const inputWildcards = [];
     const inputWildcardIndices = [];
     
     for (let i = 0; i < argv.length - 1; i++) {
-        if (argv[i] === '-i' && argv[i + 1].includes('*')) {
-            inputWildcards.push(argv[i + 1]);
-            inputWildcardIndices.push(i + 1);
+        if (argv[i] === '-i') {
+            if(argv[i + 1].includes('*')) {
+                inputWildcards.push(argv[i + 1]);
+                inputWildcardIndices.push(i + 1);
+            }
+            else {
+                regularInputs.push(argv[i + 1]);
+            }
         }
     }
 
@@ -129,7 +135,7 @@ async function expandFfmpegCommand(ffmpegCommand, options = {}) {
     
     if (hasIndexPlaceholder) {
         injectionMode = 'index';
-    } else if (hasNamePlaceholder && inputWildcards.length >= 1) {
+    } else if (hasNamePlaceholder && (inputWildcards.length >= 1 || regularInputs.length >= 1)) {
         injectionMode = 'name';
     } else if (hasHashPlaceholder) {
         injectionMode = 'hash';
@@ -146,7 +152,7 @@ async function expandFfmpegCommand(ffmpegCommand, options = {}) {
         // ───────────────────────────────────────────────────────────────────────
         const inputs = inputWildcards.length > 0 
             ? inputWildcards.map((p) => expansions[p][idx])
-            : [];
+            : regularInputs; // Use regular inputs if no wildcards
         
         // ───────────────────────────────────────────────────────────────────────
         // 8b: Generate injection values
