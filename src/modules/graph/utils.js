@@ -70,7 +70,7 @@ async function expandFfmpegCommand(ffmpegCommand, options = {}) {
         }
         
         // Check if this looks like an output (has wildcard, placeholder, or is a file path)
-        if (arg.includes('*') || placeholderRegex.test(arg)) {
+        if (placeholderRegex.test(arg)) {
             outputPatterns.push(arg);
             outputPatternIndices.push(i);
         } else if (!arg.startsWith('[') && !arg.startsWith('-')) {
@@ -85,9 +85,8 @@ async function expandFfmpegCommand(ffmpegCommand, options = {}) {
     // ═══════════════════════════════════════════════════════════════════════════
     const hasPlaceholders = outputPatterns.some(p => placeholderRegex.test(p));
     const hasInputWildcards = inputWildcards.length > 0;
-    const hasOutputWildcards = outputPatterns.some(p => p.includes('*'));
     
-    if (!hasInputWildcards && !hasOutputWildcards && !hasPlaceholders) {
+    if (!hasInputWildcards && !hasPlaceholders) {
         return [ffmpegCommand];
     }
 
@@ -127,7 +126,7 @@ async function expandFfmpegCommand(ffmpegCommand, options = {}) {
     // ═══════════════════════════════════════════════════════════════════════════
     // STEP 7: Detect injection mode automatically
     // ═══════════════════════════════════════════════════════════════════════════
-    const hasNamePlaceholder = outputPatterns.some(p => p.includes('{name}') || p.includes('*'));
+    const hasNamePlaceholder = outputPatterns.some(p => p.includes('{name}'));
     const hasHashPlaceholder = outputPatterns.some(p => p.includes('{hash}'));
     const hasIndexPlaceholder = outputPatterns.some(p => p.includes('{index}'));
 
