@@ -249,15 +249,18 @@ fn parse_general(
                     if header_re.is_match(opt_line) {
                         // New flag line: "-flag <type> category ..."
                         let parts: Vec<&str> = opt_line.split_whitespace().collect();
-                        if parts.len() > 3 {
+                        if parts.len() > 2 {
                             is_dup_fields = false;
-                            let desc: String =
-                                parts.iter().skip(3).fold(String::new(), |acc, s| acc + s);
-                            if repeated_opt.contains(&desc) {
-                                is_dup_fields = true;
-                                continue;
-                            } else {
-                                repeated_opt.insert(desc);
+                            // Not all args have description
+                            if parts.len() > 3 {
+                                let desc: String =
+                                    parts.iter().skip(3).fold(String::new(), |acc, s| acc + s);
+                                if repeated_opt.contains(&desc) {
+                                    is_dup_fields = true;
+                                    continue;
+                                } else {
+                                    repeated_opt.insert(desc);
+                                }
                             }
 
                             if let Some(prev) = current_opt.take() {
