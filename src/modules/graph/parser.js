@@ -286,12 +286,12 @@ function isFilename(arg) {
     if (!arg) return false;
     arg = arg.replace(/^['"]|['"]$/g, "");
 
-    const invalidChars = /[<>"/\\|?*\x00]/;
+    const invalidChars = /[<>"/|?*\x00]/;
     if (invalidChars.test(arg)) return false;
 
     if (arg === "-") return true; // stdout or stdin
     if (/^pipe:\d+$/.test(arg)) return true; // pipe:0, pipe:1, etc.
-    if (/\.[a-z0-9]{2,5}$/i.test(arg)) return true; // file.ext (mp4, mp3, wav, etc.)
+    if (/\.[a-z0-9]{2,5}$/i.test(arg.split(/[\\/]/).pop())) return true; // file.ext (mp4, mp3, wav, etc.)
     return false;
 }
 
@@ -322,7 +322,7 @@ function splitFFmpegArgs(args) {
             continue;
         }
 
-        if (isFilename(arg)) {
+        if (inputs.length > 0 && isFilename(arg)) {
             outputs.push(buffer);
             buffer = [];
             continue;
