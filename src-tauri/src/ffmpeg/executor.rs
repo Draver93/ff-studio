@@ -409,7 +409,7 @@ pub fn make_preview_cmd(
     let re = Regex::new(r#"(?:[^\s"]+|"[^"]*")+"#).unwrap();
     let tokens: Vec<String> = re
         .find_iter(cmd)
-        .map(|m| m.as_str().trim_matches('"').to_string())
+        .map(|m| m.as_str().to_string())
         .collect();
 
     let i_idx = tokens
@@ -463,7 +463,7 @@ pub fn make_preview_cmd(
     let step1_cmd = step1_tokens
         .into_iter()
         .map(|t| {
-            if t.contains(' ') {
+            if !(t.starts_with('\"') && t.ends_with('\"')) && t.contains(' ') {
                 format!("\"{t}\"")
             } else {
                 t
@@ -495,7 +495,7 @@ pub fn make_preview_cmd(
     let step2_cmd = step2_tokens
         .into_iter()
         .map(|t| {
-            if t.contains(' ') {
+            if !(t.starts_with('\"') && t.ends_with('\"')) && t.contains(' ') {
                 format!("\"{t}\"")
             } else {
                 t
