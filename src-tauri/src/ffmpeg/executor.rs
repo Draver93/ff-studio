@@ -407,10 +407,7 @@ pub fn make_preview_cmd(
     let seg_name: String = utils::hash::short_hash(&seg_name);
 
     let re = Regex::new(r#"(?:[^\s"]+|"[^"]*")+"#).unwrap();
-    let tokens: Vec<String> = re
-        .find_iter(cmd)
-        .map(|m| m.as_str().to_string())
-        .collect();
+    let tokens: Vec<String> = re.find_iter(cmd).map(|m| m.as_str().to_string()).collect();
 
     let i_idx = tokens
         .iter()
