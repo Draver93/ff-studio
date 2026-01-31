@@ -38,7 +38,7 @@ jobs:
         working-directory: ./src-tauri
         run: cargo tauri build
 
-      - name: Upload Linux .deb
+      - name: Rename Linux .deb with commit SHA
         run: |
           SHA=$(git rev-parse --short HEAD)
           for f in ./src-tauri/target/release/bundle/deb/*; do
@@ -46,8 +46,24 @@ jobs:
           done
         shell: bash
 
-      - name: Upload artifact
+      - name: Rename Linux AppImage with commit SHA
+        run: |
+          SHA=$(git rev-parse --short HEAD)
+          for f in ./src-tauri/target/release/bundle/appimage/*; do
+            if [[ "$f" == *.AppImage ]]; then
+              mv "$f" "${f%.AppImage}-$SHA.AppImage"
+            fi
+          done
+        shell: bash
+
+      - name: Upload .deb artifact
         uses: actions/upload-artifact@v4
         with:
           name: linux-deb
           path: ./src-tauri/target/release/bundle/deb/*
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-appimage
+          path: ./src-tauri/target/release/bundle/appimage/*.AppImage
