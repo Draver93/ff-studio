@@ -5,6 +5,7 @@ const { invoke } = window.__TAURI__.core;
 const { open, save } = window.__TAURI__.dialog;
 
 import { addLogEntry } from '../logs/logs.js';
+import { ensureQuoted } from '../core/format.js';
 import * as graph_consts from './constants.js';
 
 
@@ -345,7 +346,7 @@ function make_io_nodes() {
             (dec_v ? "-c:v " + dec_v + " " : "") +
             (d ? d + " " : "") +
             (g ? g + " " : "") +
-            "-i " + str
+            "-i " + ensureQuoted(str)
         );
 
         this.setOutputData(0, {
@@ -486,7 +487,7 @@ function make_io_nodes() {
             (g ? g + " " : "") +
             (enc_a ? "-c:a " + enc_a + " " : "") +
             (enc_v ? "-c:v " + enc_v + " " : "") +
-            path);
+            ensureQuoted(path));
     };
     ffoutput.prototype.onDrawForeground = function (ctx) {
 

@@ -36,3 +36,11 @@ export function textToPastelColor(text) {
   const hash = textToHash(text);
   return hashToPastelColor(hash);
 }
+
+// Ensure a string is quoted (if not already)
+export function ensureQuoted(str) {
+  if (typeof str !== 'string') return str;
+  return (/^(['"]).*\1$/).test(str)
+    ? str
+    : `"${str.replace(/(^['"]|['"]$)/g, '')}"`;
+}
