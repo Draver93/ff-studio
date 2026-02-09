@@ -719,6 +719,9 @@ function createInputNode(inputArgs, graph) {
         if (demuxNode) {
             demuxNode.connect(0, inputNode, 3); // demuxer input
             createdNodes.push(demuxNode);
+        } else {
+            // If no demuxer node found, add as general parameter
+            general.push({ name: "-f", stream_spec: "", value: demuxer });
         }
     }
     
