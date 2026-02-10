@@ -1,6 +1,6 @@
 [package]
 name = "ffstudio"
-version = "0.2.5"
+version = "0.2.6"
 edition = "2021"
 authors = ["Finoshkin Aleksei <alexeyf.160620@gmail.com>"]
 description = "Visual workflows for FFmpeg"
