@@ -1,7 +1,7 @@
 import { addNewWorkflow, selectWorkflow } from '../workflows/workflows.js';
 import { showLoading, hideLoading, updateLoadingProgress, updateLoadingDetails } from './loading.js';
 import { make_nodes, make_io_nodes } from '../graph/nodes.js';
-import { graph } from '../graph/core.js';
+import { canvas, graph } from '../graph/core.js';
 
 const { invoke } = window.__TAURI__.core;
 const { once } = window.__TAURI__.event;
@@ -64,6 +64,9 @@ export function showAddModal() {
 
                     LiteGraph.clearRegisteredTypes();
                     graph.configure("{}");
+                    
+                    canvas.ds.offset = [0, 0];
+                    canvas.ds.scale = 1;
 
                     make_nodes(data["nodes"]);
                     make_io_nodes();

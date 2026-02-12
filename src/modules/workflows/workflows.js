@@ -3,7 +3,7 @@ import { showLoading, hideLoading, updateLoadingProgress, updateLoadingDetails }
 import { showAddModal, showEditModal, hideModal, resetForm } from '../ui/modal.js';
 import { exportGraph } from '../graph/import_export.js';
 import { make_nodes, make_io_nodes } from '../graph/nodes.js';
-import { graph, updateCanvasVisibility } from '../graph/core.js';
+import { graph, canvas, updateCanvasVisibility } from '../graph/core.js';
 
 const { listen, once } = window.__TAURI__.event;
 const { invoke } = window.__TAURI__.core;
@@ -71,6 +71,8 @@ export function addNewWorkflow(name, path, select = false) {
 listen('get_workflow_listener', (event) => {
     LiteGraph.clearRegisteredTypes();
     graph.configure("{}");
+    canvas.ds.offset = [0, 0];
+    canvas.ds.scale = 1;
 
     clearInterval(window.loadingInterval);
     updateLoadingProgress(100);
@@ -151,6 +153,8 @@ export function deleteWorkflow(name) {
     else {
         window.selectedWorkflow = '';
         if(graph) graph.configure("{}");
+        canvas.ds.offset = [0, 0];
+        canvas.ds.scale = 1;
     }
     workflowItems.forEach(item => { 
         if( item.getAttribute('data-workflow') === name ) 
@@ -196,6 +200,9 @@ export async function reconfig_graph(path) {
         let data = event.payload;
         if(window.LiteGraph) window.LiteGraph.clearRegisteredTypes();
         if(graph) graph.configure("{}");
+        canvas.ds.offset = [0, 0];
+        canvas.ds.scale = 1;
+        
         make_nodes(data);
         make_io_nodes();
         addLogEntry('info', `Succesfuly reconfigured litegraph for: ` + path);
