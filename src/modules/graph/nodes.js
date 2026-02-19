@@ -7,7 +7,7 @@ const { open, save } = window.__TAURI__.dialog;
 import { addLogEntry } from '../logs/logs.js';
 import { ensureQuoted } from '../core/format.js';
 import * as graph_consts from './constants.js';
-
+import { graph, canvas } from './core.js';
 
 const ffmpegTypeMap = {
     "<enum>": (node, opt) => {
@@ -511,6 +511,82 @@ function make_io_nodes() {
     LiteGraph.registerNodeType("ffmpeg/output", ffoutput);
 }
 
+// Control Node for variable management
+function make_control_node() {
+    function ffvariables() {
+        this.serialize_widgets = true;
+
+        this.addProperty("Count", 1, "number");
+        this._max_count = 200;
+        this._max_props = 0;
+        this._rebuilding = false;
+
+        this.title = "variables";
+        this.desc = "Define variables for graph-wide replacement.<br>\
+        Select how many rows are active.<br>\
+        Enter each row as key,value.<br>\
+        Use variables as {{key}} throughout graph.";
+
+        this.rebuildWidgets(this.properties.Count || 1);
+    }
+
+    ffvariables.prototype.onPropertyChanged = function(name, value) {
+        if (name !== "Count") return;
+        if (this._rebuilding) return;
+        var count = Math.max(1, Math.min(this._max_count, parseInt(value, 10) || 1));
+        this.rebuildWidgets(count);
+    };
+
+    ffvariables.prototype.rebuildWidgets = function(count) {
+        this._rebuilding = true;
+
+        count = Math.max(1, Math.min(this._max_count, parseInt(count, 10) || 1));
+        this.properties.Count = count;
+
+        // Ensure we have enough backing properties for the requested count
+        for (var i = this._max_props + 1; i <= count; i++) {
+            this.addProperty(`Var${i}_pair`, "", "string");
+        }
+        this._max_props = Math.max(this._max_props, count);
+
+        this.widgets = [];
+
+        this.addWidget("number", "Count", count, { property: "Count", min: 1, max: this._max_count, step: 10, precision: 0 });
+
+        for (var i = 1; i <= count; i++) {
+            this.addWidget("text", "Key,Val", this.properties[`Var${i}_pair`] || "", { property: `Var${i}_pair` });
+        }
+
+        let size = this.computeSize();
+        this.setSize([size[0], size[1] - 20]);
+        this.setDirtyCanvas(true);
+
+        this._rebuilding = false;
+    };
+
+    ffvariables.prototype.onExecute = function () {
+        if (window.global_ffmpeg && window.global_ffmpeg.selected_only && !this.is_selected) { return; }
+
+        var count = Math.max(1, Math.min(this._max_count, parseInt(this.properties.Count, 10) || 1));
+        window.graph_variables = window.graph_variables || {};
+
+        for (var i = 1; i <= count; i++) {
+            var row = (this.properties[`Var${i}_pair`] || "").trim();
+            if (!row) continue;
+
+            var commaIndex = row.indexOf(",");
+            if (commaIndex === -1) continue;
+
+            var key = row.slice(0, commaIndex).trim();
+            var value = row.slice(commaIndex + 1).trim();
+            if (key && value) window.graph_variables[key] = value;
+        }
+    };
+
+    ffvariables.title = "variables";
+    LiteGraph.registerNodeType("ffmpeg/variables", ffvariables);
+}
+
 function make_nodes(nodes) {
     nodes.forEach((item) => {
         var category = "ffmpeg/";
@@ -730,4 +806,4 @@ function exec_codec(node) {
 }
 
 
-export { make_io_nodes, make_nodes };
+export { make_io_nodes, make_nodes, make_control_node };
