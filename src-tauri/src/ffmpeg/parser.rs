@@ -287,8 +287,11 @@ fn parse_general(
                     } else if !is_dup_fields {
                         if let Some(ref mut opt) = current_opt {
                             if opt.r#type.as_deref() == Some("<flags>") {
-                                opt.desc = Some(line.to_string());
-                            } else if let Some(enum_val) = line.split_whitespace().next() {
+                                match &mut opt.desc {
+                                    Some(desc) => desc.push_str(&format!("<br>{opt_line}")),
+                                    None => opt.desc = Some(opt_line.to_string()),
+                                };
+                            } else if let Some(enum_val) = opt_line.split_whitespace().next() {
                                 opt.enum_vals.push(enum_val.to_string());
                                 opt.r#type = Some("<enum>".to_string());
                                 opt.no_args = true;
