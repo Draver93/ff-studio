@@ -285,12 +285,13 @@ fn parse_general(
                             current_opt = Some(opt);
                         }
                     } else if !is_dup_fields {
-                        // Enum/continuation: take first token
-                        if let Some(ref mut e) = current_opt {
-                            if let Some(first) = opt_line.split_whitespace().next() {
-                                e.enum_vals.push(first.to_string());
-                                e.r#type = Some("<enum>".to_string());
-                                e.no_args = true;
+                        if let Some(ref mut opt) = current_opt {
+                            if opt.r#type.as_deref() == Some("<flags>") {
+                                opt.desc = Some(line.to_string());
+                            } else if let Some(enum_val) = line.split_whitespace().next() {
+                                opt.enum_vals.push(enum_val.to_string());
+                                opt.r#type = Some("<enum>".to_string());
+                                opt.no_args = true;
                             }
                         }
                     }
