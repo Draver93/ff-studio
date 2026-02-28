@@ -133,9 +133,12 @@ function initializeImportExport() {
 
         try {
             readTextFile(event.payload.paths[0]).then(function(content) {
-                const serialized = graph.serialize();
                 graph.configure(mergeGraphs(graph.serialize(), JSON.parse(content)));
                 addLogEntry("success", "Graph successfully imported!");
+                // Reset undo/redo history for the newly loaded graph
+                if (window.__GRAPH_UNDO_MGR__) {
+                    window.__GRAPH_UNDO_MGR__.resetHistory();
+                }
             });
         } catch (error) {
             addLogEntry("error", "Caught error:" + error);

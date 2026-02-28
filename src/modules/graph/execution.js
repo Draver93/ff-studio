@@ -23,6 +23,28 @@ const removeChainElement = document.getElementById('remove-chain-element');
 const canvasContainer = document.getElementById('canvas-container');
 const chain_canvas = document.getElementById('chainCanvas');
 
+function replaceVariables(command) {
+    if (!window.graph_variables) {
+        return command;
+    }
+
+    let result = command;
+
+    function escapeRegExp(str) {
+        return String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    // Replace variables in format {{variable_name}}
+    Object.keys(window.graph_variables).forEach(key => {
+        const value = window.graph_variables[key];
+        const safeKey = escapeRegExp(key);
+        const regex = new RegExp(`\\{\\{${safeKey}\\}\\}`, 'g');
+        result = result.replace(regex, value);
+    });
+
+    return result;
+}
+
 // Generate FFmpeg command from graph
 function get_ffmpeg_command(selected_only = false) {
     window.global_ffmpeg = {
@@ -31,7 +53,8 @@ function get_ffmpeg_command(selected_only = false) {
         filters: [],
         outputs: []
     };
-    
+    window.graph_variables = {};
+
     core.graph.runStep();
 
     let result_cmd = "";
@@ -55,6 +78,8 @@ function get_ffmpeg_command(selected_only = false) {
         addLogEntry("error", "Caught error: Failed to create ffmpeg transcode cmd! At least one Output node must be specified!");
         return;
     }
+
+    result_cmd = replaceVariables(result_cmd);
 
     return result_cmd;
 }

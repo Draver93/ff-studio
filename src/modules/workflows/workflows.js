@@ -2,8 +2,9 @@ import { addLogEntry } from '../logs/logs.js';
 import { showLoading, hideLoading, updateLoadingProgress, updateLoadingDetails } from '../ui/loading.js';
 import { showAddModal, showEditModal, hideModal, resetForm } from '../ui/modal.js';
 import { exportGraph } from '../graph/import_export.js';
-import { make_nodes, make_io_nodes } from '../graph/nodes.js';
+import { make_nodes, make_io_nodes, make_control_node } from '../graph/nodes.js';
 import { graph, canvas, updateCanvasVisibility } from '../graph/core.js';
+import { GraphUndoManager } from '../graph/undo_redo.js';
 
 const { listen, once } = window.__TAURI__.event;
 const { invoke } = window.__TAURI__.core;
@@ -98,7 +99,13 @@ listen('get_workflow_listener', (event) => {
 
     make_nodes(data["nodes"]);
     make_io_nodes();
+    make_control_node();
     if(data["graph"]) graph.configure(JSON.parse(data["graph"]));
+
+    // Reset undo history when loading new workflow
+    if (window.__GRAPH_UNDO_MGR__) {
+        window.__GRAPH_UNDO_MGR__.resetHistory();
+    }
 });
 
 export async function selectWorkflow(name) {
@@ -205,6 +212,7 @@ export async function reconfig_graph(path) {
         
         make_nodes(data);
         make_io_nodes();
+        make_control_node();
         addLogEntry('info', `Succesfuly reconfigured litegraph for: ` + path);
         hideLoading();
     });
