@@ -2,6 +2,7 @@ import { addNewWorkflow, selectWorkflow } from '../workflows/workflows.js';
 import { showLoading, hideLoading, updateLoadingProgress, updateLoadingDetails } from './loading.js';
 import { make_nodes, make_io_nodes } from '../graph/nodes.js';
 import { canvas, graph } from '../graph/core.js';
+import { addLogEntry } from '../logs/logs.js';
 
 const { invoke } = window.__TAURI__.core;
 const { once } = window.__TAURI__.event;
@@ -23,14 +24,6 @@ document.getElementById('ffmpeg-path-picker').addEventListener('click', async ()
   if (selected) {
     document.getElementById('ffmpeg-path').value = selected;
   }
-});
-
-// Loading modal event listeners
-const loadingModal = document.getElementById('loading-modal');
-loadingModal.addEventListener('click', (e) => {
-    if (e.target === loadingModal) {
-        hideLoading();
-    }
 });
 
 document.getElementById("workflow-name").addEventListener("input", function(e) {
@@ -73,6 +66,14 @@ export function showAddModal() {
                 once('create_workflow_listener', (event) => {
                     let data = event.payload;
                     clearInterval(window.workflowCreationInterval);
+                    hideLoading();
+
+                    if (data.message !== "Workflow created successfully") {
+                        addLogEntry('error', data.message);
+                        document.querySelector(`.workflow-item[data-workflow="${name}"]`)?.remove();
+                        document.querySelector(`.workflow-icon[data-workflow="${name}"]`)?.remove();
+                        return;
+                    }
 
                     LiteGraph.clearRegisteredTypes();
                     graph.configure("{}");
@@ -84,8 +85,6 @@ export function showAddModal() {
                     make_io_nodes();
 
                     selectWorkflow(name);
-
-                    hideLoading();
                 });
 
                 // Simulate processing steps
@@ -97,8 +96,8 @@ export function showAddModal() {
                 }, 600);
 
                 updateLoadingDetails('Parsing FFmpeg...<br>Estimated time: Calculating...');
-                showLoading("Litegraph configuring", false, false);
-                invoke('create_workflow', {name: name, path: path, env: env, desc: desc });
+                showLoading("Litegraph configuring", false);
+                invoke('create_workflow', {name: name, path: path, env: env, desc: desc }).catch(() => {});
                 resetForm();
             }
             modal.style.display = 'none';

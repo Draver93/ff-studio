@@ -80,8 +80,6 @@ listen('get_workflow_listener', (event) => {
     updateLoadingDetails('Initializing FFmpeg Graph...<br>Complete');
     // Simulate cancellation delay
     setTimeout(() => {
-        //It's just bad
-        allow_skip = true;
         hideLoading();
     }, 800);
 
@@ -139,7 +137,7 @@ export async function selectWorkflow(name) {
             icon.classList.remove('selected');
         }
     });
-    showLoading("Switching workflow!", false, false);
+    showLoading("Switching workflow!", false);
     let progress = 0;
     window.loadingInterval = setInterval(() => {
         progress += Math.random() * ((75 - progress) / 8.0);

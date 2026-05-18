@@ -206,7 +206,11 @@ pub fn to_user_message(error: &FFStudioError) -> String {
             format!("Parse error: {msg}")
         }
         FFStudioError::Application(msg) => {
-            format!("Application error: {msg}")
+            if msg.starts_with("spawning") {
+                "FFmpeg binary not found at the specified path. Check the path and try again.".to_string()
+            } else {
+                format!("Application error: {msg}")
+            }
         }
         FFStudioError::Io(msg) => {
             if msg.contains("Permission denied") {

@@ -5,21 +5,17 @@ const loadingProgress = document.getElementById('loading-progress');
 const loadingDetails = document.getElementById('loading-details');
 
 // Loading modal UI module
-export function showLoading(message = "Processing Video", cancelable = false, skipable = true) {
+export function showLoading(message = "Processing Video", cancelable = false) {
     if (message) {
         loadingMessage.textContent = message;
     }
     loadingModal.style.display = 'flex';
     cancelLoadBtn.style.display = cancelable ? 'inline-flex' : 'none';
-    window.allow_skip = skipable;
     updateLoadingProgress(0);
 }
 
 export function hideLoading() {
-    if(!window.allow_skip) return;
-    const loadingModal = document.getElementById('loading-modal');
     loadingModal.style.display = 'none';
-    window.allow_skip = true;
 }
 
 export function updateLoadingProgress(percent) {
@@ -34,9 +30,3 @@ export function updateLoadingDetails(details) {
     if(detailsEl) detailsEl.innerHTML = details;
 }
 
-// Close modal when clicking outside
-loadingModal.addEventListener('click', (e) => {
-    if (e.target === loadingModal) {
-        hideLoading();
-    }
-});
