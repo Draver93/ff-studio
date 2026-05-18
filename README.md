@@ -22,6 +22,11 @@
 
 - **Visual Workflow Editor:** Drag-and-drop node-based editor using LiteGraph.js to construct FFmpeg processing graphs with automatic node generation from FFmpeg binary.
 - **Workflow Management:** Create, edit, save, and delete reusable workflows, each with its own FFmpeg path, environment variables, and description.
+- **Undo/Redo:** Per-graph undo/redo history (Ctrl+Z / Ctrl+Y) for safe graph editing.
+- **Variables Node:** Define shared variables in one place for consistent graph-wide configuration.
+- **Queue System:** Job execution queue with configurable concurrency, stop all, and clear completed controls.
+- **Graph Import/Export:** Drag-and-drop `.ffgraph` file import for sharing and backing up workflows.
+- **Graph Clipboard:** Copy, cut, and paste nodes within and across graphs.
 - **Advanced Player System:** 
   - **Timeline Preview:** Visual timeline with segment management and frame-accurate seeking
   - **Stream Player:** Support for HLS (.m3u8) and DASH (.mpd) streaming protocols with quality selection
@@ -48,11 +53,13 @@ FFStudio is designed to make advanced FFmpeg usage accessible and visual. Instea
 
 ### Main UI Areas
 
-- **Top Bar:** App title, tab navigation (Graph, Player, Logs).
+- **Top Bar:** App title, tab navigation (Graph, Player, Queue, Logs, Help).
 - **Main Area:**
   - **Graph:** Node-based editor for building FFmpeg graphs.
   - **Player:** Video/audio player with timeline and segment controls.
+  - **Queue:** Job execution queue with concurrency control, stop all, and clear completed.
   - **Logs:** Execution and debug logs.
+  - **Help:** Collapsible help cards for app walkthrough and reference.
 - **Right Sidebar:** Workflow management (list, add, edit, delete, select, execute).
 - **Modals:** For workflow creation/editing and loading/progress feedback.
 
@@ -115,7 +122,7 @@ FFStudio is designed to make advanced FFmpeg usage accessible and visual. Instea
 ### Prerequisites
 
 - [Rust](https://www.rust-lang.org/tools/install) (latest stable version)
-- [Tauri CLI](https://tauri.app/v1/guides/getting-started/prerequisites) (`cargo install tauri-cli`)
+- [Tauri CLI](https://v2.tauri.app/start/prerequisites/) (`cargo install tauri-cli`)
 - [FFmpeg](https://ffmpeg.org/) binary installed on your system
 - Git (for cloning the repository)
 
@@ -127,29 +134,19 @@ FFStudio is designed to make advanced FFmpeg usage accessible and visual. Instea
    cd ff-studio
    ```
 
-2. **Install dependencies:**
+2. **Install Rust (if not already installed):**
    ```sh
-   # Install Rust (if not already installed)
    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-   # Clone the repository
-   git clone https://github.com/Draver93/ff-studio.git
-   cd ff-studio
-
-   # Build the application in release mode
-   cargo build --release
-
-   # Run the application
-   cargo run --release
    ```
 
-3. **Run the app:**
+3. **Run in development mode:**
    ```sh
-   # Development mode (from project root)
-   tauri dev
+   cargo tauri dev
+   ```
    
-   # Or build and run release version
-   tauri build
+4. **Build for production:**
+   ```sh
+   cargo tauri build
    ```
 ### 🧩 Troubleshooting
 
@@ -210,6 +207,7 @@ This disables GPU acceleration for WebKit and may resolve rendering issues on so
 ```
 ff-studio/
 ├── src/                           # Frontend application
+│   ├── assets/                    # Screenshots and media assets
 │   ├── index.html                 # Main HTML UI with tabbed interface
 │   ├── modules/                   # JavaScript modules (ES6)
 │   │   ├── main.js                # Application entry point
@@ -224,20 +222,27 @@ ff-studio/
 │   │   │   ├── import_export.js
 │   │   │   ├── nodes.js           # Node definitions and types
 │   │   │   ├── parser.js          # FFmpeg command parsing
+│   │   │   ├── undo_redo.js       # Undo/redo history manager
 │   │   │   └── utils.js
+│   │   ├── help/                  # Help card system
+│   │   │   ├── help.js
+│   │   │   └── help-cards.html
+│   │   ├── logs/                  # Logging system
+│   │   │   └── logs.js
 │   │   ├── player/                # Media player system
 │   │   │   ├── compare-player.js
 │   │   │   ├── player.js          # Main player controller
 │   │   │   ├── stream-player.js
 │   │   │   ├── timeline-player.js
 │   │   │   └── timeline.js        # Timeline and segment management
-│   │   ├── workflows/             # Workflow management
-│   │   │   └── workflows.js
-│   │   ├── logs/                  # Logging system
-│   │   │   └── logs.js
-│   │   └── ui/                    # UI components (modals, loading)
-│   │       ├── loading.js
-│   │       └── modal.js
+│   │   ├── queue/                 # Job execution queue
+│   │   │   ├── constants.js
+│   │   │   └── queue.js
+│   │   ├── ui/                    # UI components (modals, loading)
+│   │   │   ├── loading.js
+│   │   │   └── modal.js
+│   │   └── workflows/             # Workflow management
+│   │       └── workflows.js
 │   ├── styles/                    # CSS styling system
 │   │   ├── main.css               # Main stylesheet
 │   │   ├── animations/
@@ -266,6 +271,8 @@ ff-studio/
 │   │   │   ├── main-content.css
 │   │   │   ├── side-bar.css
 │   │   │   └── top-bar.css
+│   │   ├── help/                  # Help card styles
+│   │   │   └── help.css
 │   │   ├── logs/
 │   │   │   └── logs-zone.css
 │   │   ├── player/                # Player and timeline styles
@@ -275,6 +282,9 @@ ff-studio/
 │   │   │   ├── timeline-player.css
 │   │   │   ├── timeline.css
 │   │   │   └── video-controls.css
+│   │   ├── queue/                 # Queue zone styles
+│   │   │   ├── queue-tab.css
+│   │   │   └── queue-zone.css
 │   │   ├── responsive/            # Mobile and tablet styles
 │   │   │   ├── mobile.css
 │   │   │   └── tablet.css
@@ -339,6 +349,9 @@ For full license details, see [LICENSE](./LICENSE).
 
 - **Workflows:** Named, reusable sets of FFmpeg processing steps, each with its own configuration and environment.
 - **Node Graph:** Each workflow is a directed graph of nodes (inputs, filters, codecs, outputs) representing FFmpeg operations.
+- **Variables:** Define shared values in a single node for consistent graph-wide configuration.
+- **Undo/Redo:** Per-graph history with debounced snapshots and keyboard shortcuts.
+- **Queue:** Job execution queue with configurable concurrency for batch processing.
 - **Timeline:** Lets users select, label, and manage time-based segments for precise editing and preview.
 - **Player:** Integrated video/audio player for instant feedback.
 - **Logs:** All actions and FFmpeg output are logged for transparency and debugging.
