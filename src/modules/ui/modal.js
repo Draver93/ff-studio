@@ -5,13 +5,25 @@ import { canvas, graph } from '../graph/core.js';
 
 const { invoke } = window.__TAURI__.core;
 const { once } = window.__TAURI__.event;
+const { open } = window.__TAURI__.dialog;
 
+function stripQuotes(str) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/^['"]|['"]$/g, '');
+}
 
 // Modal event listeners
 const addBtn = document.getElementById('add-workflow-btn');
 const cancelBtn = document.getElementById('cancel-btn');
 addBtn.addEventListener('click', () => { showAddModal(); });
 cancelBtn.addEventListener('click', () => { hideModal(); });
+
+document.getElementById('ffmpeg-path-picker').addEventListener('click', async () => {
+  const selected = await open({});
+  if (selected) {
+    document.getElementById('ffmpeg-path').value = selected;
+  }
+});
 
 // Loading modal event listeners
 const loadingModal = document.getElementById('loading-modal');
@@ -35,7 +47,7 @@ export function showAddModal() {
     okBtn.onclick = function (e) {
         e.preventDefault();
         const name = document.getElementById('workflow-name').value;
-        const path = document.getElementById('ffmpeg-path').value;
+        const path = stripQuotes(document.getElementById('ffmpeg-path').value);
         const env = document.getElementById('env-vars').value;
         const desc = document.getElementById('workflow-desc').value;
         let isValid = true;
@@ -105,7 +117,7 @@ export function showEditModal() {
     okBtn.innerHTML = "Edit Workflow";
     okBtn.onclick = function (e) {
         const name = document.getElementById('workflow-name').value;
-        const path = document.getElementById('ffmpeg-path').value;
+        const path = stripQuotes(document.getElementById('ffmpeg-path').value);
         const env = document.getElementById('env-vars').value;
         const desc = document.getElementById('workflow-desc').value;
         hideModal();

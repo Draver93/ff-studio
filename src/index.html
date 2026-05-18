@@ -486,7 +486,12 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="ffmpeg-path">FFmpeg Path</label>
-                    <input type="text" class="form-input" id="ffmpeg-path" placeholder="/usr/local/bin/ffmpeg" required>
+                    <div class="input-group">
+                        <input type="text" class="form-input" id="ffmpeg-path" placeholder="/usr/local/bin/ffmpeg" required>
+                        <button type="button" class="form-input-btn" id="ffmpeg-path-picker" title="Browse for FFmpeg binary">
+                            <i class="fas fa-folder-open"></i>
+                        </button>
+                    </div>
                     <div class="error-message" id="path-error">Please specify the FFmpeg path</div>
                 </div>
                 <div class="form-group">

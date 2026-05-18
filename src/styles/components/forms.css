@@ -147,3 +147,34 @@
     background: var(--tertiary-bg);
     border-color: var(--accent);
 }
+
+/* ========================================
+   INPUT GROUP (input + adjacent button)
+   ======================================== */
+.input-group {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.input-group .form-input {
+    flex: 1;
+}
+
+.form-input-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    background: var(--tertiary-bg);
+    border: 1px solid var(--border-secondary);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.form-input-btn:hover {
+    border-color: var(--accent);
+    background: var(--secondary-bg);
+}
