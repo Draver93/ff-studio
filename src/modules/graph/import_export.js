@@ -165,4 +165,28 @@ function initializeImportExport() {
     });
 }
 
-export { mergeGraphs, exportGraph, initializeImportExport };
+async function importGraph() {
+    const { open } = window.__TAURI__.dialog;
+    const filePath = await open({
+        filters: [{ name: "Graph workflow", extensions: ["ffgraph"] }]
+    });
+    if (!filePath) {
+        addLogEntry('warning', 'Import cancelled by user.');
+        return;
+    }
+
+    try {
+        const content = await readTextFile(filePath);
+        const imported = JSON.parse(content);
+        
+        if (window.__GRAPH_UNDO_MGR__) { window.__GRAPH_UNDO_MGR__.forceSnapshot(); }
+        graph.configure(imported);
+        if (window.__GRAPH_UNDO_MGR__) { window.__GRAPH_UNDO_MGR__.forceSnapshot(); }
+
+        addLogEntry('success', `Graph imported successfully: ${filePath}`);
+    } catch (err) {
+        addLogEntry('error', `Failed to import graph: ${err}`);
+    }
+}
+
+export { mergeGraphs, exportGraph, importGraph, initializeImportExport };

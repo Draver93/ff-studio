@@ -152,12 +152,18 @@
     background: rgba(255, 208, 107, 0.1);
 }
 
-.action-btn.edit:hover {
-    color: #4dabf7;
-    background: rgba(77, 171, 247, 0.1);
+.action-btn.import:hover {
+    color: #4dd4c4;
+    background: rgba(77, 212, 196, 0.1);
 }
 
 .action-btn.save:hover {
     color: #6bcf7f;
     background: rgba(107, 207, 127, 0.1);
 }
+
+.action-btn.edit:hover {
+    color: #4dabf7;
+    background: rgba(77, 171, 247, 0.1);
+}
+

@@ -101,6 +101,28 @@ export class GraphUndoManager {
     this.currentIndex = targetIndex;
   }
 
+  // Immediately commit the current graph state to history (bypasses debounce)
+  forceSnapshot() {
+    if (this._debounceTimer) {
+      clearTimeout(this._debounceTimer);
+      this._debounceTimer = null;
+      this._pendingState = null;
+    }
+    const state = this._cloneState(this.graph.serialize());
+    const last = (this.currentIndex >= 0 && this.currentIndex < this.history.length) ? this.history[this.currentIndex] : null;
+    if (last && state === last) return;
+    if (this.currentIndex < this.history.length - 1) {
+      this.history = this.history.slice(0, this.currentIndex + 1);
+    }
+    this.history.push(state);
+    if (this.history.length > this.maxHistory) {
+      this.history.shift();
+      this.currentIndex = this.maxHistory - 1;
+    } else {
+      this.currentIndex = this.history.length - 1;
+    }
+  }
+
   resetHistory() {
     // Cancel any pending snapshot
     if (this._debounceTimer) {

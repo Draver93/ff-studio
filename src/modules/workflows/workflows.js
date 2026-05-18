@@ -1,7 +1,7 @@
 import { addLogEntry } from '../logs/logs.js';
 import { showLoading, hideLoading, updateLoadingProgress, updateLoadingDetails } from '../ui/loading.js';
 import { showAddModal, showEditModal, hideModal, resetForm } from '../ui/modal.js';
-import { exportGraph } from '../graph/import_export.js';
+import { exportGraph, importGraph } from '../graph/import_export.js';
 import { make_nodes, make_io_nodes, make_control_node } from '../graph/nodes.js';
 import { graph, canvas, updateCanvasVisibility } from '../graph/core.js';
 import { GraphUndoManager } from '../graph/undo_redo.js';
@@ -28,7 +28,8 @@ export function addNewWorkflow(name, path, select = false) {
             <div class="workflow-actions">
                 <button class="action-btn edit" title="Edit" style="display:none"><i class="fas fa-pen"></i></button>
                 <button class="action-btn save" title="Save" style="display:none"><i class="fas fa-save"></i></button>
-                <button class="action-btn export" title="Export" style="display:none"><i class="fas fa-file-export"></i></button>
+                <button class="action-btn export" title="Export .ffgraph" style="display:none"><i class="fas fa-file-export"></i></button>
+                <button class="action-btn import" title="Import .ffgraph" style="display:none"><i class="fas fa-file-import"></i></button>
                 <div> </div>
                 <button class="action-btn delete" title="Delete"><i class="fas fa-trash"></i></button>
             </div>
@@ -62,6 +63,10 @@ export function addNewWorkflow(name, path, select = false) {
     newWorkflow.querySelector('.action-btn.export').addEventListener('click', (e) => {
         e.stopPropagation();
         exportGraph();
+    });
+    newWorkflow.querySelector('.action-btn.import').addEventListener('click', (e) => {
+        e.stopPropagation();
+        importGraph();
     });
     if(select) selectWorkflow(name);
     return true;
@@ -123,10 +128,12 @@ export async function selectWorkflow(name) {
             item.querySelector('.action-btn.edit').style.display = "block";
             item.querySelector('.action-btn.save').style.display = "block";
             item.querySelector('.action-btn.export').style.display = "block";
+            item.querySelector('.action-btn.import').style.display = "block";
         } else {
             item.querySelector('.action-btn.edit').style.display = "none";
             item.querySelector('.action-btn.save').style.display = "none";
             item.querySelector('.action-btn.export').style.display = "none";
+            item.querySelector('.action-btn.import').style.display = "none";
             item.classList.remove('selected');
         }
     });
