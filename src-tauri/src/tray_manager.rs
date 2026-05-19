@@ -1,10 +1,12 @@
 use image::{load_from_memory, Rgba};
 use tauri::image::Image as TauriImage;
-use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
+use tauri::menu::MenuItem;
 use tauri::tray::TrayIcon;
 
 pub struct TrayState {
     pub tray: TrayIcon,
+    pub queue_status: MenuItem<tauri::Wry>,
+    pub wf_status: MenuItem<tauri::Wry>,
 }
 
 impl TrayState {
@@ -15,55 +17,8 @@ impl TrayState {
     }
 
     pub fn set_menu_texts(&self, queue_text: &str, wf_text: &str) {
-        let app = self.tray.app_handle();
-
-        let show = match MenuItem::with_id(app, "show", "Show Window", true, None::<&str>) {
-            Ok(m) => m,
-            Err(_) => return,
-        };
-        let sep1 = match PredefinedMenuItem::separator(app) {
-            Ok(m) => m,
-            Err(_) => return,
-        };
-        let queue_status = match MenuItem::with_id(app, "queue_status", queue_text, false, None::<&str>) {
-            Ok(m) => m,
-            Err(_) => return,
-        };
-        let wf_status = match MenuItem::with_id(app, "wf_status", wf_text, false, None::<&str>) {
-            Ok(m) => m,
-            Err(_) => return,
-        };
-        let cancel_all = match MenuItem::with_id(app, "cancel_all", "Cancel All Jobs", true, None::<&str>) {
-            Ok(m) => m,
-            Err(_) => return,
-        };
-        let stop_wf = match MenuItem::with_id(app, "stop_wf", "Stop All Watch Folders", true, None::<&str>) {
-            Ok(m) => m,
-            Err(_) => return,
-        };
-        let sep2 = match PredefinedMenuItem::separator(app) {
-            Ok(m) => m,
-            Err(_) => return,
-        };
-        let quit = match MenuItem::with_id(app, "quit", "Quit", true, Some("CmdOrCtrl+Q")) {
-            Ok(m) => m,
-            Err(_) => return,
-        };
-
-        let menu = match Menu::new(app) {
-            Ok(m) => m,
-            Err(_) => return,
-        };
-        let _ = menu.append(&show);
-        let _ = menu.append(&sep1);
-        let _ = menu.append(&queue_status);
-        let _ = menu.append(&wf_status);
-        let _ = menu.append(&cancel_all);
-        let _ = menu.append(&stop_wf);
-        let _ = menu.append(&sep2);
-        let _ = menu.append(&quit);
-
-        let _ = self.tray.set_menu(Some(menu));
+        let _ = self.queue_status.set_text(queue_text);
+        let _ = self.wf_status.set_text(wf_text);
     }
 }
 

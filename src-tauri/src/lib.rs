@@ -94,7 +94,7 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            app.manage(TrayState { tray });
+            app.manage(TrayState { tray, queue_status, wf_status });
 
             Ok(())
         })
