@@ -47,43 +47,35 @@ function replaceVariables(command) {
     return result;
 }
 
-// Generate FFmpeg command from graph
-function get_ffmpeg_command(selected_only = false) {
+function _collect_ffmpeg_parts(selected_only = false) {
     window.global_ffmpeg = {
-        selected_only: selected_only,
+        selected_only,
         inputs: [],
         filters: [],
-        outputs: []
+        outputs: [],
     };
     window.graph_variables = {};
-
     core.graph.runStep();
+    return window.global_ffmpeg;
+}
 
-    let result_cmd = "";
+// Generate FFmpeg command from graph
+function get_ffmpeg_command(selected_only = false) {
+    const parts = _collect_ffmpeg_parts(selected_only);
 
-    window.global_ffmpeg.inputs.forEach((item) => {
-        result_cmd += item + " ";
-    });
+    let result_cmd = parts.inputs.join(" ") + " ";
 
-    let filter_str = "";
-    window.global_ffmpeg.filters.forEach((item) => {
-        filter_str += item + ";";
-    });
-    if (filter_str.slice(-1) === ";") filter_str = filter_str.slice(0, -1);
+    let filter_str = parts.filters.join(";");
     if (filter_str) result_cmd += `-filter_complex "${filter_str}" `;
 
-    window.global_ffmpeg.outputs.forEach((item) => {
-        result_cmd += item + " ";
-    });
-    
-    if (!window.global_ffmpeg.outputs.length) {
+    result_cmd += parts.outputs.join(" ");
+
+    if (!parts.outputs.length) {
         addLogEntry("error", "Caught error: Failed to create ffmpeg transcode cmd! At least one Output node must be specified!");
         return;
     }
 
-    result_cmd = replaceVariables(result_cmd);
-
-    return result_cmd;
+    return replaceVariables(result_cmd);
 }
 
 async function startTranscding(cmds, envs) {
@@ -96,41 +88,27 @@ async function startTranscding(cmds, envs) {
 }
 
 function get_ffmpeg_template() {
-    window.global_ffmpeg = {
-        selected_only: false,
-        inputs: [],
-        filters: [],
-        outputs: []
-    };
-    window.graph_variables = {};
-
-    core.graph.runStep();
+    const parts = _collect_ffmpeg_parts(false);
 
     let result_cmd = "";
 
-    window.global_ffmpeg.inputs.forEach((item) => {
+    parts.inputs.forEach((item) => {
         result_cmd += item.replace(/-i "([^"]+)"/g, '-i {input}').replace(/-i '([^']+)'/g, '-i {input}') + " ";
     });
 
-    let filter_str = "";
-    window.global_ffmpeg.filters.forEach((item) => {
-        filter_str += item + ";";
-    });
-    if (filter_str.slice(-1) === ";") filter_str = filter_str.slice(0, -1);
+    let filter_str = parts.filters.join(";");
     if (filter_str) result_cmd += `-filter_complex "${filter_str}" `;
 
-    window.global_ffmpeg.outputs.forEach((item) => {
+    parts.outputs.forEach((item) => {
         result_cmd += item.replace(/"([^"]+)"/g, '{output}').replace(/'([^']+)'/g, '{output}') + " ";
     });
 
-    if (!window.global_ffmpeg.outputs.length) {
+    if (!parts.outputs.length) {
         addLogEntry("error", "Caught error: Failed to create ffmpeg template! At least one Output node must be specified!");
         return null;
     }
 
-    result_cmd = replaceVariables(result_cmd);
-
-    return result_cmd.trim();
+    return replaceVariables(result_cmd).trim();
 }
 
 async function startWatch() {
