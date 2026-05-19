@@ -27,7 +27,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["protocol-asset"] }
+tauri = { version = "2", features = ["protocol-asset", "tray-icon"] }
 
 tokio = { version = "1", features = ["full"] }
 tokio-util = "0.7"
@@ -51,6 +51,7 @@ tauri-plugin-clipboard = "2.1.11"
 directories = "6.0.0"
 shellwords = "1.1.0" 
 glob = "0.3"
+image = "0.25"
 
 
 [profile.dev]

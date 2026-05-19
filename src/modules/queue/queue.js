@@ -84,6 +84,16 @@ function updateQueueDisplay(jobs) {
     
     // Update tab badge
     updateQueueTabBadge(runningCount, queuedCount);
+
+    // Update tray icon status
+    updateTrayStatus(jobs);
+}
+
+function updateTrayStatus(jobs) {
+    const running = jobs.some(j => j.status === 'Running');
+    const queued = jobs.some(j => j.status === 'Queued');
+    const color = running ? 'green' : queued ? 'blue' : 'gray';
+    invoke('set_tray_status', { color });
 }
 
 function updateQueueTabBadge(runningCount, queuedCount) {

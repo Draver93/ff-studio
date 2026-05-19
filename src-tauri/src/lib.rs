@@ -3,8 +3,15 @@
 mod commands;
 mod error;
 mod ffmpeg;
+mod tray_manager;
 mod utils;
 mod workflow;
+
+use tauri::menu::{Menu, MenuItem};
+use tauri::tray::{TrayIconBuilder, TrayIconEvent};
+use tauri::Manager;
+
+use crate::tray_manager::TrayState;
 
 pub use error::{log_error, to_user_message, ErrorContext, FFStudioError, Result};
 
@@ -23,6 +30,44 @@ pub fn run() {
 
     tauri::Builder::default()
         .manage(ffmpeg::executor::TranscodeQueue::default())
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                let _ = window.hide();
+                api.prevent_close();
+            }
+        })
+        .setup(|app| {
+            let show = MenuItem::with_id(app, "show", "Show Window", true, None::<&str>)?;
+            let quit = MenuItem::with_id(app, "quit", "Quit", true, Some("CmdOrCtrl+Q"))?;
+            let menu = Menu::with_items(app, &[&show, &quit])?;
+
+            let tray = TrayIconBuilder::new()
+                .icon(app.default_window_icon().unwrap().clone())
+                .menu(&menu)
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "show" => {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    "quit" => app.exit(0),
+                    _ => {}
+                })
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::DoubleClick { .. } = event {
+                        if let Some(window) = tray.app_handle().get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                })
+                .build(app)?;
+
+            app.manage(TrayState { tray });
+
+            Ok(())
+        })
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard::init())
@@ -50,7 +95,13 @@ pub fn run() {
             workflow::manager::get_workflow_list,
             utils::version::app_version,
             utils::filesystem::expand_wildcard_path,
+            set_tray_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[tauri::command]
+fn set_tray_status(state: tauri::State<TrayState>, color: String) {
+    state.set_status(&color);
 }
