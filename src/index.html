@@ -284,9 +284,17 @@
                 <!-- Logs Zone -->
                 <div class="logs-zone" id="logs-zone">
                     <div class="logs-header">
-                        <div>
+                        <div class="logs-header-left">
                             <span>Execution Logs</span>
-                            <span class="badge">24 entries</span>
+                            <span class="badge"><span class="badge-count">24</span> entries</span>
+                            <div class="trim-controls">
+                                <label class="trim-toggle">
+                                    <input type="checkbox" id="log-trim-toggle" checked>
+                                    <span class="trim-dot"></span>
+                                </label>
+                                <span class="trim-max-label">Limit</span>
+                                <input type="number" id="log-trim-max" value="2000" min="100" max="100000" step="100" class="log-trim-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                            </div>
                         </div>
                         <div class="log-actions">
                             <button class="log-btn" id="logs-zone-clear">

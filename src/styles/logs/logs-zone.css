@@ -28,6 +28,36 @@
     border-bottom: 1px solid var(--border-primary);
 }
 
+.logs-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logs-header-left .badge {
+    color: var(--text-muted);
+}
+
+.logs-header-left .badge-count {
+    color: var(--text-primary);
+}
+
+.log-trim-input {
+    width: 48px;
+    padding: 1px 6px;
+    background: rgba(0, 0, 0, 0.15);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    font-family: var(--font-family-mono);
+    text-align: center;
+    line-height: 1;
+    transition: opacity var(--transition-fast);
+    -moz-appearance: textfield;
+}
+
 /* Scrollable log content */
 .logs-content {
     flex: 1;
@@ -90,8 +120,91 @@
 /* Action buttons within a log */
 .log-actions {
     display: flex;
+    align-items: center;
     gap: var(--spacing-sm);
     margin-left: auto;
+}
+
+/* Trim controls group */
+.trim-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--tertiary-bg);
+    border-radius: var(--radius-xl);
+    padding: 3px 8px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+/* Basic dot toggle */
+.trim-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.trim-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.trim-toggle .trim-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #555;
+    transition: background var(--transition-fast);
+}
+
+.trim-toggle input:checked + .trim-dot {
+    background: var(--accent);
+}
+
+.trim-max-label {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-secondary);
+    user-select: none;
+    line-height: 1;
+    transition: opacity var(--transition-fast);
+}
+
+.log-trim-input {
+    width: 48px;
+    padding: 1px 6px;
+    background: rgba(0, 0, 0, 0.15);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    font-family: var(--font-family-mono);
+    text-align: center;
+    line-height: 1;
+    transition: opacity var(--transition-fast);
+    -moz-appearance: textfield;
+}
+
+.trim-controls:has(#log-trim-toggle:not(:checked)) .trim-max-label {
+    opacity: 0.4;
+}
+
+.log-trim-input::-webkit-inner-spin-button,
+.log-trim-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+}
+
+.log-trim-input:disabled {
+    opacity: 0.4;
 }
 
 .log-btn {

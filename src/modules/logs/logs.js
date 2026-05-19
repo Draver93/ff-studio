@@ -13,6 +13,24 @@ export function initLogs() {
     logsExportBtn.addEventListener('click', (e) => {
         exportLogs();
     });
+
+    // Trim toggle enables/disables the max input
+    const trimControls = document.querySelector('.trim-controls');
+    const trimToggle = document.getElementById('log-trim-toggle');
+    const trimMaxInput = document.getElementById('log-trim-max');
+    if (trimToggle && trimMaxInput) {
+        trimMaxInput.disabled = !trimToggle.checked;
+        trimToggle.addEventListener('change', () => {
+            trimMaxInput.disabled = !trimToggle.checked;
+        });
+        if (trimControls) {
+            trimControls.addEventListener('click', (e) => {
+                if (e.target === trimMaxInput) return;
+                trimToggle.checked = !trimToggle.checked;
+                trimToggle.dispatchEvent(new Event('change'));
+            });
+        }
+    }
 };
 
 // Log system module
@@ -44,18 +62,28 @@ export function addLogEntry(type, message) {
 
     // Auto-scroll only if user is near the bottom
     if (shouldAutoScroll) logsContent.scrollTop = logsContent.scrollHeight;
+
+    // Trim oldest entries if toggle is enabled
+    const trimToggle = document.getElementById('log-trim-toggle');
+    const trimMaxInput = document.getElementById('log-trim-max');
+    if (trimToggle && trimToggle.checked && trimMaxInput) {
+        const maxEntries = parseInt(trimMaxInput.value, 10) || 2000;
+        while (logsContent.childElementCount > maxEntries) {
+            logsContent.removeChild(logsContent.firstElementChild);
+        }
+    }
     
-    const logCount = logsContent.querySelectorAll('.log-entry').length;
-    const badge = document.querySelector('.badge');
-    if(badge) badge.textContent = `${logCount} entries`;
+    const logCount = logsContent.childElementCount;
+    const badgeCount = document.querySelector('.badge-count');
+    if (badgeCount) badgeCount.textContent = logCount;
 }
 
 function clearLogs() {
     logsContent.innerHTML = ``;
     logsContent.scrollTop = logsContent.scrollHeight;
-    const logCount = logsContent.querySelectorAll('.log-entry').length;
-    const badge = document.querySelector('.badge');
-    if(badge) badge.textContent = `${logCount} entries`;
+    const logCount = logsContent.childElementCount;
+    const badgeCount = document.querySelector('.badge-count');
+    if (badgeCount) badgeCount.textContent = logCount;
 }
 
 function exportLogs() {
