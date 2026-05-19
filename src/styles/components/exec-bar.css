@@ -49,7 +49,7 @@
     background: var(--accent);
 }
 
-.pro-mode-toggle {
+.mode-toggle {
     background: var(--secondary-bg);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-md);
@@ -63,15 +63,16 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    pointer-events: auto;
     transition: all var(--transition-fast);
 }
 
-.pro-mode-toggle:hover {
+.mode-toggle:hover {
     background: var(--secondary-bright-bg);
     border-color: var(--accent);
 }
 
-.pro-mode-toggle.active {
+.mode-toggle.active {
     border-color: var(--accent);
     color: var(--accent);
 }
@@ -129,4 +130,72 @@
 
 .canvas-container::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, 0.3); /* semi-transparent*/
+}
+
+/* Watch Folder Settings */
+.watch-settings {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.watch-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.watch-field label {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-medium);
+}
+
+.watch-field-row {
+    display: flex;
+    gap: 6px;
+}
+
+.watch-field input[type="text"] {
+    flex: 1;
+    padding: 6px 10px;
+    background: var(--primary-bg);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: var(--font-size-sm);
+    font-family: var(--font-family-mono);
+    transition: border-color var(--transition-fast);
+}
+
+.watch-field input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.watch-pick-btn {
+    width: 32px;
+    height: 32px;
+    background: var(--tertiary-bg);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.watch-pick-btn:hover {
+    background: var(--secondary-bright-bg);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.watch-hint {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    margin-top: 2px;
 }

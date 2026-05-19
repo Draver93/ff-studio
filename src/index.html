@@ -66,13 +66,16 @@
                     </div>
                     <!-- Graph Execution Bar -->
                     <div class="graph-execution-bar">
-                        <!-- Compact View (Execute Button + Pro Mode Toggle) -->
+                        <!-- Compact View (Execute Button + Mode Toggles) -->
                         <div class="execution-bar-compact">
                             <button class="execute-btn" id="execute-btn">
                                 <i class="fas fa-play"></i>
                                 <span>Execute Graph</span>
                             </button>
-                            <button class="pro-mode-toggle" id="pro-mode-toggle">
+                            <button class="mode-toggle" id="watch-toggle">
+                                <i class="fas fa-folder-open"></i>
+                            </button>
+                            <button class="mode-toggle" id="pro-mode-toggle">
                                 <i class="fas fa-cogs"></i>
                             </button>
                         </div>
@@ -100,6 +103,41 @@
                             <!-- Canvas Container -->
                             <div class="canvas-container" id="canvas-container">
                                 <canvas id="chainCanvas" style="max-width: none"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Expanded View (Watch Folder Settings) -->
+                        <div class="execution-bar-expanded" id="watch-expanded">
+                            <div class="execution-header">
+                                <div class="execution-title">
+                                    <i class="fas fa-folder-open"></i>
+                                    <span>Watch Folder Settings</span>
+                                </div>
+                            </div>
+                            <div class="watch-settings">
+                                <div class="watch-field">
+                                    <label>Watch directory</label>
+                                    <div class="watch-field-row">
+                                        <input type="text" id="watch-dir" placeholder="C:\videos\incoming">
+                                        <button class="watch-pick-btn" id="watch-dir-pick"><i class="fas fa-folder-open"></i></button>
+                                    </div>
+                                </div>
+                                <div class="watch-field">
+                                    <label>File pattern</label>
+                                    <input type="text" id="watch-pattern" value="*.mp4" placeholder="*.mp4, *.mov">
+                                </div>
+                                <div class="watch-field">
+                                    <label>Output directory</label>
+                                    <div class="watch-field-row">
+                                        <input type="text" id="watch-out-dir" placeholder="C:\videos\output">
+                                        <button class="watch-pick-btn" id="watch-out-pick"><i class="fas fa-folder-open"></i></button>
+                                    </div>
+                                </div>
+                                <div class="watch-field">
+                                    <label>Output filename</label>
+                                    <input type="text" id="watch-out-name" value="{name}.mp4" placeholder="{name}.mp4">
+                                    <span class="watch-hint">Use {name}, {hash}, {index} placeholders</span>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -15,6 +15,8 @@ window.action_button_listener = false;
 
 // DOM elements
 const executeBtn = document.getElementById('execute-btn');
+const watchToggle = document.getElementById('watch-toggle');
+const watchExpanded = document.getElementById('watch-expanded');
 const proModeToggle = document.getElementById('pro-mode-toggle');
 const executionBarExpanded = document.getElementById('execution-bar-expanded');
 const addChainElement = document.getElementById('add-chain-element');
@@ -93,6 +95,19 @@ async function startTranscding(cmds, envs) {
         });
 }
 
+function startWatch() {
+    const watchDir = document.getElementById('watch-dir').value;
+    const pattern = document.getElementById('watch-pattern').value;
+    const outDir = document.getElementById('watch-out-dir').value;
+    const outName = document.getElementById('watch-out-name').value;
+
+    addLogEntry("info", `Watch folder started: ${watchDir} (${pattern} → ${outDir}/${outName})`);
+
+    watchToggle.classList.remove('active');
+    watchExpanded.classList.remove('active');
+    executeBtn.querySelector('span').textContent = "Execute Graph";
+}
+
 // Initialize execution system
 function initializeExecution() {
     // Canvas and chain state
@@ -123,10 +138,21 @@ function initializeExecution() {
 
     // Pro Mode Toggle
     proModeToggle.addEventListener('click', () => {
+        watchToggle.classList.remove('active');
+        watchExpanded.classList.remove('active');
         const result = proModeToggle.classList.toggle('active');
         executionBarExpanded.classList.toggle('active');
         
         if(!window.isTranscoding) executeBtn.querySelector('span').textContent = result ? "Execute Pipeline" : "Execute Graph";
+    });
+    // Watch Folder Toggle
+    watchToggle.addEventListener('click', () => {
+        proModeToggle.classList.remove('active');
+        executionBarExpanded.classList.remove('active');
+        const result = watchToggle.classList.toggle('active');
+        watchExpanded.classList.toggle('active');
+        
+        if(!window.isTranscoding) executeBtn.querySelector('span').textContent = result ? "Start Watch" : "Execute Graph";
     });
     // Add new element to canvas chain
     addChainElement.addEventListener('click', () => {
@@ -172,6 +198,10 @@ function initializeExecution() {
 
     // Execute functions
     executeBtn.addEventListener('click', () => {
+        if (watchToggle.classList.contains('active')) {
+            startWatch();
+            return;
+        }
 
         let cmds = [];
         let envs = [];
