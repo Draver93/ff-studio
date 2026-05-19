@@ -23,6 +23,8 @@ export class ComparePlayer {
         this.offsetInput = document.getElementById('offset-input');
         this.timeDisplay = document.getElementById('compare-time-display');
         
+        this.labelBContainer = document.getElementById('label-b-container');
+        
         this.splitPosition = 50; // percentage
         this.isDragging = false;
         this.offsetMs = 0;
@@ -177,6 +179,7 @@ export class ComparePlayer {
         this.splitDivider.style.left = this.splitPosition + '%';
         this.videoWrapperA.style.clipPath = `inset(0 ${100 - this.splitPosition}% 0 0)`;
         this.videoWrapperB.style.clipPath = 'none';
+        this.labelBContainer.style.clipPath = `inset(0 0 0 ${this.splitPosition}%)`;
     }
 
     updatePlayPauseIcon() {
