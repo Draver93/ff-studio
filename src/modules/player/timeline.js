@@ -487,17 +487,17 @@ export class Timeline {
         const onKey = (e) => {
             if(!playerZone.style.display || playerZone.style.display === 'none') return;
 
-            if (['ArrowLeft', 'ArrowRight', ' ', '+', '-', '=', '_'].includes(e.key)) e.preventDefault();
+            if (['ArrowLeft', 'ArrowRight', 'Space', 'Minus', 'Equal', 'Delete', 'NumpadAdd', 'NumpadSubtract'].includes(e.code)) e.preventDefault();
             const nudgeSmall = 1 / 30; // ~1 frame at 30fps
             const nudgeBig = 0.5;
-            if (e.key === ' ') { this.toggle(); return; }
+            if (e.code === 'Space') { this.toggle(); return; }
             if (e.key === 'ArrowLeft') this.setPlayhead(this.playhead - (e.shiftKey ? nudgeBig : nudgeSmall));
             if (e.key === 'ArrowRight') this.setPlayhead(this.playhead + (e.shiftKey ? nudgeBig : nudgeSmall));
-            if (e.key === '+' || e.key === '=') this.zoomAt(1.15, this.timeToX(this.playhead));
-            if (e.key === '-' || e.key === '_') this.zoomAt(1 / 1.15, this.timeToX(this.playhead));
+            if (e.code === 'Equal' || e.code === 'NumpadAdd') this.zoomAt(1.15, this.timeToX(this.playhead));
+            if (e.code === 'Minus' || e.code === 'NumpadSubtract') this.zoomAt(1 / 1.15, this.timeToX(this.playhead));
             
             // Delete key to remove selected segment
-            if (e.key === 'Delete' && this.hoverSegment !== null) {
+            if (e.code === 'Delete' && this.hoverSegment !== null) {
                 this.onSegmentDelete(this.hoverSegment);
                 this.removeSegment(this.hoverSegment);
             }

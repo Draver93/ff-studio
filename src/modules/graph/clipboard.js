@@ -32,21 +32,21 @@ function initializeClipboard() {
     
     // Keyboard event handling for copy/paste
     litegraph_canvas.addEventListener("keydown", async (event) => {
-        const key = event.key.toLowerCase();
+        const key = event.code;
 
-        if (event.ctrlKey && key === "c") {
+        if (event.ctrlKey && key === "KeyC") {
             const selected = canvas.getClipboard();
             await copyToClipboard(selected);
         }
 
-        if (event.ctrlKey && key === "x") {
+        if (event.ctrlKey && key === "KeyX") {
             canvas.copyToClipboard();
             const selected = canvas.getClipboard();
             await copyToClipboard(selected);
             canvas.deleteSelectedNodes();
         }
 
-        if (event.ctrlKey && key === "v") {
+        if (event.ctrlKey && key === "KeyV") {
             try {
                 const text = await pasteFromClipboard();
                 if (!text) return;

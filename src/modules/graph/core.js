@@ -58,15 +58,15 @@ function initializeCanvas() {
         const isMac = navigator.platform.toLowerCase().includes('mac');
         const ctrlOrCmd = isMac ? e.metaKey : e.ctrlKey;
         if (!ctrlOrCmd) return;
-        const key = e.key.toLowerCase();
-        if (key === 'z') {
+        const key = e.code;
+        if (key === 'KeyZ') {
           e.preventDefault();
           if (e.shiftKey) {
             window.__GRAPH_UNDO_MGR__ && window.__GRAPH_UNDO_MGR__.redo();
           } else {
             window.__GRAPH_UNDO_MGR__ && window.__GRAPH_UNDO_MGR__.undo();
           }
-        } else if (key === 'y') {
+        } else if (key === 'KeyY') {
           e.preventDefault();
           window.__GRAPH_UNDO_MGR__ && window.__GRAPH_UNDO_MGR__.redo();
         }
