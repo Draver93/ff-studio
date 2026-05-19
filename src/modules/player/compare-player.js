@@ -32,6 +32,8 @@ export class ComparePlayer {
     }
 
     init() {
+        this.videoA.muted = true;
+        this.videoB.muted = true;
         this.setupEventListeners();
         this.updateSplitPosition(50);
     }
@@ -172,13 +174,9 @@ export class ComparePlayer {
 
     updateSplitPosition(percentage) {
         this.splitPosition = Math.max(0, Math.min(100, percentage));
-        
-        // Update divider position
         this.splitDivider.style.left = this.splitPosition + '%';
-        
-        // Update video B clipping
-        this.videoWrapperB.style.clipPath = `inset(0 0 0 ${this.splitPosition}%)`;
         this.videoWrapperA.style.clipPath = `inset(0 ${100 - this.splitPosition}% 0 0)`;
+        this.videoWrapperB.style.clipPath = 'none';
     }
 
     updatePlayPauseIcon() {

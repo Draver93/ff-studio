@@ -81,8 +81,12 @@
     justify-content: center;
 }
 
+#video-wrapper-a {
+    z-index: 2;
+}
+
 #video-wrapper-b {
-    clip-path: inset(0 0 0 50%);
+    z-index: 1;
 }
 
 .compare-video {
