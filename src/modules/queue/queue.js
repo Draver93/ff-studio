@@ -38,11 +38,18 @@ export function initializeQueue() {
     // Listen for queue status changes
     listen('queue_status_changed', (event) => {
         updateQueueDisplay(event.payload);
+        refreshTrayMenu();
     });
 
     // Listen for watchfolder status changes
     listen('watch_status_changed', (event) => {
         updateWatchDisplay(event.payload);
+        refreshTrayMenu();
+    });
+
+    // Listen for tray menu cancel all
+    listen('tray_cancel_all', () => {
+        cancelAllJobs();
     });
 
     // Initial load
@@ -53,18 +60,76 @@ export function initializeQueue() {
 }
 
 async function refreshQueueStatus() {
+    let jobs = [];
+    let watches = [];
     try {
-        const status = await invoke('get_queue_status');
-        updateQueueDisplay(status);
+        jobs = await invoke('get_queue_status');
+        updateQueueDisplay(jobs);
     } catch (err) {
         console.error('Failed to refresh queue:', err);
     }
     try {
-        const watches = await invoke('get_watchfolders');
+        watches = await invoke('get_watchfolders');
         updateWatchDisplay(watches);
     } catch (err) {
         // Silently ignore - watchfolder may not be available
     }
+    updateTrayMenu(jobs, watches);
+}
+
+let lastQueueText = '';
+let lastWfText = '';
+let menuDebounce = null;
+
+function pushTrayMenu(queueText, wfText) {
+    if (queueText === lastQueueText && wfText === lastWfText) return;
+    lastQueueText = queueText;
+    lastWfText = wfText;
+    if (menuDebounce) clearTimeout(menuDebounce);
+    menuDebounce = setTimeout(() => {
+        invoke('update_tray_menu', { queueText, wfText });
+        menuDebounce = null;
+    }, 400);
+}
+
+function updateTrayMenu(jobs, watches) {
+    const runningCount = jobs.filter(j => j.status === 'Running').length;
+    const queuedCount = jobs.filter(j => j.status === 'Queued').length;
+    const wfCount = watches.length;
+
+    let queueText = 'Queue: idle';
+    if (runningCount > 0 || queuedCount > 0) {
+        queueText = `Queue: ${runningCount} running, ${queuedCount} queued`;
+    }
+
+    let wfText = 'Watchfolder: idle';
+    if (wfCount > 0) {
+        wfText = `Watchfolder: ${wfCount} active`;
+    }
+
+    pushTrayMenu(queueText, wfText);
+}
+
+function refreshTrayMenu() {
+    let runningCount = 0;
+    let queuedCount = 0;
+    for (const [, entry] of queueJobs) {
+        if (entry.status === 'Running') runningCount++;
+        if (entry.status === 'Queued') queuedCount++;
+    }
+    const wfCount = watchEntries.size;
+
+    let queueText = 'Queue: idle';
+    if (runningCount > 0 || queuedCount > 0) {
+        queueText = `Queue: ${runningCount} running, ${queuedCount} queued`;
+    }
+
+    let wfText = 'Watchfolder: idle';
+    if (wfCount > 0) {
+        wfText = `Watchfolder: ${wfCount} active`;
+    }
+
+    pushTrayMenu(queueText, wfText);
 }
 
 function updateQueueDisplay(jobs) {

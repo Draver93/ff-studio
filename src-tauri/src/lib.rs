@@ -8,9 +8,9 @@ mod utils;
 mod watch_queue;
 mod workflow;
 
-use tauri::menu::{Menu, MenuItem};
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 use crate::tray_manager::TrayState;
 
@@ -40,8 +40,23 @@ pub fn run() {
         })
         .setup(|app| {
             let show = MenuItem::with_id(app, "show", "Show Window", true, None::<&str>)?;
+            let sep1 = PredefinedMenuItem::separator(app)?;
+            let queue_status = MenuItem::with_id(app, "queue_status", "Queue: idle", false, None::<&str>)?;
+            let wf_status = MenuItem::with_id(app, "wf_status", "Watchfolder: idle", false, None::<&str>)?;
+            let cancel_all = MenuItem::with_id(app, "cancel_all", "Cancel All Jobs", true, None::<&str>)?;
+            let stop_wf = MenuItem::with_id(app, "stop_wf", "Stop All Watch Folders", true, None::<&str>)?;
+            let sep2 = PredefinedMenuItem::separator(app)?;
             let quit = MenuItem::with_id(app, "quit", "Quit", true, Some("CmdOrCtrl+Q"))?;
-            let menu = Menu::with_items(app, &[&show, &quit])?;
+
+            let menu = Menu::new(app)?;
+            menu.append(&show)?;
+            menu.append(&sep1)?;
+            menu.append(&queue_status)?;
+            menu.append(&wf_status)?;
+            menu.append(&cancel_all)?;
+            menu.append(&stop_wf)?;
+            menu.append(&sep2)?;
+            menu.append(&quit)?;
 
             let tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
@@ -52,6 +67,18 @@ pub fn run() {
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.show();
                             let _ = window.set_focus();
+                        }
+                    }
+                    "cancel_all" => {
+                        let _ = app.emit("tray_cancel_all", ());
+                    }
+                    "stop_wf" => {
+                        if let Some(wq) = app.try_state::<watch_queue::WatchFolderQueue>() {
+                            let ids: Vec<u64> = wq.get_info_list().iter().map(|w| w.id).collect();
+                            for id in ids {
+                                wq.remove_entry(id);
+                            }
+                            let _ = app.emit("watch_status_changed", wq.get_info_list());
                         }
                     }
                     "quit" => app.exit(0),
@@ -99,6 +126,7 @@ pub fn run() {
             utils::version::app_version,
             utils::filesystem::expand_wildcard_path,
             set_tray_status,
+            update_tray_menu,
             watch_queue::start_watchfolder,
             watch_queue::stop_watchfolder,
             watch_queue::get_watchfolders,
@@ -110,4 +138,9 @@ pub fn run() {
 #[tauri::command]
 fn set_tray_status(state: tauri::State<TrayState>, color: String) {
     state.set_status(&color);
+}
+
+#[tauri::command]
+fn update_tray_menu(state: tauri::State<TrayState>, queue_text: String, wf_text: String) {
+    state.set_menu_texts(&queue_text, &wf_text);
 }
