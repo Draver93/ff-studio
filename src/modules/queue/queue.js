@@ -111,25 +111,9 @@ function updateTrayMenu(jobs, watches) {
 }
 
 function refreshTrayMenu() {
-    let runningCount = 0;
-    let queuedCount = 0;
-    for (const [, entry] of queueJobs) {
-        if (entry.status === 'Running') runningCount++;
-        if (entry.status === 'Queued') queuedCount++;
-    }
-    const wfCount = watchEntries.size;
-
-    let queueText = 'Queue: idle';
-    if (runningCount > 0 || queuedCount > 0) {
-        queueText = `Queue: ${runningCount} running, ${queuedCount} queued`;
-    }
-
-    let wfText = 'Watchfolder: idle';
-    if (wfCount > 0) {
-        wfText = `Watchfolder: ${wfCount} active`;
-    }
-
-    pushTrayMenu(queueText, wfText);
+    const jobs = Array.from(queueJobs.values());
+    const watches = Array.from(watchEntries.values()).map(e => ({ id: e.id }));
+    updateTrayMenu(jobs, watches);
 }
 
 function updateQueueDisplay(jobs) {
