@@ -94,6 +94,12 @@
     display: block;
 }
 
+#watch-expanded {
+    width: 45vw;
+    max-width: 500px;
+    min-width: 300px;
+}
+
 .execution-header {
     display: flex;
     justify-content: space-between;
