@@ -488,6 +488,7 @@ function showCommandTooltip(button, command) {
     
     // Adjust if tooltip goes off screen
     setTimeout(() => {
+        if (!commandTooltip) return;
         const tooltipRect = commandTooltip.getBoundingClientRect();
         if (tooltipRect.right > window.innerWidth) {
             commandTooltip.style.left = `${window.innerWidth - tooltipRect.width - 16}px`;
