@@ -398,6 +398,15 @@
     font-weight: 500;
 }
 
+[class*="queue-tag-W-"] {
+    background: rgba(108, 92, 231, 0.15);
+    color: #a29bfe;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+}
+
 .watch-stop-btn {
     background: var(--tertiary-bg);
     border: 1px solid var(--border-primary);

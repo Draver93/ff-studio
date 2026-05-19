@@ -239,8 +239,9 @@ fn start_watchdog_thread(
 
             if let Some(matched) = matched {
                 for (input_file, output_file, cmd) in matched {
+                    let wf_tag = format!("W-{}", id);
                     let desc = serde_json::json!({
-                        "tags": ["single transcode", "watchfolder"],
+                        "tags": ["single transcode", wf_tag],
                         "cmd": cmd,
                         "workflow": workflow,
                         "source": input_file,
