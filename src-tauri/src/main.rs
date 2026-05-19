@@ -10,6 +10,11 @@ use tokio::runtime::Runtime;
 use crate::server::file_server;
 
 fn main() {
+    #[cfg(target_os = "linux")]
+    {
+        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+    }
+
     thread::spawn(|| {
         // We need a Tokio runtime inside this thread
         let rt = Runtime::new().unwrap();
