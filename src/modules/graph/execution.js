@@ -95,13 +95,68 @@ async function startTranscding(cmds, envs) {
         });
 }
 
-function startWatch() {
+function get_ffmpeg_template() {
+    window.global_ffmpeg = {
+        selected_only: false,
+        inputs: [],
+        filters: [],
+        outputs: []
+    };
+    window.graph_variables = {};
+
+    core.graph.runStep();
+
+    let result_cmd = "";
+
+    window.global_ffmpeg.inputs.forEach((item) => {
+        result_cmd += item.replace(/-i "([^"]+)"/g, '-i {input}').replace(/-i '([^']+)'/g, '-i {input}') + " ";
+    });
+
+    let filter_str = "";
+    window.global_ffmpeg.filters.forEach((item) => {
+        filter_str += item + ";";
+    });
+    if (filter_str.slice(-1) === ";") filter_str = filter_str.slice(0, -1);
+    if (filter_str) result_cmd += `-filter_complex "${filter_str}" `;
+
+    window.global_ffmpeg.outputs.forEach((item) => {
+        result_cmd += item.replace(/"([^"]+)"/g, '{output}').replace(/'([^']+)'/g, '{output}') + " ";
+    });
+
+    if (!window.global_ffmpeg.outputs.length) {
+        addLogEntry("error", "Caught error: Failed to create ffmpeg template! At least one Output node must be specified!");
+        return null;
+    }
+
+    result_cmd = replaceVariables(result_cmd);
+
+    return result_cmd.trim();
+}
+
+async function startWatch() {
     const watchDir = document.getElementById('watch-dir').value;
     const pattern = document.getElementById('watch-pattern').value;
     const outDir = document.getElementById('watch-out-dir').value;
     const outName = document.getElementById('watch-out-name').value;
 
-    addLogEntry("info", `Watch folder started: ${watchDir} (${pattern} → ${outDir}/${outName})`);
+    const template = get_ffmpeg_template();
+    if (!template) return;
+
+    try {
+        const id = await invoke('start_watchfolder', {
+            watchDir,
+            pattern,
+            outputDir: outDir,
+            outputName: outName,
+            ffmpegTemplate: template,
+            ffmpegBin: window.FFMPEG_BIN,
+            envs: window.FFMPEG_ENV,
+            workflow: window.selectedWorkflow || '',
+        });
+        addLogEntry("success", `Watch folder started (ID: ${id}): ${watchDir} (${pattern})`);
+    } catch (err) {
+        addLogEntry("error", `Failed to start watch folder: ${err}`);
+    }
 
     watchToggle.classList.remove('active');
     watchExpanded.classList.remove('active');
@@ -153,6 +208,21 @@ function initializeExecution() {
         watchExpanded.classList.toggle('active');
         
         if(!window.isTranscoding) executeBtn.querySelector('span').textContent = result ? "Start Watch" : "Execute Graph";
+    });
+
+    // Watch folder directory pickers
+    document.getElementById('watch-dir-pick').addEventListener('click', async () => {
+        const selected = await window.__TAURI__.dialog.open({ directory: true });
+        if (selected) {
+            document.getElementById('watch-dir').value = selected;
+        }
+    });
+
+    document.getElementById('watch-out-pick').addEventListener('click', async () => {
+        const selected = await window.__TAURI__.dialog.open({ directory: true });
+        if (selected) {
+            document.getElementById('watch-out-dir').value = selected;
+        }
     });
     // Add new element to canvas chain
     addChainElement.addEventListener('click', () => {

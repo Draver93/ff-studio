@@ -8,6 +8,7 @@ import { ERROR_REGEX, WARNING_REGEX, PROGRESS_REGEX } from './constants.js';
 
 const queueContent = document.querySelector('.queue-content');
 let queueJobs = new Map(); // Store job data by ID
+let watchEntries = new Map(); // Store watchfolder entries by ID
 
 export function initializeQueue() {
     // Queue controls
@@ -39,6 +40,11 @@ export function initializeQueue() {
         updateQueueDisplay(event.payload);
     });
 
+    // Listen for watchfolder status changes
+    listen('watch_status_changed', (event) => {
+        updateWatchDisplay(event.payload);
+    });
+
     // Initial load
     refreshQueueStatus();
 
@@ -52,6 +58,12 @@ async function refreshQueueStatus() {
         updateQueueDisplay(status);
     } catch (err) {
         console.error('Failed to refresh queue:', err);
+    }
+    try {
+        const watches = await invoke('get_watchfolders');
+        updateWatchDisplay(watches);
+    } catch (err) {
+        // Silently ignore - watchfolder may not be available
     }
 }
 
@@ -92,8 +104,132 @@ function updateQueueDisplay(jobs) {
 function updateTrayStatus(jobs) {
     const running = jobs.some(j => j.status === 'Running');
     const queued = jobs.some(j => j.status === 'Queued');
-    const color = running ? 'green' : queued ? 'blue' : 'gray';
+    const watching = watchEntries.size > 0;
+    const color = running ? 'green' : queued ? 'blue' : watching ? 'blue' : 'gray';
     invoke('set_tray_status', { color });
+}
+
+function updateWatchDisplay(watches) {
+    const currentIds = new Set(watches.map(w => `watch-${w.id}`));
+
+    // Remove watch entries that are no longer active
+    for (const [id, entry] of watchEntries.entries()) {
+        if (!currentIds.has(id)) {
+            entry.element.remove();
+            watchEntries.delete(id);
+        }
+    }
+
+    // Add or update watch entries
+    watches.forEach(w => {
+        const key = `watch-${w.id}`;
+        let entry = watchEntries.get(key);
+
+        if (!entry) {
+            entry = createWatchEntry(w);
+            watchEntries.set(key, entry);
+            // Insert at the top of the queue
+            if (queueContent.firstChild) {
+                queueContent.insertBefore(entry.element, queueContent.firstChild);
+            } else {
+                queueContent.appendChild(entry.element);
+            }
+        } else {
+            updateWatchEntry(entry, w);
+        }
+    });
+}
+
+function createWatchEntry(watch) {
+    const entry = document.createElement('div');
+    entry.className = 'queue-entry watch-entry';
+    entry.dataset.watchId = watch.id;
+
+    const time = new Date().toLocaleTimeString();
+    const statusClass = watch.status === 'Watching' ? 'status-watching' : 'status-paused';
+
+    // Build workflow tag if available
+    let workflowHTML = '';
+    if (watch.workflow) {
+        const baseColor = textToPastelColor(watch.workflow);
+        const hslMatch = baseColor.match(/hsl\((\d+),\s*(\d+)%?,\s*(\d+)%?\)/);
+        let bgColor = baseColor;
+        let borderColor = baseColor;
+        if (hslMatch) {
+            const [_, h, s, l] = hslMatch.map(Number);
+            bgColor = `hsla(${h}, ${s}%, ${Math.max(0, l - 20)}%, 0.15)`;
+            borderColor = `hsla(${h}, ${s}%, ${Math.max(0, l - 15)}%, 0.4)`;
+        }
+        workflowHTML = `
+            <span class="queue-workflow" style="border:1px solid ${borderColor};background:${bgColor};color:${baseColor}">
+                ${watch.workflow}
+            </span>
+        `;
+    }
+
+    entry.innerHTML = `
+        <div class="queue-entry-header">
+            <span class="queue-time">${time}</span>
+            <div class="queue-status-group">
+                <span class="queue-status ${statusClass}">
+                    <i class="fas fa-eye"></i>
+                    ${watch.status}
+                </span>
+            </div>
+            <span class="queue-id">W-${watch.id}</span>
+            <div class="queue-meta">
+                <span class="queue-tag queue-tag-watchfolder">watchfolder</span>
+                ${workflowHTML}
+            </div>
+        </div>
+        <div class="queue-entry-progress">
+            <span class="progress-text" style="font-size: 11px; color: var(--text-secondary);">
+                <i class="fas fa-folder-open"></i> ${watch.watch_dir} (${watch.pattern})
+            </span>
+        </div>
+        <div class="queue-entry-info" style="display: flex;">
+            <i class="fas fa-arrow-right"></i>
+            <span class="info-text">→ ${watch.output_dir}/${watch.output_name} | Files queued: ${watch.files_queued}</span>
+        </div>
+        <div class="queue-entry-actions">
+            <button class="watch-stop-btn" data-watch-id="${watch.id}">
+                <i class="fas fa-stop"></i> Stop
+            </button>
+        </div>
+    `;
+
+    // Stop button listener
+    const stopBtn = entry.querySelector('.watch-stop-btn');
+    stopBtn.addEventListener('click', () => {
+        stopWatch(watch.id);
+    });
+
+    return {
+        element: entry,
+        id: watch.id,
+        key: `watch-${watch.id}`,
+    };
+}
+
+function updateWatchEntry(entry, watch) {
+    const statusSpan = entry.element.querySelector('.queue-status');
+    const statusClass = watch.status === 'Watching' ? 'status-watching' : 'status-paused';
+    statusSpan.className = `queue-status ${statusClass}`;
+    statusSpan.innerHTML = `<i class="fas fa-eye"></i> ${watch.status}`;
+
+    const infoText = entry.element.querySelector('.info-text');
+    infoText.textContent = `${watch.output_dir}/${watch.output_name} | Files found: ${watch.files_queued}`;
+}
+
+async function stopWatch(id) {
+    try {
+        const result = await invoke('stop_watchfolder', { id });
+        if (result) {
+            addLogEntry('info', `Watch folder ${id} stopped`);
+        }
+    } catch (err) {
+        addLogEntry('error', `Failed to stop watch folder: ${err}`);
+    }
 }
 
 function updateQueueTabBadge(runningCount, queuedCount) {
@@ -151,10 +287,11 @@ function createJobEntry(job) {
         console.warn('Failed to parse job description:', e);
     }
     
-    // Build tag element if available
-    const tagHTML = descData.tag ? `
-        <span class="queue-tag queue-tag-${descData.tag.replace(' ', '-')}">${descData.tag}</span>
-    ` : '';
+    // Build tag elements from tags array
+    const tags = descData.tags || (descData.tag ? [descData.tag] : []);
+    const tagsHTML = tags.map(t => `
+        <span class="queue-tag queue-tag-${t.replace(' ', '-')}">${t}</span>
+    `).join('');
     
     // Build workflow element if available
     let workflowHTML = ``;
@@ -204,7 +341,7 @@ function createJobEntry(job) {
             </div>
             <span class="queue-id">${job.id}</span>
             <div class="queue-meta">
-                ${tagHTML}
+                ${tagsHTML}
                 ${workflowHTML}
             </div>
         </div>

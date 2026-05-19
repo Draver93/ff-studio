@@ -5,6 +5,7 @@ mod error;
 mod ffmpeg;
 mod tray_manager;
 mod utils;
+mod watch_queue;
 mod workflow;
 
 use tauri::menu::{Menu, MenuItem};
@@ -30,6 +31,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .manage(ffmpeg::executor::TranscodeQueue::default())
+        .manage(watch_queue::WatchFolderQueue::default())
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 let _ = window.hide();
@@ -96,6 +98,9 @@ pub fn run() {
             utils::version::app_version,
             utils::filesystem::expand_wildcard_path,
             set_tray_status,
+            watch_queue::start_watchfolder,
+            watch_queue::stop_watchfolder,
+            watch_queue::get_watchfolders,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -351,3 +351,73 @@
 .queue-cancel-btn:active {
     transform: scale(0.95);
 }
+
+/* ========================================
+   WATCHFOLDER QUEUE ENTRIES
+   ======================================== */
+.queue-status-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.watch-entry {
+    border-left-color: #6c5ce7;
+    background: rgba(108, 92, 231, 0.05);
+}
+
+.watch-entry:hover {
+    background: rgba(108, 92, 231, 0.08);
+}
+
+.status-watching {
+    background: rgba(108, 92, 231, 0.15);
+    color: #a29bfe;
+}
+
+.status-paused {
+    background: rgba(158, 158, 158, 0.15);
+    color: var(--text-muted);
+}
+
+.queue-tag-watchfolder {
+    background: rgba(108, 92, 231, 0.15);
+    color: #a29bfe;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+}
+
+.queue-tag-single-transcode {
+    background: rgba(77, 171, 247, 0.15);
+    color: var(--info);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+}
+
+.watch-stop-btn {
+    background: var(--tertiary-bg);
+    border: 1px solid var(--border-primary);
+    box-shadow: var(--shadow-sm);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    color: #a29bfe;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    transition: all var(--transition-fast);
+}
+
+.watch-stop-btn:hover {
+    background: rgba(108, 92, 231, 0.15);
+    border-color: #6c5ce7;
+}
+
+.watch-stop-btn:active {
+    transform: scale(0.95);
+}
