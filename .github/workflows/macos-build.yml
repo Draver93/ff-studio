@@ -1,9 +1,6 @@
-name: macOS Build (Unsigned ZIP)
+name: macOS Build
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 env:
@@ -12,6 +9,13 @@ env:
 jobs:
   build:
     runs-on: macos-latest
+    strategy:
+      matrix:
+        include:
+          - arch: arm64
+            target: aarch64-apple-darwin
+          - arch: x64
+            target: x86_64-apple-darwin
 
     steps:
       - uses: actions/checkout@v4
@@ -22,22 +26,36 @@ jobs:
       - name: Install Tauri CLI
         run: cargo install tauri-cli
 
-      - name: Build Tauri app (macOS)
+      - name: Add target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Build Tauri app (macOS ${{ matrix.arch }})
         working-directory: ./src-tauri
-        run: cargo tauri build
+        run: cargo tauri build --target ${{ matrix.target }}
 
-      - name: Create ZIP from .app (Gatekeeper-safe)
+      - name: Create artifacts with checksums
         run: |
-          APP_DIR=$(find src-tauri/target/release/bundle/macos -name "*.app" -maxdepth 1)
-          if [ -z "$APP_DIR" ]; then
-            echo "ERROR: .app bundle not found"
-            exit 1
-          fi
-          APP_NAME=$(basename "$APP_DIR" .app)
-          ditto -c -k --keepParent "$APP_DIR" "$APP_NAME-macos.zip"
+          ver=$(grep '^version\s*=' src-tauri/Cargo.toml | sed 's/version\s*=\s*"\([^"]*\)"/\1/')
+          target="${{ matrix.target }}"
+          arch="${{ matrix.arch }}"
 
-      - name: Upload macOS artifact
+          # Rename and checksum DMG
+          dmg=$(find src-tauri/target/$target/release/bundle/dmg -name "*.dmg")
+          dmgName="ffstudio-$ver-$target.dmg"
+          mv $dmg $dmgName
+          shasum -a 256 $dmgName > "$dmgName.sha256"
+
+          # Create portable ZIP with checksum
+          APP_DIR=$(find src-tauri/target/$target/release/bundle/macos -name "*.app" -maxdepth 1)
+          zipName="ffstudio-$ver-$target-portable.zip"
+          ditto -c -k --keepParent "$APP_DIR" $zipName
+          shasum -a 256 $zipName > "$zipName.sha256"
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: macos-unsigned-zip
-          path: "*.zip"
+          name: macos-${{ matrix.arch }}-artifacts
+          path: |
+            *.dmg
+            *.zip
+            *.sha256

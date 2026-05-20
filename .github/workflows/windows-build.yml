@@ -1,36 +1,61 @@
-name: Windows Build
+name: Build Windows
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  windows:
     runs-on: windows-latest
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Tauri CLI
         run: cargo install tauri-cli
 
-      - name: Build Tauri app (Windows)
+      - name: Build Tauri app (Windows x64)
         working-directory: ./src-tauri
         run: cargo tauri build
 
-      - name: Rename artifacts with commit SHA
+      - name: Rename and create checksums
+        shell: powershell
         run: |
-          $sha = git rev-parse --short HEAD
-          Get-ChildItem ./src-tauri/target/release/bundle/msi/* | Rename-Item -NewName { "$($_.BaseName)-$sha$($_.Extension)" }
-        shell: pwsh
+          $ver = $(Get-Content ./src-tauri/Cargo.toml | Select-String -Pattern '^version\s*=' | ForEach-Object { ($_ -split '= "')[1] -replace '"', '' })
+          $target = "x86_64-pc-windows-msvc"
 
-      - name: Upload Windows artifact
+          # Rename and checksum MSI
+          $msi = Get-ChildItem ./src-tauri/target/release/bundle/msi/*
+          $msiName = "ffstudio-$ver-$target.msi"
+          Move-Item $msi.FullName $msiName
+          (Get-FileHash $msiName -Algorithm SHA256 | Select-Object -ExpandProperty Hash) + "  " + $msiName | Out-File "$msiName.sha256" -Encoding ASCII
+
+          # Rename and checksum NSIS installer
+          $nsis = Get-ChildItem ./src-tauri/target/release/bundle/nsis/*
+          $nsisName = "ffstudio-$ver-$target-setup.exe"
+          Move-Item $nsis.FullName $nsisName
+          (Get-FileHash $nsisName -Algorithm SHA256 | Select-Object -ExpandProperty Hash) + "  " + $nsisName | Out-File "$nsisName.sha256" -Encoding ASCII
+
+      - name: Create portable ZIP with checksum
+        shell: powershell
+        run: |
+          # Kill any running ffstudio processes
+          Get-Process ffstudio -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+          Start-Sleep -Milliseconds 500
+
+          $ver = $(Get-Content ./src-tauri/Cargo.toml | Select-String -Pattern '^version\s*=' | ForEach-Object { ($_ -split '= "')[1] -replace '"', '' })
+          $target = "x86_64-pc-windows-msvc"
+          $zipName = "ffstudio-$ver-$target-portable.zip"
+          Compress-Archive -Path ./src-tauri/target/release/*.exe -DestinationPath $zipName
+          (Get-FileHash $zipName -Algorithm SHA256 | Select-Object -ExpandProperty Hash) + "  " + $zipName | Out-File "$zipName.sha256" -Encoding ASCII
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows-msi
-          path: ./src-tauri/target/release/bundle/msi/*
+          name: windows-artifacts
+          path: |
+            *.msi
+            *.exe
+            *.zip
+            *.sha256

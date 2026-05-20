@@ -1,22 +1,18 @@
-name: Linux Build
+name: Build Linux
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  linux:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Linux dependencies
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -29,7 +25,9 @@ jobs:
             libwebkit2gtk-4.1-dev \
             pkg-config \
             build-essential \
-            curl
+            curl \
+            patchelf \
+            xdg-utils
 
       - name: Install Tauri CLI
         run: cargo install tauri-cli
@@ -38,32 +36,36 @@ jobs:
         working-directory: ./src-tauri
         run: cargo tauri build
 
-      - name: Rename Linux .deb with commit SHA
+      - name: Create artifacts with checksums
         run: |
-          SHA=$(git rev-parse --short HEAD)
-          for f in ./src-tauri/target/release/bundle/deb/*; do
-            mv "$f" "${f%.deb}-$SHA.deb"
-          done
-        shell: bash
+          ver=$(grep '^version\s*=' src-tauri/Cargo.toml | sed 's/version\s*=\s*"\([^"]*\)"/\1/')
+          target="x86_64-unknown-linux-gnu"
 
-      - name: Rename Linux AppImage with commit SHA
-        run: |
-          SHA=$(git rev-parse --short HEAD)
-          for f in ./src-tauri/target/release/bundle/appimage/*; do
-            if [[ "$f" == *.AppImage ]]; then
-              mv "$f" "${f%.AppImage}-$SHA.AppImage"
-            fi
-          done
-        shell: bash
+          # Rename and checksum .deb
+          deb=$(find ./src-tauri/target/release/bundle/deb -name "*.deb")
+          debName="ffstudio-$ver-$target.deb"
+          mv $deb $debName
+          sha256sum $debName > "$debName.sha256"
 
-      - name: Upload .deb artifact
+          # Rename and checksum .AppImage
+          appimage=$(find ./src-tauri/target/release/bundle/appimage -name "*.AppImage")
+          appimageName="ffstudio-$ver-$target.AppImage"
+          mv $appimage $appimageName
+          sha256sum $appimageName > "$appimageName.sha256"
+
+          # Create portable tar.gz with checksum
+          mkdir -p ffstudio-portable
+          cp ./src-tauri/target/release/ffstudio ffstudio-portable/
+          tarName="ffstudio-$ver-$target-portable.tar.gz"
+          tar -czvf $tarName ffstudio-portable/
+          sha256sum $tarName > "$tarName.sha256"
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux-deb
-          path: ./src-tauri/target/release/bundle/deb/*
-
-      - name: Upload AppImage artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-appimage
-          path: ./src-tauri/target/release/bundle/appimage/*.AppImage
+          name: linux-artifacts
+          path: |
+            *.deb
+            *.AppImage
+            *.tar.gz
+            *.sha256
