@@ -26,16 +26,20 @@ jobs:
           $target = "x86_64-pc-windows-msvc"
 
           # Rename and checksum MSI
-          $msi = Get-ChildItem ./src-tauri/target/release/bundle/msi/*
-          $msiName = "ffstudio-$ver-$target.msi"
-          Move-Item $msi.FullName $msiName
-          (Get-FileHash $msiName -Algorithm SHA256 | Select-Object -ExpandProperty Hash) + "  " + $msiName | Out-File "$msiName.sha256" -Encoding ASCII
+          $msi = Get-ChildItem ./src-tauri/target/release/bundle/msi/* -ErrorAction SilentlyContinue
+          if ($msi) {
+            $msiName = "ffstudio-$ver-$target.msi"
+            Move-Item $msi.FullName $msiName
+            (Get-FileHash $msiName -Algorithm SHA256 | Select-Object -ExpandProperty Hash) + "  " + $msiName | Out-File "$msiName.sha256" -Encoding ASCII
+          }
 
           # Rename and checksum NSIS installer
-          $nsis = Get-ChildItem ./src-tauri/target/release/bundle/nsis/*
-          $nsisName = "ffstudio-$ver-$target-setup.exe"
-          Move-Item $nsis.FullName $nsisName
-          (Get-FileHash $nsisName -Algorithm SHA256 | Select-Object -ExpandProperty Hash) + "  " + $nsisName | Out-File "$nsisName.sha256" -Encoding ASCII
+          $nsis = Get-ChildItem ./src-tauri/target/release/bundle/nsis/* -ErrorAction SilentlyContinue
+          if ($nsis) {
+            $nsisName = "ffstudio-$ver-$target-setup.exe"
+            Move-Item $nsis.FullName $nsisName
+            (Get-FileHash $nsisName -Algorithm SHA256 | Select-Object -ExpandProperty Hash) + "  " + $nsisName | Out-File "$nsisName.sha256" -Encoding ASCII
+          }
 
       - name: Create portable ZIP with checksum
         shell: powershell
@@ -46,9 +50,12 @@ jobs:
 
           $ver = $(Get-Content ./src-tauri/Cargo.toml | Select-String -Pattern '^version\s*=' | ForEach-Object { ($_ -split '= "')[1] -replace '"', '' })
           $target = "x86_64-pc-windows-msvc"
-          $zipName = "ffstudio-$ver-$target-portable.zip"
-          Compress-Archive -Path ./src-tauri/target/release/*.exe -DestinationPath $zipName
-          (Get-FileHash $zipName -Algorithm SHA256 | Select-Object -ExpandProperty Hash) + "  " + $zipName | Out-File "$zipName.sha256" -Encoding ASCII
+          $exe = Get-ChildItem ./src-tauri/target/release/*.exe -ErrorAction SilentlyContinue
+          if ($exe) {
+            $zipName = "ffstudio-$ver-$target-portable.zip"
+            Compress-Archive -Path $exe.FullName -DestinationPath $zipName
+            (Get-FileHash $zipName -Algorithm SHA256 | Select-Object -ExpandProperty Hash) + "  " + $zipName | Out-File "$zipName.sha256" -Encoding ASCII
+          }
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

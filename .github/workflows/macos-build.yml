@@ -35,21 +35,24 @@ jobs:
 
       - name: Create artifacts with checksums
         run: |
-          ver=$(grep '^version\s*=' src-tauri/Cargo.toml | sed 's/version\s*=\s*"\([^"]*\)"/\1/')
+          ver=$(awk -F'"' '/^version = /{print $2}' src-tauri/Cargo.toml)
           target="${{ matrix.target }}"
-          arch="${{ matrix.arch }}"
 
           # Rename and checksum DMG
-          dmg=$(find src-tauri/target/$target/release/bundle/dmg -name "*.dmg")
-          dmgName="ffstudio-$ver-$target.dmg"
-          mv $dmg $dmgName
-          shasum -a 256 $dmgName > "$dmgName.sha256"
+          dmg=$(find "src-tauri/target/$target/release/bundle/dmg" -name "*.dmg" | head -1)
+          if [ -n "$dmg" ]; then
+            dmgName="ffstudio-$ver-$target.dmg"
+            mv "$dmg" "$dmgName"
+            shasum -a 256 "$dmgName" > "$dmgName.sha256"
+          fi
 
           # Create portable ZIP with checksum
-          APP_DIR=$(find src-tauri/target/$target/release/bundle/macos -name "*.app" -maxdepth 1)
-          zipName="ffstudio-$ver-$target-portable.zip"
-          ditto -c -k --keepParent "$APP_DIR" $zipName
-          shasum -a 256 $zipName > "$zipName.sha256"
+          APP_DIR=$(find "src-tauri/target/$target/release/bundle/macos" -name "*.app" -maxdepth 1 | head -1)
+          if [ -n "$APP_DIR" ]; then
+            zipName="ffstudio-$ver-$target-portable.zip"
+            ditto -c -k --keepParent "$APP_DIR" "$zipName"
+            shasum -a 256 "$zipName" > "$zipName.sha256"
+          fi
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
