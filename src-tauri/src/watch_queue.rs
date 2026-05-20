@@ -131,8 +131,8 @@ impl WatchFolderEntry {
 
 fn resolve_placeholders(template: &str, input_file: &str, output_path: &str) -> String {
     template
-        .replace("{input}", input_file)
-        .replace("{output}", output_path)
+        .replace("{input}", &format!("\"{}\"", input_file))
+        .replace("{output}", &format!("\"{}\"", output_path))
 }
 
 fn build_output_path(
