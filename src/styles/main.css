@@ -92,6 +92,9 @@
 /* Status badges and labels */
 @import 'components/badges.css';
 
+/* Empty state placeholders */
+@import 'components/empty-states.css';
+
 /* Custom scrollbar styling */
 @import 'components/scrollbars.css';
 

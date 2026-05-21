@@ -17,6 +17,8 @@ function chooseTick(pixPerSec) {
     return 10 * mult;
 }
 function showFrame(path) {
+    const emptyState = document.getElementById('timeline-empty-state');
+    if (emptyState) emptyState.style.display = 'none';
     video.pause();
     video.style.display = "none";
     if(video.src) {
@@ -28,6 +30,8 @@ function showFrame(path) {
     frameDisplay.style.display = "block";
 }
 function showVideo(src) {
+    const emptyState = document.getElementById('timeline-empty-state');
+    if (emptyState) emptyState.style.display = 'none';
     frameDisplay.style.display = "none";
     video.style.display = "block";
     if (src) {
@@ -43,6 +47,8 @@ function showVideo(src) {
     } 
 }
 function hideMedia() {
+    const emptyState = document.getElementById('timeline-empty-state');
+    if (emptyState) emptyState.style.display = '';
     frameDisplay.style.display = "none";
     video.style.display = "none";
 }

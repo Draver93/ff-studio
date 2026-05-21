@@ -10,7 +10,7 @@ window.__CURRENT_GRAPH__ = null;
 // DOM elements
 const graph_zone = document.getElementById('graph-zone');
 const litegraph_canvas = document.getElementById("litegraph-canvas");
-const no_workflow_message = document.getElementById("no-workflows-message");
+const no_workflow_message = document.getElementById("no-workflows-empty-state");
 
 // Graph and canvas instances
 let graph = new LGraph();

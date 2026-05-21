@@ -1,0 +1,45 @@
+/**
+ * Empty State Placeholder
+ * Shown when a panel has no content yet
+ */
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-xl) var(--spacing-xxl) var(--spacing-xl);
+    text-align: center;
+    color: var(--text-muted);
+    user-select: none;
+    flex: 1;
+    min-height: 0;
+}
+
+.empty-state-icon {
+    font-size: 2.5rem;
+    opacity: 0.2;
+    margin-bottom: var(--spacing-xs);
+}
+
+.empty-state-title {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-secondary);
+}
+
+.empty-state-text {
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    max-width: 300px;
+    line-height: 1.5;
+}
+
+/* Overlay variant - sits on top of the video/player area */
+.empty-state-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    background: #000;
+}

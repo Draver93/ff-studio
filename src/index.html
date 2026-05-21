@@ -57,12 +57,10 @@
                     <canvas id='litegraph-canvas' style='display: none;'></canvas>
 
                     <!-- Message shown when no workflows exist -->
-                    <div id="no-workflows-message" style="user-select: none;">
-                        <div>
-                            <i class="fas fa-project-diagram"></i>
-                            <h3>No workflows available</h3>
-                            <p>Please create or import a new workflow to get started</p>
-                        </div>
+                    <div class="empty-state" id="no-workflows-empty-state">
+                        <i class="fas fa-project-diagram empty-state-icon"></i>
+                        <div class="empty-state-title">No workflow selected</div>
+                        <div class="empty-state-text">Create a new workflow or select an existing one from the sidebar to get started</div>
                     </div>
                     <!-- Graph Execution Bar -->
                     <div class="graph-execution-bar">
@@ -167,6 +165,11 @@
                                 <source src="" type="video/mp4">
                             </video>
                             <img id="frame-display"/>
+                                <div class="empty-state empty-state-overlay" id="timeline-empty-state">
+                                <i class="fas fa-film empty-state-icon"></i>
+                                <div class="empty-state-title">No segment to preview</div>
+                                <div class="empty-state-text">Use timeline to render a small portion of your graph source below for a quick graph preview</div>
+                            </div>
                         </div>
                         <div class="player-controls">
                             <button class="control-btn play" id="play-pause-btn">
@@ -238,6 +241,11 @@
                             <video id="stream-video" class="video-js" 
                                 controls preload="auto" playsinline>
                             </video>
+                                <div class="empty-state empty-state-overlay" id="stream-empty-state">
+                                <i class="fas fa-stream empty-state-icon"></i>
+                                <div class="empty-state-title">No stream loaded</div>
+                                <div class="empty-state-text">Load and preview local or remote HLS (.m3u8) and DASH (.mpd) streams</div>
+                            </div>
                         </div>
 
                         <div class="stream-stats" id="stream-stats">
@@ -298,6 +306,12 @@
                                     <div class="handle-grip"></div>
                                 </div>
                             </div>
+
+                            <div class="empty-state empty-state-overlay" id="compare-empty-state">
+                                <i class="fas fa-columns empty-state-icon"></i>
+                                <div class="empty-state-title">No videos to compare</div>
+                                <div class="empty-state-text">Select video A and B above to compare side by side. Supports MP4, WebM, Ogg</div>
+                            </div>
                         </div>
 
                         <div class="compare-controls">
@@ -346,6 +360,11 @@
                         </div>
                     </div>
                     <div class="logs-content">
+                        <div class="empty-state" id="logs-empty-state">
+                            <i class="fas fa-terminal empty-state-icon"></i>
+                            <div class="empty-state-title">No log entries</div>
+                            <div class="empty-state-text">Log entries will appear here as you process videos</div>
+                        </div>
                     </div>
                 </div>
 
@@ -372,6 +391,11 @@
                     
                     <!-- Scrollable Queue Content -->
                     <div class="queue-content">
+                        <div class="empty-state" id="queue-empty-state">
+                            <i class="fas fa-list empty-state-icon"></i>
+                            <div class="empty-state-title">No jobs in queue</div>
+                            <div class="empty-state-text">Execute a graph or set up a watch folder to see jobs here</div>
+                        </div>
                         <!-- Queue entries will be added here dynamically -->
                     </div>
                 </div>

@@ -1,4 +1,5 @@
 import { formatTime } from '../core/format.js';
+import { addLogEntry } from '../logs/logs.js';
 
 const { open } = window.__TAURI__.dialog;
 
@@ -33,11 +34,37 @@ export class ComparePlayer {
         this.init();
     }
 
+    updateEmptyState() {
+        const emptyState = document.getElementById('compare-empty-state');
+        if (!emptyState) return;
+        const hasVideo = this.videoA.src || this.videoB.src;
+        emptyState.style.display = hasVideo ? 'none' : '';
+    }
+
     init() {
         this.videoA.muted = true;
         this.videoB.muted = true;
         this.setupEventListeners();
         this.updateSplitPosition(50);
+        this.updateEmptyState();
+        this.setupVideoErrorHandling();
+    }
+
+    setupVideoErrorHandling() {
+        this.videoA.addEventListener('error', () => {
+            const err = this.videoA.error;
+            const code = err ? err.code : 0;
+            const labels = { 1: 'aborted', 2: 'network error', 3: 'decode error', 4: 'format not supported' };
+            const path = this.videoPathA.value || 'unknown';
+            addLogEntry('error', `Compare player: Video A failed to load (${labels[code] || code}) — ${path}`);
+        });
+        this.videoB.addEventListener('error', () => {
+            const err = this.videoB.error;
+            const code = err ? err.code : 0;
+            const labels = { 1: 'aborted', 2: 'network error', 3: 'decode error', 4: 'format not supported' };
+            const path = this.videoPathB.value || 'unknown';
+            addLogEntry('error', `Compare player: Video B failed to load (${labels[code] || code}) — ${path}`);
+        });
     }
 
     setupEventListeners() {
@@ -125,6 +152,7 @@ export class ComparePlayer {
                     this.videoA.src = `http://127.0.0.1:8893/${encodeURIComponent(filePath)}`;
                     this.videoA.load();
                     this.videoPathA.value = filePath;
+                    this.updateEmptyState();
                 }
             });
         });
@@ -132,6 +160,7 @@ export class ComparePlayer {
         this.videoPathA.addEventListener('change', () => {
             this.videoA.src = `http://127.0.0.1:8893/${encodeURIComponent(this.videoPathA.value)}`;
             this.videoA.load();
+            this.updateEmptyState();
         });
 
         this.browseB.addEventListener('click', () => {
@@ -140,6 +169,7 @@ export class ComparePlayer {
                     this.videoB.src = `http://127.0.0.1:8893/${encodeURIComponent(filePath)}`;
                     this.videoB.load();
                     this.videoPathB.value = filePath;
+                    this.updateEmptyState();
                 }
             });
         });
@@ -147,6 +177,7 @@ export class ComparePlayer {
         this.videoPathB.addEventListener('change', () => {
             this.videoB.src = `http://127.0.0.1:8893/${encodeURIComponent(this.videoPathB.value)}`;
             this.videoB.load();
+            this.updateEmptyState();
         });
     }
 

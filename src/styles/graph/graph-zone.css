@@ -43,3 +43,15 @@
     border-color: rgba(77, 171, 247, 0.5);
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
+
+/* Graph empty state - absolute centered */
+#no-workflows-empty-state {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    flex: none;
+    width: auto;
+    height: auto;
+    z-index: 5;
+}

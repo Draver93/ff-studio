@@ -38,6 +38,10 @@ export function addLogEntry(type, message) {
     const logsContent = document.querySelector('.logs-content');
     const shouldAutoScroll = logsContent.scrollTop + logsContent.clientHeight >= logsContent.scrollHeight - 50;
     
+    // Hide empty state when first entry is added
+    const emptyState = document.getElementById('logs-empty-state');
+    if (emptyState) emptyState.style.display = 'none';
+
     const time = new Date().toLocaleTimeString();
     const logEntry = document.createElement('div');
     logEntry.className = `log-entry ${type}`;
@@ -68,20 +72,35 @@ export function addLogEntry(type, message) {
     const trimMaxInput = document.getElementById('log-trim-max');
     if (trimToggle && trimToggle.checked && trimMaxInput) {
         const maxEntries = parseInt(trimMaxInput.value, 10) || 2000;
-        while (logsContent.childElementCount > maxEntries) {
-            logsContent.removeChild(logsContent.firstElementChild);
+        const logEntries = logsContent.querySelectorAll('.log-entry');
+        const excess = logEntries.length - maxEntries;
+        if (excess > 0) {
+            for (let i = 0; i < excess; i++) {
+                logEntries[i].remove();
+            }
         }
     }
     
-    const logCount = logsContent.childElementCount;
+    const logCount = logsContent.querySelectorAll('.log-entry').length;
     const badgeCount = document.querySelector('.badge-count');
     if (badgeCount) badgeCount.textContent = logCount;
+    
+    // Re-show empty state if all entries removed (e.g. by trim)
+    if (logCount === 0) {
+        const emptyState = document.getElementById('logs-empty-state');
+        if (emptyState) emptyState.style.display = '';
+    }
 }
 
 function clearLogs() {
-    logsContent.innerHTML = ``;
-    logsContent.scrollTop = logsContent.scrollHeight;
-    const logCount = logsContent.childElementCount;
+    logsContent.querySelectorAll('.log-entry').forEach(el => el.remove());
+    logsContent.scrollTop = 0;
+
+    // Show empty state again
+    const emptyState = document.getElementById('logs-empty-state');
+    if (emptyState) emptyState.style.display = '';
+
+    const logCount = logsContent.querySelectorAll('.log-entry').length;
     const badgeCount = document.querySelector('.badge-count');
     if (badgeCount) badgeCount.textContent = logCount;
 }

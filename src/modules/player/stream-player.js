@@ -63,6 +63,10 @@ export class StreamPlayer {
     }
 
     loadSource(url) {
+        // Hide empty state when loading a stream
+        const emptyState = document.getElementById('stream-empty-state');
+        if (emptyState) emptyState.style.display = 'none';
+
         let path = url;
         if(!path.startsWith("http")) {
             path = `http://127.0.0.1:8893/${encodeURIComponent(url)}`;
@@ -120,6 +124,10 @@ export class StreamPlayer {
     }
 
     clear() {
+        // Show empty state when stream is cleared
+        const emptyState = document.getElementById('stream-empty-state');
+        if (emptyState) emptyState.style.display = '';
+
         if (this.player) {
             this.player.pause();
             this.player.reset();

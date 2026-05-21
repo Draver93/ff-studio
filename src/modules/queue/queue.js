@@ -145,9 +145,18 @@ function updateQueueDisplay(jobs) {
     
     // Update tab badge
     updateQueueTabBadge(runningCount, queuedCount);
-
+    
     // Update tray icon status
     updateTrayStatus(jobs);
+    
+    updateQueueEmptyState();
+}
+
+function updateQueueEmptyState() {
+    const empty = document.getElementById('queue-empty-state');
+    if (!empty) return;
+    const hasEntries = queueContent.querySelectorAll('.queue-entry').length > 0;
+    empty.style.display = hasEntries ? 'none' : '';
 }
 
 function updateTrayStatus(jobs) {
@@ -187,6 +196,8 @@ function updateWatchDisplay(watches) {
             updateWatchEntry(entry, w);
         }
     });
+    
+    updateQueueEmptyState();
 }
 
 function createWatchEntry(watch) {
@@ -729,6 +740,7 @@ function clearCompletedJobs() {
     }
 
     addLogEntry('info', 'Cleared completed jobs from queue');
+    updateQueueEmptyState();
 }
 
 // Forward transcode events to logs tab
