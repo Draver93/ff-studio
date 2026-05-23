@@ -3,15 +3,20 @@
 mod commands;
 mod error;
 mod ffmpeg;
+mod server;
 mod tray_manager;
 mod utils;
 mod watch_queue;
 mod workflow;
 
+use std::net::SocketAddr;
+use std::thread;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tauri::{Emitter, Manager};
+use tokio::runtime::Runtime;
 
+use crate::server::file_server;
 use crate::tray_manager::TrayState;
 
 pub use error::{log_error, to_user_message, ErrorContext, FFStudioError, Result};
@@ -28,6 +33,20 @@ pub fn run() {
         log_error(&e, "initializing working directories");
         eprintln!("Failed to initialize working directories: {e}");
     }
+
+    // Start file server on an available port
+    thread::spawn(|| {
+        let rt = Runtime::new().unwrap();
+        rt.block_on(async {
+            let port = file_server::find_available_port(9200, 9299).await;
+            server::port::set(port);
+            let addr: SocketAddr = ([127, 0, 0, 1], port).into();
+            eprintln!("File server listening on {addr}");
+            if let Err(e) = file_server::start_server(addr).await {
+                eprintln!("File server failed on port {port}: {e}");
+            }
+        });
+    });
 
     tauri::Builder::default()
         .manage(ffmpeg::executor::TranscodeQueue::default())
@@ -127,6 +146,7 @@ pub fn run() {
             utils::filesystem::expand_wildcard_path,
             set_tray_status,
             update_tray_menu,
+            get_server_port,
             watch_queue::start_watchfolder,
             watch_queue::stop_watchfolder,
             watch_queue::get_watchfolders,
@@ -143,4 +163,9 @@ fn set_tray_status(state: tauri::State<TrayState>, color: String) {
 #[tauri::command]
 fn update_tray_menu(state: tauri::State<TrayState>, queue_text: String, wf_text: String) {
     state.set_menu_texts(&queue_text, &wf_text);
+}
+
+#[tauri::command]
+fn get_server_port() -> u16 {
+    server::port::get()
 }

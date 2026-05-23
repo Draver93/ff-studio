@@ -1,5 +1,7 @@
 import { formatTime } from '../core/format.js';
+
 import { addLogEntry } from '../logs/logs.js';
+import { serverUrl } from '../core/server-port.js';
 
 const { open } = window.__TAURI__.dialog;
 
@@ -149,7 +151,7 @@ export class ComparePlayer {
         this.browseA.addEventListener('click', () => {
             open({}).then((filePath) => {
                 if(filePath) {
-                    this.videoA.src = `http://127.0.0.1:8893/${encodeURIComponent(filePath)}`;
+                    this.videoA.src = serverUrl(filePath);
                     this.videoA.load();
                     this.videoPathA.value = filePath;
                     this.updateEmptyState();
@@ -158,7 +160,7 @@ export class ComparePlayer {
         });
 
         this.videoPathA.addEventListener('change', () => {
-            this.videoA.src = `http://127.0.0.1:8893/${encodeURIComponent(this.videoPathA.value)}`;
+            this.videoA.src = serverUrl(this.videoPathA.value);
             this.videoA.load();
             this.updateEmptyState();
         });
@@ -166,7 +168,7 @@ export class ComparePlayer {
         this.browseB.addEventListener('click', () => {
             open({}).then((filePath) => {
                 if(filePath) {
-                    this.videoB.src = `http://127.0.0.1:8893/${encodeURIComponent(filePath)}`;
+                    this.videoB.src = serverUrl(filePath);
                     this.videoB.load();
                     this.videoPathB.value = filePath;
                     this.updateEmptyState();
@@ -175,7 +177,7 @@ export class ComparePlayer {
         });
 
         this.videoPathB.addEventListener('change', () => {
-            this.videoB.src = `http://127.0.0.1:8893/${encodeURIComponent(this.videoPathB.value)}`;
+            this.videoB.src = serverUrl(this.videoPathB.value);
             this.videoB.load();
             this.updateEmptyState();
         });

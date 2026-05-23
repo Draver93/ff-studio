@@ -1,5 +1,6 @@
 use hyper::{
     header,
+    server::conn::AddrIncoming,
     service::{make_service_fn, service_fn},
     Body, Request, Response, Server, StatusCode,
 };
@@ -13,6 +14,7 @@ use std::{
 use tokio::{
     fs::File,
     io::{AsyncReadExt, AsyncSeekExt},
+    net::TcpListener,
 };
 use tokio_util::io::ReaderStream;
 use urlencoding::decode;
@@ -109,15 +111,33 @@ async fn serve_file(req: Request<Body>, state: SharedState) -> Result<Response<B
     Ok(builder.body(body).unwrap())
 }
 
-pub async fn start_server(addr: SocketAddr) {
+pub async fn start_server(addr: SocketAddr) -> Result<(), String> {
     let state = Arc::new(Mutex::new(HashMap::new()));
+    let listener = match TcpListener::bind(addr).await {
+        Ok(l) => l,
+        Err(e) => return Err(format!("Failed to bind to {addr}: {e}")),
+    };
+    let incoming = AddrIncoming::from_listener(listener).map_err(|e| e.to_string())?;
+
     let make_svc = make_service_fn(move |_conn| {
         let state = state.clone();
         async move { Ok::<_, Infallible>(service_fn(move |req| serve_file(req, state.clone()))) }
     });
 
-    let server = Server::bind(&addr).serve(make_svc);
+    let server = Server::builder(incoming).serve(make_svc);
     if let Err(e) = server.await {
-        eprintln!("Server error: {e}");
+        return Err(format!("Server error: {e}"));
     }
+    Ok(())
+}
+
+pub async fn find_available_port(start: u16, end: u16) -> u16 {
+    for port in start..=end {
+        let addr: SocketAddr = ([127, 0, 0, 1], port).into();
+        if let Ok(listener) = tokio::net::TcpListener::bind(addr).await {
+            drop(listener);
+            return port;
+        }
+    }
+    start
 }

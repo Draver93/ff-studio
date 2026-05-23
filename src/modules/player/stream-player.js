@@ -1,4 +1,5 @@
 import { addLogEntry } from '../logs/logs.js';
+import { serverUrl } from '../core/server-port.js';
 
 const { open } = window.__TAURI__.dialog;
 
@@ -40,7 +41,7 @@ export class StreamPlayer {
         this.player.on('xhr-hooks-ready', () => {
             const playerRequestHook = (options) => {
                 if (options.uri && !options.uri.startsWith('http')) {
-                    options.uri = `http://127.0.0.1:8893/${encodeURIComponent(options.uri)}`;
+                    options.uri = serverUrl(options.uri);
                 }
                 return options;
             };
@@ -69,7 +70,7 @@ export class StreamPlayer {
 
         let path = url;
         if(!path.startsWith("http")) {
-            path = `http://127.0.0.1:8893/${encodeURIComponent(url)}`;
+            path = serverUrl(url);
         }
 
         let protocol = '';

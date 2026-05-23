@@ -2,6 +2,7 @@ import { Timeline } from './timeline.js';
 import { formatTime } from '../core/format.js';
 import { get_ffmpeg_command } from '../graph/execution.js';
 import { addLogEntry } from '../logs/logs.js';
+import { serverUrl } from '../core/server-port.js';
 
 const { once } = window.__TAURI__.event;
 const { invoke } = window.__TAURI__.core;
@@ -218,7 +219,7 @@ export class TimelinePlayer {
                     this.timeline.segments[segmentIndex].label = "Unknown"; 
                 }
 
-                this.timeline.segments[segmentIndex].path = `http://127.0.0.1:8893/${encodeURIComponent(data)}`;
+                this.timeline.segments[segmentIndex].path = serverUrl(data);
                 addLogEntry("info", `${this.timeline.segments[segmentIndex].type} was created. Location: ${data}`);
             });
         }); 

@@ -51,6 +51,11 @@ player.initPlayer();
 // Initialize workflows
 workflows.initWorkflows();
 
+// Fetch file server port
+invoke('get_server_port').then(port => {
+    window.__SERVER_PORT__ = port;
+});
+
 // Tab switching functionality
 const tabs = document.querySelectorAll('.tab');
 const graphZone = document.getElementById('graph-zone');
