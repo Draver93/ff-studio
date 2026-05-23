@@ -207,7 +207,8 @@ pub fn to_user_message(error: &FFStudioError) -> String {
         }
         FFStudioError::Application(msg) => {
             if msg.starts_with("spawning") {
-                "FFmpeg binary not found at the specified path. Check the path and try again.".to_string()
+                "FFmpeg binary not found at the specified path. Check the path and try again."
+                    .to_string()
             } else {
                 format!("Application error: {msg}")
             }

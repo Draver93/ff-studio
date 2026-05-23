@@ -60,10 +60,14 @@ pub fn run() {
         .setup(|app| {
             let show = MenuItem::with_id(app, "show", "Show Window", true, None::<&str>)?;
             let sep1 = PredefinedMenuItem::separator(app)?;
-            let queue_status = MenuItem::with_id(app, "queue_status", "Queue: idle", false, None::<&str>)?;
-            let wf_status = MenuItem::with_id(app, "wf_status", "Watchfolder: idle", false, None::<&str>)?;
-            let cancel_all = MenuItem::with_id(app, "cancel_all", "Cancel All Jobs", true, None::<&str>)?;
-            let stop_wf = MenuItem::with_id(app, "stop_wf", "Stop All Watch Folders", true, None::<&str>)?;
+            let queue_status =
+                MenuItem::with_id(app, "queue_status", "Queue: idle", false, None::<&str>)?;
+            let wf_status =
+                MenuItem::with_id(app, "wf_status", "Watchfolder: idle", false, None::<&str>)?;
+            let cancel_all =
+                MenuItem::with_id(app, "cancel_all", "Cancel All Jobs", true, None::<&str>)?;
+            let stop_wf =
+                MenuItem::with_id(app, "stop_wf", "Stop All Watch Folders", true, None::<&str>)?;
             let sep2 = PredefinedMenuItem::separator(app)?;
             let quit = MenuItem::with_id(app, "quit", "Quit", true, Some("CmdOrCtrl+Q"))?;
 
@@ -104,7 +108,11 @@ pub fn run() {
                     _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {
-                    if let TrayIconEvent::Click { button: tauri::tray::MouseButton::Left, .. } = event {
+                    if let TrayIconEvent::Click {
+                        button: tauri::tray::MouseButton::Left,
+                        ..
+                    } = event
+                    {
                         if let Some(window) = tray.app_handle().get_webview_window("main") {
                             let _ = window.show();
                             let _ = window.set_focus();
@@ -113,7 +121,11 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            app.manage(TrayState { tray, queue_status, wf_status });
+            app.manage(TrayState {
+                tray,
+                queue_status,
+                wf_status,
+            });
 
             Ok(())
         })

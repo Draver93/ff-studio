@@ -135,11 +135,7 @@ fn resolve_placeholders(template: &str, input_file: &str, output_path: &str) -> 
         .replace("{output}", &format!("\"{}\"", output_path))
 }
 
-fn build_output_path(
-    output_dir: &PathBuf,
-    output_name: &str,
-    input_file: &PathBuf,
-) -> PathBuf {
+fn build_output_path(output_dir: &PathBuf, output_name: &str, input_file: &PathBuf) -> PathBuf {
     let stem = input_file
         .file_stem()
         .map(|s| s.to_string_lossy().to_string())
@@ -153,9 +149,7 @@ fn build_output_path(
     output_dir.join(name)
 }
 
-fn poll_folder(
-    entry: &mut WatchFolderEntry,
-) -> Vec<(String, String, String)> {
+fn poll_folder(entry: &mut WatchFolderEntry) -> Vec<(String, String, String)> {
     let pattern_str = format!(
         "{}/{}",
         entry.watch_dir.to_string_lossy(),
@@ -188,20 +182,12 @@ fn poll_folder(
         let input_str = path.to_string_lossy();
         let output_str = output_path.to_string_lossy();
 
-        let cmd = resolve_placeholders(
-            &entry.ffmpeg_template,
-            &input_str,
-            &output_str,
-        );
+        let cmd = resolve_placeholders(&entry.ffmpeg_template, &input_str, &output_str);
 
         let full_cmd = format!("{} {}", entry.ffmpeg_bin, cmd);
 
         entry.seen_files.insert(path.clone());
-        results.push((
-            input_str.to_string(),
-            output_str.to_string(),
-            full_cmd,
-        ));
+        results.push((input_str.to_string(), output_str.to_string(), full_cmd));
     }
 
     results
@@ -283,8 +269,14 @@ pub fn start_watchfolder(
     let od = PathBuf::from(&output_dir);
 
     let id = watch_queue.add_entry(
-        wd, pattern, od, output_name,
-        ffmpeg_template, ffmpeg_bin, envs, workflow,
+        wd,
+        pattern,
+        od,
+        output_name,
+        ffmpeg_template,
+        ffmpeg_bin,
+        envs,
+        workflow,
     )?;
 
     // Start watchdog on first entry
@@ -317,8 +309,6 @@ pub fn stop_watchfolder(
 }
 
 #[tauri::command]
-pub fn get_watchfolders(
-    watch_queue: tauri::State<WatchFolderQueue>,
-) -> Vec<WatchFolderInfo> {
+pub fn get_watchfolders(watch_queue: tauri::State<WatchFolderQueue>) -> Vec<WatchFolderInfo> {
     watch_queue.get_info_list()
 }
