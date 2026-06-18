@@ -27,12 +27,8 @@ jobs:
             xdg-utils
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v__VERSION__
-          releaseBody: "See artifacts"
-          draft: true 
+          args: --bundles deb,appimage,rpm
 
       - name: Create artifacts with checksums
         run: |
