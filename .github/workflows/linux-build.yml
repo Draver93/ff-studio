@@ -27,42 +27,42 @@ jobs:
             xdg-utils
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
-        with:
-          args: --bundles deb,appimage,rpm
+
+      - name: List built bundles
+        run: |
+          find ./src-tauri/target/release/bundle -type f -name "*.deb" -o -name "*.AppImage" -o -name "*.rpm" | sort
 
       - name: Create artifacts with checksums
         run: |
+          set -e
           ver=$(awk -F'"' '/^version = /{print $2}' src-tauri/Cargo.toml)
           target="x86_64-unknown-linux-gnu"
+          mkdir -p artifacts
 
           # Rename and checksum .deb
-          deb=$(find ./src-tauri/target/release/bundle/deb -name "*.deb" | head -1)
+          deb=$(find ./src-tauri/target/release/bundle/deb -name "*.deb" | grep -v sig | head -1)
           if [ -n "$deb" ]; then
-            debName="ffstudio-$ver-$target.deb"
-            mv "$deb" "$debName"
-            sha256sum "$debName" > "$debName.sha256"
+            cp "$deb" "artifacts/ffstudio-$ver-$target.deb"
           fi
           # Rename and checksum .AppImage
-          appimage=$(find ./src-tauri/target/release/bundle/appimage -name "*.AppImage" | head -1)
+          appimage=$(find ./src-tauri/target/release/bundle/appimage -name "*.AppImage" | grep -v sig | head -1)
           if [ -n "$appimage" ]; then
-            appimageName="ffstudio-$ver-$target.AppImage"
-            mv "$appimage" "$appimageName"
-            sha256sum "$appimageName" > "$appimageName.sha256"
+            cp "$appimage" "artifacts/ffstudio-$ver-$target.AppImage"
           fi
           # Create portable tar.gz with checksum
           if [ -f ./src-tauri/target/release/ffstudio ]; then
-            mkdir -p ffstudio-portable
-            cp ./src-tauri/target/release/ffstudio ffstudio-portable/
-            tarName="ffstudio-$ver-$target-portable.tar.gz"
-            tar -czvf "$tarName" ffstudio-portable/
-            sha256sum "$tarName" > "$tarName.sha256"
+            mkdir -p artifacts/ffstudio-portable
+            cp ./src-tauri/target/release/ffstudio artifacts/ffstudio-portable/
+            tar -czf "artifacts/ffstudio-$ver-$target-portable.tar.gz" -C artifacts ffstudio-portable/
           fi
+          cd artifacts
+          for f in *; do
+            if [ -f "$f" ]; then
+              sha256sum "$f" > "$f.sha256"
+            fi
+          done
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux-artifacts
-          path: |
-            *.deb
-            *.AppImage
-            *.tar.gz
-            *.sha256
+          path: artifacts/*
