@@ -24,7 +24,8 @@ jobs:
             build-essential \
             curl \
             patchelf \
-            xdg-utils
+            xdg-utils \
+            gvfs-libs
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
 
