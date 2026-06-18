@@ -1,14 +1,11 @@
 name: Build Linux
-
 on:
   workflow_dispatch:
-
 env:
   CARGO_TERM_COLOR: always
-
 jobs:
   linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
@@ -28,13 +25,14 @@ jobs:
             curl \
             patchelf \
             xdg-utils
-
-      - name: Install Tauri CLI
-        run: cargo install tauri-cli
-
-      - name: Build Tauri app (Linux)
-        working-directory: ./src-tauri
-        run: cargo tauri build
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseBody: "See artifacts"
+          draft: true 
 
       - name: Create artifacts with checksums
         run: |
@@ -48,7 +46,6 @@ jobs:
             mv "$deb" "$debName"
             sha256sum "$debName" > "$debName.sha256"
           fi
-
           # Rename and checksum .AppImage
           appimage=$(find ./src-tauri/target/release/bundle/appimage -name "*.AppImage" | head -1)
           if [ -n "$appimage" ]; then
@@ -56,7 +53,6 @@ jobs:
             mv "$appimage" "$appimageName"
             sha256sum "$appimageName" > "$appimageName.sha256"
           fi
-
           # Create portable tar.gz with checksum
           if [ -f ./src-tauri/target/release/ffstudio ]; then
             mkdir -p ffstudio-portable
@@ -65,7 +61,6 @@ jobs:
             tar -czvf "$tarName" ffstudio-portable/
             sha256sum "$tarName" > "$tarName.sha256"
           fi
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
