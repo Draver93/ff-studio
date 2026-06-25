@@ -3,7 +3,7 @@ use crate::utils;
 use glob::Pattern;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tauri::Emitter;
@@ -63,6 +63,7 @@ impl WatchFolderQueue {
         *c
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn add_entry(
         &self,
         watch_dir: PathBuf,
@@ -135,7 +136,7 @@ fn resolve_placeholders(template: &str, input_file: &str, output_path: &str) -> 
         .replace("{output}", &format!("\"{}\"", output_path))
 }
 
-fn build_output_path(output_dir: &PathBuf, output_name: &str, input_file: &PathBuf) -> PathBuf {
+fn build_output_path(output_dir: &Path, output_name: &str, input_file: &Path) -> PathBuf {
     let stem = input_file
         .file_stem()
         .map(|s| s.to_string_lossy().to_string())
@@ -251,6 +252,7 @@ fn start_watchdog_thread(
     });
 }
 
+#[allow(clippy::too_many_arguments)]
 #[tauri::command]
 pub fn start_watchfolder(
     watch_dir: String,
