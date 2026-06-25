@@ -126,6 +126,11 @@ FFStudio is designed to make advanced FFmpeg usage accessible and visual. Instea
 - [FFmpeg](https://ffmpeg.org/) binary installed on your system
 - Git (for cloning the repository)
 
+> **Linux:** For video playback in the integrated player, install GStreamer codec plugins:
+> ```
+> sudo apt-get install gstreamer1.0-plugins-bad gstreamer1.0-libav
+> ```
+
 ### Installation
 
 1. **Clone the repository:**

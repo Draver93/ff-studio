@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=FFStudio
+Comment=Visual workflows for FFmpeg
+Exec=ffstudio %U
+Icon=com.fai.ffstudio
+Terminal=false
+Type=Application
+Categories=AudioVideo;AudioVideoEditing;
+StartupNotify=true

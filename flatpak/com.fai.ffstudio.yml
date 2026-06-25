@@ -1,0 +1,51 @@
+id: com.fai.ffstudio
+runtime: org.gnome.Platform
+runtime-version: '47'
+sdk: org.gnome.Sdk
+command: ffstudio
+
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  - --share=ipc
+  - --share=network
+  - --filesystem=host
+  - --talk-name=org.kde.StatusNotifierWatcher
+  - --filesystem=xdg-run/tray-icon:create
+  - --env=WEBKIT_DISABLE_DMABUF_RENDERER=1
+
+modules:
+  - name: ffstudio
+    buildsystem: simple
+    sources:
+      - type: file
+        path: ffstudio.deb
+      - type: file
+        path: com.fai.ffstudio.metainfo.xml
+      - type: file
+        path: com.fai.ffstudio.desktop
+    build-commands:
+      - ar -x ffstudio.deb
+      - |
+        if [ -f data.tar.zst ]; then
+          tar --zstd -xf data.tar.zst
+        elif [ -f data.tar.xz ]; then
+          tar -xf data.tar.xz
+        else
+          tar -xf data.tar.gz
+        fi
+      - cp -r usr/* /app/
+      # Install icons with flatpak ID name (overwrite any from cp)
+      - |
+        for f in /app/share/icons/hicolor/*/apps/*.png; do
+          [ -f "$f" ] || continue
+          dir=$(dirname "$f")
+          install -Dm644 "$f" "${dir}/com.fai.ffstudio.png"
+          rm -f "$f"
+        done
+      # Install our own desktop file (avoids deb's non-standard FFStudio.desktop name)
+      - install -Dm644 com.fai.ffstudio.desktop /app/share/applications/com.fai.ffstudio.desktop
+      - rm -f /app/share/applications/FFStudio.desktop /app/share/applications/ffstudio.desktop
+      # Metainfo (our corrected version)
+      - install -Dm644 com.fai.ffstudio.metainfo.xml /app/share/metainfo/com.fai.ffstudio.metainfo.xml

@@ -1,15 +1,19 @@
-name: Build Linux
+name: Linux Build
+
 on:
   workflow_dispatch:
+
 env:
   CARGO_TERM_COLOR: always
+
 jobs:
-  linux:
+  build:
     runs-on: ubuntu-22.04
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install Linux dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -20,50 +24,139 @@ jobs:
             libjavascriptcoregtk-4.1-dev \
             libsoup-3.0-dev \
             libwebkit2gtk-4.1-dev \
+            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
+            gstreamer1.0-plugins-bad \
+            gstreamer1.0-libav \
+            squashfs-tools \
             pkg-config \
             build-essential \
-            curl \
-            patchelf \
-            xdg-utils \
-            gvfs-libs
-      - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
+            curl
 
-      - name: List built bundles
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli
+
+      - name: Build Tauri app (Linux)
+        working-directory: ./src-tauri
+        run: cargo tauri build
+
+      - name: Patch AppImage
         run: |
-          find ./src-tauri/target/release/bundle -type f -name "*.deb" -o -name "*.AppImage" -o -name "*.rpm" | sort
+          set -e
+          appimage=$(find ./src-tauri/target/release/bundle/appimage -name "*.AppImage" | head -1)
+          if [ -z "$appimage" ]; then
+            echo "No AppImage found, skipping patch"
+            exit 0
+          fi
+          echo "Patching: $appimage"
 
-      - name: Create artifacts with checksums
+          # Extract using the AppImage's own runtime
+          "$appimage" --appimage-extract > /dev/null 2>&1
+          if [ ! -d squashfs-root ]; then
+            echo "ERROR: extraction failed"
+            exit 1
+          fi
+
+          # Patch AppRun: disable GVFS, bundle GStreamer + libs, set env (after shebang)
+          if [ -f squashfs-root/AppRun ]; then
+            sed -i '1a export GIO_MODULE_DIR=/nonexistent' squashfs-root/AppRun
+            if [ -d /usr/lib/x86_64-linux-gnu/gstreamer-1.0 ]; then
+              # Copy GStreamer plugins
+              mkdir -p squashfs-root/usr/lib/gstreamer-1.0
+              cp -a /usr/lib/x86_64-linux-gnu/gstreamer-1.0/*.so squashfs-root/usr/lib/gstreamer-1.0/
+
+              # Copy GStreamer shared libraries (not plugins, but linked by plugins)
+              mkdir -p squashfs-root/usr/lib
+              for lib in /usr/lib/x86_64-linux-gnu/libgst*-1.0.so*; do
+                [ -f "$lib" ] && cp -aL "$lib" squashfs-root/usr/lib/
+              done
+
+              # Find and copy transitive non-system dependencies of all copied .so files
+              find squashfs-root/usr/lib -name "*.so*" | while read -r so; do
+                ldd "$so" 2>/dev/null | grep "=> /" | awk '{print $3}' | while read -r dep; do
+                  depname=$(basename "$dep")
+                  # Skip system-critical libraries, X/GL/drm, and standard C++/C libs
+                  case "$depname" in
+                    libc.so*|libpthread.so*|libdl.so*|librt.so*|libm.so*|libstdc++.so*|libgcc_s.so*) continue ;;
+                    libGL.so*|libEGL.so*|libX11.so*|libdrm.so*|libgbm.so*|libxcb.so*|libXau.so*|libXdmcp.so*) continue ;;
+                    libffi.so*) continue ;;
+                  esac
+                  # Skip GLib/GObject libraries (provided by system on any distro)
+                  case "$depname" in
+                    libglib-2.0.so*|libgobject-2.0.so*|libgthread-2.0.so*|libgio-2.0.so*|libgmodule-2.0.so*) continue ;;
+                  esac
+                  [ -f "squashfs-root/usr/lib/$depname" ] && continue
+                  cp -aL "$dep" squashfs-root/usr/lib/
+                done
+              done
+
+              echo "Bundled GStreamer plugins and dependencies"
+              sed -i '2a export LD_LIBRARY_PATH="${APPDIR}/usr/lib:${LD_LIBRARY_PATH}"' squashfs-root/AppRun
+              sed -i '3a export GST_PLUGIN_SYSTEM_PATH="${APPDIR}/usr/lib/gstreamer-1.0:${GST_PLUGIN_SYSTEM_PATH}"' squashfs-root/AppRun
+            fi
+          else
+            echo "WARNING: AppRun not found, skipping env patches"
+          fi
+
+          # Create a script-based AppImage (no appimagetool needed)
+          # Use printf to avoid YAML heredoc indentation issues
+          printf '%s\n' \
+            '#!/bin/bash' \
+            'set -e' \
+            'skip=$(grep -an "^# ARCHIVE$" "$0" | head -1 | cut -d: -f1)' \
+            'if [ "$1" = "--appimage-extract" ]; then' \
+            '  tail -n +$((skip + 1)) "$0" | tar -xzf -' \
+            '  echo "Extracted to ./squashfs-root/"' \
+            '  exit 0' \
+            'fi' \
+            'WORKDIR=$(mktemp -d)' \
+            'tail -n +$((skip + 1)) "$0" | tar -xzf - -C "$WORKDIR"' \
+            'export APPDIR="$WORKDIR/squashfs-root"' \
+            '"$APPDIR"/AppRun "$@"' \
+            'rm -rf "$WORKDIR"' \
+            'exit 0' \
+            '# ARCHIVE' \
+            > launcher.sh
+
+          # Create tar.gz of patched content
+          tar -czf content.tar.gz squashfs-root/
+
+          # Build new AppImage: launcher + content
+          cat launcher.sh content.tar.gz > "$appimage"
+          chmod +x "$appimage"
+          rm -f launcher.sh content.tar.gz
+          rm -rf squashfs-root
+          echo "Patched AppImage written (script-based)"
+
+      - name: Rename and create checksums
         run: |
           set -e
           ver=$(awk -F'"' '/^version = /{print $2}' src-tauri/Cargo.toml)
           target="x86_64-unknown-linux-gnu"
-          mkdir -p artifacts
 
           # Rename and checksum .deb
           deb=$(find ./src-tauri/target/release/bundle/deb -name "*.deb" | grep -v sig | head -1)
           if [ -n "$deb" ]; then
-            cp "$deb" "artifacts/ffstudio-$ver-$target.deb"
+            debname="ffstudio-$ver-$target.deb"
+            mv "$deb" "$debname"
+            sha256sum "$debname" > "$debname.sha256"
           fi
+
           # Rename and checksum .AppImage
           appimage=$(find ./src-tauri/target/release/bundle/appimage -name "*.AppImage" | grep -v sig | head -1)
           if [ -n "$appimage" ]; then
-            cp "$appimage" "artifacts/ffstudio-$ver-$target.AppImage"
+            ainame="ffstudio-$ver-$target.AppImage"
+            mv "$appimage" "$ainame"
+            sha256sum "$ainame" > "$ainame.sha256"
           fi
-          # Create portable tar.gz with checksum
-          if [ -f ./src-tauri/target/release/ffstudio ]; then
-            mkdir -p artifacts/ffstudio-portable
-            cp ./src-tauri/target/release/ffstudio artifacts/ffstudio-portable/
-            tar -czf "artifacts/ffstudio-$ver-$target-portable.tar.gz" -C artifacts ffstudio-portable/
-          fi
-          cd artifacts
-          for f in *; do
-            if [ -f "$f" ]; then
-              sha256sum "$f" > "$f.sha256"
-            fi
-          done
+        shell: bash
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux-artifacts
-          path: artifacts/*
+          path: |
+            *.deb
+            *.deb.sha256
+            *.AppImage
+            *.AppImage.sha256

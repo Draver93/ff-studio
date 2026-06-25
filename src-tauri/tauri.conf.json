@@ -31,6 +31,10 @@
     "licenseFile": "../LICENSE",
     "linux": {
       "deb": {
+        "depends": [
+          "gstreamer1.0-plugins-bad",
+          "gstreamer1.0-libav"
+        ],
         "files": {
           "/usr/share/doc/FFStudio/copyright": "../debian/copyright",
           "/usr/share/metainfo/com.fai.ffstudio.metainfo.xml": "../debian/metainfo.xml"

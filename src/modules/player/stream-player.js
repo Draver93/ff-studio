@@ -58,7 +58,10 @@ export class StreamPlayer {
 
         this.browseStreamBtn.addEventListener('click', () => {
             open({}).then((filePath) => {
-                if(filePath) this.streamUrlInput.value = filePath;
+                if(filePath) {
+                    this.streamUrlInput.value = filePath;
+                    this.loadSource(filePath);
+                }
             });
         });
     }
@@ -82,6 +85,7 @@ export class StreamPlayer {
             protocol = 'DASH';
         } else {
             addLogEntry("error", `Unsupported stream format: ${url}`);
+            this.clear();
             return;
         }
 

@@ -11,7 +11,7 @@
   <project_license>GPL-3.0-only</project_license>
   <url type="homepage">https://ffstudio.app</url>
   <developer_name>Finoshkin Aleksei</developer_name>
-  <icon type="cached">ffstudio</icon>
+  <icon type="cached">com.fai.ffstudio</icon>
   <categories>
     <category>AudioVideo</category>
     <category>AudioVideoEditing</category>
@@ -19,7 +19,7 @@
   <provides>
     <binary>ffstudio</binary>
   </provides>
-  <launchable type="desktop-id">FFStudio.desktop
+  <launchable type="desktop-id">com.fai.ffstudio.desktop</launchable>
   <releases>
     <release version="0.2.7" date="2025-01-01"/>
   </releases>
