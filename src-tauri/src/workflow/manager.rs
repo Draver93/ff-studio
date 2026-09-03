@@ -29,9 +29,8 @@ pub fn get_workflow_list() -> Result<Vec<WorkflowStructure>> {
             let data = std::fs::read_to_string(&path).map_err(|e| {
                 FFStudioError::file_system(format!("Failed to read workflow file: {e}"))
             })?;
-            let workflow: WorkflowStructure = serde_json::from_str(&data).map_err(|e| {
-                FFStudioError::json(format!("Failed to parse workflow file: {e}"))
-            })?;
+            let workflow: WorkflowStructure = serde_json::from_str(&data)
+                .map_err(|e| FFStudioError::json(format!("Failed to parse workflow file: {e}")))?;
             result.push(workflow);
         }
     }
