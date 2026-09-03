@@ -9,6 +9,32 @@ import { GraphUndoManager } from '../graph/undo_redo.js';
 const { listen, once } = window.__TAURI__.event;
 const { invoke } = window.__TAURI__.core;
 
+// Default preset graph loaded for newly created workflows (input -> video/audio
+// stream selectors -> output). Stored in the graph.configure() serialized format
+// so both positions and connections are applied exactly.
+const DEFAULT_GRAPH = {
+  "last_node_id":11,"last_link_id":15,
+  "nodes":[
+    {"id":8,"type":"ffmpeg/input","pos":[39,353],"size":[210,166],"flags":{},"order":0,"mode":0,"inputs":[{"name":"globals","type":"ioopt","link":null},{"name":"dec:v","type":"dec","link":null},{"name":"dec:a","type":"dec","link":null},{"name":"demuxer","type":"fmt","link":null}],"outputs":[{"name":"n-streams","type":"streams","links":[8,9],"slot_index":0}],"title":"IN","properties":{"src_path":"your_input.mov"},"widgets_values":["your_input.mov","",""],"mediaInfoText":"","mediaInfoLines":[]},
+    {"id":11,"type":"ffmpeg/output","pos":[788,245],"size":{"0":210,"1":202},"flags":{},"order":3,"mode":0,"inputs":[{"name":"globals","type":"ioopt","link":null},{"name":"enc:v","type":"enc","link":null},{"name":"enc:a","type":"enc","link":null},{"name":"muxer","type":"fmt","link":null},{"name":"stream","type":"maps","link":14},{"name":"stream","type":"maps","link":15},{"name":"stream","type":"maps","link":null}],"title":"OUT","properties":{"dst_path":"desire_output.mp4"},"widgets_values":["desire_output.mp4",""]},
+    {"id":9,"type":"ffmpeg/stream selector","pos":[410,256],"size":{"0":210,"1":106},"flags":{},"order":1,"mode":0,"inputs":[{"name":"n-streams","type":"streams","link":8}],"outputs":[{"name":"stream","type":"maps","links":[14],"slot_index":0}],"properties":{"Select by":"type","Type":"video","Id":""},"widgets_values":["type","video",""]},
+    {"id":10,"type":"ffmpeg/stream selector","pos":[408,446],"size":{"0":210,"1":106},"flags":{},"order":2,"mode":0,"inputs":[{"name":"n-streams","type":"streams","link":9,"slot_index":0}],"outputs":[{"name":"stream","type":"maps","links":[15],"slot_index":0}],"properties":{"Select by":"type","Type":"audio","Id":""},"widgets_values":["type","audio",""]}
+  ],
+  "links":[[8,8,0,9,0,"streams"],[9,8,0,10,0,"streams"],[14,9,0,11,4,"maps"],[15,10,0,11,5,"maps"]],
+  "groups":[],"config":{},"extra":{},"version":0.4
+};
+
+// Inject the default preset graph into the current (empty) graph by configuring
+// it directly, preserving exact node positions and connections.
+export function injectDefaultGraph() {
+    graph.configure(DEFAULT_GRAPH);
+}
+
+// Serialize the current graph into a persisted string for the given workflow.
+export function defaultGraphString() {
+    return JSON.stringify(graph.serialize());
+}
+
 export function addNewWorkflow(name, path, select = false) {
     let workflowItems = document.querySelectorAll('.workflow-item');
     for (const item of workflowItems) {
