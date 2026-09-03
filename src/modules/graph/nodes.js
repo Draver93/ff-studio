@@ -274,25 +274,50 @@ function make_io_nodes() {
 
         // --- Get media info button (disabled initially) ---
         this.getInfoBtn = this.addWidget("button", "Get media info", "", () => {
-            if (!that.properties.src_path) return;
+            if (!that.properties.src_path || that.probing) return;
+            that.probing = true;
+            that.getInfoBtn.value = "Probing...";
+            that.setDirtyCanvas(true);
 
             invoke("get_mediainfo_request", {
                 path: that.properties.src_path,
                 ffmpeg: window.FFMPEG_BIN,
                 env: window.FFMPEG_ENV
             }).then((data) => {
+                that.probing = false;
+                that.getInfoBtn.value = "Get media info";
                 that.str = "";
                 that.mediaInfoLines = [];
-                
-                data.info_arr.forEach((item) => {
-                    if (item.length > 150) item = item.substr(0, 150) + "...";
-                    that.str += item + "\n";
-                    that.mediaInfoLines.push(item);
-                });
-                
+
+                if (data.timed_out) {
+                    that.mediaInfoLines = ["[Probe timed out - showing partial info]"];
+                    that.str = that.mediaInfoLines.join("\n") + "\n";
+                } else if (!data.info_arr || data.info_arr.length === 0) {
+                    that.mediaInfoLines = ["No media info returned: " + (data.message || "unknown error")];
+                    that.str = that.mediaInfoLines.join("\n") + "\n";
+                } else {
+                    data.info_arr.forEach((item) => {
+                        if (item.length > 150) item = item.substr(0, 150) + "...";
+                        that.str += item + "\n";
+                        that.mediaInfoLines.push(item);
+                    });
+                }
+
+                // Always surface any partial info ffmpeg produced (even on a
+                // timeout it often dumps the full Input stream list first).
+                if (data.timed_out && data.info_arr && data.info_arr.length) {
+                    data.info_arr.forEach((item) => {
+                        if (item.length > 150) item = item.substr(0, 150) + "...";
+                        that.str += item + "\n";
+                        that.mediaInfoLines.push(item);
+                    });
+                }
+
                 that.updateNodeSize();
                 that.setDirtyCanvas(true);
             }).catch((error) => {
+                that.probing = false;
+                that.getInfoBtn.value = "Get media info";
                 console.error("Error getting media info:", error);
                 that.str = "Error retrieving media info";
                 that.mediaInfoLines = ["Error retrieving media info"];
@@ -301,6 +326,7 @@ function make_io_nodes() {
             });
         });
         this.getInfoBtn.disabled = true;
+        this.probing = false;
 
         this.title = "IN";
         this.desc = "Input source node.<br>\

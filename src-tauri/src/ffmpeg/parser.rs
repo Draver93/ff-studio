@@ -10,18 +10,18 @@ use std::thread;
 use std::os::windows::process::CommandExt;
 
 pub fn apply_env<'a>(cmd: &'a mut Command, env_map: &HashMap<String, String>) -> &'a mut Command {
-    cmd.env_clear();
     cmd.envs(env_map.iter());
     cmd
 }
 pub fn parse_env_map(env_str: &str) -> HashMap<String, String> {
     let mut m = HashMap::new();
-    for line in env_str.lines() {
-        if line.trim().is_empty() {
+    for raw in env_str.split([',', '\n', '\r']) {
+        let line = raw.trim();
+        if line.is_empty() {
             continue;
         }
         if let Some((k, v)) = line.split_once('=') {
-            m.insert(k.to_string(), v.to_string());
+            m.insert(k.trim().to_string(), v.trim().to_string());
         }
     }
     m

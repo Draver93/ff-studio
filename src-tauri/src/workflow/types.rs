@@ -22,6 +22,7 @@ pub struct Node {
 #[derive(Serialize, Deserialize)]
 pub struct MIResponse {
     pub message: String,
+    pub timed_out: bool,
     pub info_arr: Vec<String>,
 }
 
