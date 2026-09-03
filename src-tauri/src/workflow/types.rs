@@ -25,13 +25,6 @@ pub struct MIResponse {
     pub info_arr: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct ExecResponse {
-    pub message: String,
-    pub logs: String,
-    pub end: bool,
-}
-
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Response {
     pub message: String,

@@ -13,7 +13,7 @@ pub fn get_mediainfo_request(path: String, ffmpeg: String, env: String) -> MIRes
             info_arr: array,
         },
         Err(_) => MIResponse {
-            message: "Faild to get media info".to_string(),
+            message: "Failed to get media info".to_string(),
             info_arr: Vec::new(),
         },
     }
