@@ -585,43 +585,6 @@ fn parse_contexts(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<Vec
     Ok(nodes)
 }
 
-fn parse_bsfs(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<Vec<Node>> {
-    let mut cmd = Command::new(ffmpeg);
-    #[cfg(windows)]
-    {
-        // Prevent a new terminal from appearing
-        const CREATE_NO_WINDOW: u32 = 0x08000000;
-        cmd.creation_flags(CREATE_NO_WINDOW);
-    }
-
-    cmd.args(["-bsfs", "-hide_banner"])
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null());
-    apply_env(&mut cmd, env_map);
-    let out = cmd.output()?;
-    let text = String::from_utf8_lossy(&out.stdout);
-
-    let mut nodes = Vec::new();
-    for line in text.lines().skip(1) {
-        if line.trim().is_empty() {
-            continue;
-        }
-        let words: Vec<&str> = line.split_whitespace().collect();
-        if words.is_empty() {
-            continue;
-        }
-        let node = Node {
-            is_av_option: false,
-            name: words[0].to_string(),
-            desc: "No info".to_string(),
-            ..Node::default()
-        };
-
-        nodes.push(node);
-    }
-    Ok(nodes)
-}
-
 fn parse_pix_fmts(ffmpeg: &str, env_map: &HashMap<String, String>) -> Result<Node> {
     let mut cmd = Command::new(ffmpeg);
     #[cfg(windows)]

@@ -211,16 +211,16 @@ fn start_watchdog_thread(
         };
 
         for id in watch_ids {
-            let (matched, workflow) = {
+            let (matched, workflow, envs) = {
                 let mut e = entries.lock().unwrap();
                 let entry = e.iter_mut().find(|e| e.id == id);
                 match entry {
                     Some(entry) => {
                         let matched = poll_folder(entry);
                         entry.files_queued += matched.len() as u64;
-                        (Some(matched), entry.workflow.clone())
+                        (Some(matched), entry.workflow.clone(), entry.envs.clone())
                     }
-                    None => (None, String::new()),
+                    None => (None, String::new(), String::new()),
                 }
             };
 
@@ -235,7 +235,7 @@ fn start_watchdog_thread(
                         "output": output_file,
                     })
                     .to_string();
-                    queue.add_job(vec![cmd], vec![String::new()], desc);
+                    queue.add_job(vec![cmd], vec![envs.clone()], desc);
                     queue.process_queue(window.clone());
                     let _ = window.emit("queue_status_changed", queue.get_queue_status());
                 }

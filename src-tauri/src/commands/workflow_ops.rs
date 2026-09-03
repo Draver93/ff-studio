@@ -104,7 +104,7 @@ pub async fn get_workflow(window: Window, name: String) -> Result<()> {
         return Err(FFStudioError::workflow(error_msg));
     }
 
-    let workflows = get_workflow_list();
+    let workflows = get_workflow_list()?;
     let workflow_opt = workflows.iter().find(|x| x.name == name);
 
     let workflow = match workflow_opt {
