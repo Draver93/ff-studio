@@ -276,7 +276,7 @@ function make_io_nodes() {
         this.getInfoBtn = this.addWidget("button", "Get media info", "", () => {
             if (!that.properties.src_path || that.probing) return;
             that.probing = true;
-            that.getInfoBtn.value = "Probing...";
+            that.getInfoBtn.name = "Probing...";
             that.setDirtyCanvas(true);
 
             invoke("get_mediainfo_request", {
@@ -285,7 +285,7 @@ function make_io_nodes() {
                 env: window.FFMPEG_ENV
             }).then((data) => {
                 that.probing = false;
-                that.getInfoBtn.value = "Get media info";
+                that.getInfoBtn.name = "Get media info";
                 that.str = "";
                 that.mediaInfoLines = [];
 
@@ -317,7 +317,7 @@ function make_io_nodes() {
                 that.setDirtyCanvas(true);
             }).catch((error) => {
                 that.probing = false;
-                that.getInfoBtn.value = "Get media info";
+                that.getInfoBtn.name = "Get media info";
                 console.error("Error getting media info:", error);
                 that.str = "Error retrieving media info";
                 that.mediaInfoLines = ["Error retrieving media info"];
