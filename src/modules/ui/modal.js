@@ -1,4 +1,4 @@
-import { addNewWorkflow, selectWorkflow } from '../workflows/workflows.js';
+import { addNewWorkflow, selectWorkflow, injectDefaultGraph, defaultGraphString } from '../workflows/workflows.js';
 import { showLoading, hideLoading, updateLoadingProgress, updateLoadingDetails } from './loading.js';
 import { make_nodes, make_io_nodes } from '../graph/nodes.js';
 import { canvas, graph } from '../graph/core.js';
@@ -63,7 +63,7 @@ export function showAddModal() {
         if (isValid) {
             if(addNewWorkflow(name, path)) {
                 // listen
-                once('create_workflow_listener', (event) => {
+                once('create_workflow_listener', async (event) => {
                     let data = event.payload;
                     clearInterval(window.workflowCreationInterval);
                     hideLoading();
@@ -83,6 +83,13 @@ export function showAddModal() {
 
                     make_nodes(data["nodes"]);
                     make_io_nodes();
+
+                    // Inject the default preset graph and persist it
+                    injectDefaultGraph();
+                    await new Promise((resolve) => {
+                        once('save_graph_listener', () => resolve());
+                        invoke('save_graph', {name: name, graph: defaultGraphString()}).catch(() => resolve());
+                    });
 
                     selectWorkflow(name);
                 });
